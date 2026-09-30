@@ -1,0 +1,91 @@
+name: API (Cloudflare Worker)
+
+# Despliega api/ (Worker + D1) en cada push a main que toque la API, o a mano desde
+# Actions > Run workflow. La primera vez crea la base D1 "antidoto"; siempre aplica las
+# migraciones pendientes antes de publicar.
+# Secrets en GitHub:
+#   CLOUDFLARE_API_TOKEN   además de Pages: Edit, necesita Workers Scripts: Edit y D1: Edit
+#   CLOUDFLARE_ACCOUNT_ID
+#   RESEND_API_KEY         opcional; sin ella la API funciona pero no salen correos
+#   SAL_IP                 opcional; texto aleatorio largo para el hash de IP
+# Variable (Settings > Secrets and variables > Actions > Variables):
+#   PUBLIC_API_URL         URL pública del Worker; la usan los enlaces de los correos
+# Sin CLOUDFLARE_API_TOKEN o CLOUDFLARE_ACCOUNT_ID se omite con un aviso.
+
+on:
+  push:
+    branches: [main]
+    paths: ['api/**', 'src/data/consentimiento.ts', '.github/workflows/api.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: api-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        working-directory: .
+        run: echo "::warning::Faltan CLOUDFLARE_API_TOKEN o CLOUDFLARE_ACCOUNT_ID; no se despliega la API."
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        uses: actions/checkout@v4
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: npm ci
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: npm run check && npm test
+      # Busca la base por nombre y, si no existe, la crea. Su id se escribe en wrangler.toml
+      # solo dentro del job; el repo no guarda ids de la cuenta.
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          id=$(npx wrangler d1 list --json | jq -r '.[] | select(.name == "antidoto") | .uuid')
+          if [ -z "$id" ]; then
+            npx wrangler d1 create antidoto
+            id=$(npx wrangler d1 list --json | jq -r '.[] | select(.name == "antidoto") | .uuid')
+          fi
+          test -n "$id"
+          sed -i "s/^database_id = .*/database_id = \"$id\"/" wrangler.toml
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: npx wrangler d1 migrations apply antidoto --remote
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        id: deploy
+        env:
+          APP_URL: ${{ vars.PUBLIC_API_URL }}
+        run: |
+          extra=()
+          if [ -n "$APP_URL" ]; then extra=(--var "APP_URL:$APP_URL"); fi
+          npm run deploy -- "${extra[@]}" | tee deploy.log
+          url=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' deploy.log | tail -1)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      # Los secrets viven en GitHub y se copian al Worker en cada despliegue.
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          SAL_IP: ${{ secrets.SAL_IP }}
+        run: |
+          for nombre in RESEND_API_KEY SAL_IP; do
+            valor="${!nombre}"
+            if [ -n "$valor" ]; then printf '%s' "$valor" | npx wrangler secret put "$nombre"; else echo "::notice::$nombre no está configurado."; fi
+          done
+      - if: steps.deploy.outputs.url != ''
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          echo "API publicada en ${URL}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Bandeja: ${URL}/admin/" >> "$GITHUB_STEP_SUMMARY"
