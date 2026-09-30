@@ -1,215 +1,86 @@
 ---
-// "Retos → soluciones": el concepto de la marca ocurriendo. Los retos entran al frasco del
-// logotipo y salen convertidos en soluciones. En escritorio lo guía el scroll; en móvil,
-// cada tarjeta de reto se resuelve al cruzar la pantalla. El HTML ya trae todo resuelto.
+// "Retos → soluciones" como pieza tipográfica. Cada fila es una palabra grande: arranca como
+// el reto (coral) y, al bajar, una línea de líquido cian la cruza de izquierda a derecha y la
+// reemplaza por la solución. El reto queda arriba como etiqueta tachada. Es el antídoto
+// actuando sobre el problema, sin diagramas.
+// El HTML trae el estado final (solución visible, reto tachado); el script parte del reto.
 import Encabezado from './Encabezado.astro';
 import { t, type Locale } from '../i18n/ui';
-import { diagrama, LIENZO, FRASCO } from '../lib/motion/retos-geometria';
-import { WORDMARK_SIN_LIQUIDO, LIQUIDO } from '../data/logo';
 
 interface Props {
   locale: Locale;
-  num: string;
+  num?: string;
 }
 const s = t(Astro.props.locale);
-const { num } = Astro.props;
-const d = diagrama(s.retos.length);
-
-// El frasco recortado del logo se coloca para que el centro de su líquido caiga en FRASCO.
-const VISTA = { x: 2836, y: 780, ancho: 394, alto: 540 };
-const altoFrasco = 300;
-const escala = altoFrasco / VISTA.alto;
-const frasco = {
-  ancho: VISTA.ancho * escala,
-  x: FRASCO.x - (LIQUIDO.cx - VISTA.x) * escala,
-  y: FRASCO.y - (LIQUIDO.cy - VISTA.y) * escala,
-};
-const liq = { x: LIQUIDO.cx - LIQUIDO.r, y: LIQUIDO.cy - LIQUIDO.r, lado: LIQUIDO.r * 2 };
+const pares = s.retos.map((reto, i) => ({ reto, solucion: s.soluciones[i] }));
 ---
-<section class="retos" id="retos" aria-labelledby="retos-title" data-retos>
-  <div class="escenario">
-    <div class="wrap">
-      <Encabezado num={num} kicker={s.retosKicker} titulo={s.retosTitle} lead={s.retosLead} id="retos-title" />
-
-      <svg class="diagrama" viewBox={`0 0 ${LIENZO.ancho} ${LIENZO.alto}`} aria-hidden="true">
-        <defs>
-          <clipPath id="retos-liquido"><circle cx={LIQUIDO.cx} cy={LIQUIDO.cy} r={LIQUIDO.r} /></clipPath>
-          <radialGradient id="retos-brillo"><stop offset="0" stop-color="#80DCFF" stop-opacity="0.55" /><stop offset="1" stop-color="#80DCFF" stop-opacity="0" /></radialGradient>
-        </defs>
-        <text class="col-titulo" x={d.retos[0].x} y="36" text-anchor="middle">{s.retosLabel}</text>
-        <text class="col-titulo" x={d.soluciones[0].x} y="36" text-anchor="middle">{s.solucionesLabel}</text>
-
-        <circle class="brillo" cx={FRASCO.x} cy={FRASCO.y} r="190" fill="url(#retos-brillo)" data-brillo />
-
-        <g class="entradas">{d.entradas.map((p) => <path d={p} data-entrada />)}</g>
-        <g class="salidas">{d.salidas.map((p) => <path d={p} data-salida />)}</g>
-
-        <svg x={frasco.x} y={frasco.y} width={frasco.ancho} height={altoFrasco} viewBox={`${VISTA.x} ${VISTA.y} ${VISTA.ancho} ${VISTA.alto}`} class="frasco">
-          <g fill="currentColor" set:html={WORDMARK_SIN_LIQUIDO} />
-          <g clip-path="url(#retos-liquido)">
-            <rect class="liquido" x={liq.x} y={liq.y} width={liq.lado} height={liq.lado} data-liquido />
-          </g>
-        </svg>
-
-        {d.retos.map((p, i) => (
-          <g class="nodo reto">
-            <circle cx={p.x} cy={p.y} r="10" />
-            <text x={p.x - 24} y={p.y + 7} text-anchor="end">{s.retos[i]}</text>
-          </g>
-        ))}
-        {d.soluciones.map((p, i) => (
-          <g class="nodo solucion" data-solucion>
-            <circle cx={p.x} cy={p.y} r="10" />
-            <text x={p.x + 24} y={p.y + 7}>{s.soluciones[i]}</text>
-          </g>
-        ))}
-        {d.retos.map(() => <circle class="particula reto" r="7" data-p-entrada />)}
-        {d.soluciones.map(() => <circle class="particula solucion" r="7" data-p-salida />)}
-      </svg>
-
-      <ol class="pares">
-        {s.retos.map((r, i) => (
-          <li data-par style={`--i: ${i}`}>
-            <span class="reto">{r}</span>
-            <span class="flecha" aria-hidden="true">→</span>
-            <span class="solucion">{s.soluciones[i]}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
+<section class="seccion retos" aria-labelledby="retos-title" data-retos>
+  <div class="wrap">
+    <Encabezado kicker={s.retosKicker} titulo={s.retosTitle} lead={s.retosLead} id="retos-title" />
+    <ol class="filas">
+      {pares.map(({ reto, solucion }) => (
+        <li class="fila" data-fila>
+          <p class="reto-label"><span class="etq">{s.retosLabel.replace(/s$/, '')}</span><span class="tachado" data-tachado>{reto}</span></p>
+          <p class="palabra">
+            <span class="sr">{reto}: {solucion}</span>
+            <span class="capa sol" aria-hidden="true" data-sol>{solucion}</span>
+            <span class="capa reto" aria-hidden="true" data-reto>{reto}</span>
+            <span class="menisco" aria-hidden="true" data-menisco></span>
+          </p>
+        </li>
+      ))}
+    </ol>
   </div>
 </section>
 
 <script>
-  import { gsap, ScrollTrigger, pieza } from '../lib/motion/core';
-  import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
-  import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
+  import { gsap, pieza } from '../lib/motion/core';
 
-  gsap.registerPlugin(DrawSVGPlugin, MotionPathPlugin);
-
-  function iniciar() {
-    const raiz = document.querySelector<HTMLElement>('[data-retos]');
-    if (!raiz) return;
-    const q = <T extends Element>(sel: string) => [...raiz.querySelectorAll<T>(sel)];
-    let mm: gsap.MatchMedia | null = null;
-
+  const raiz = document.querySelector<HTMLElement>('[data-retos]');
+  if (raiz) {
+    const filas = [...raiz.querySelectorAll<HTMLElement>('[data-fila]')];
     pieza(
       'retos',
       () => {
-        mm = gsap.matchMedia();
-
-        // Escritorio: la sección se alarga y el escenario queda fijo mientras el scroll
-        // lleva cada reto al frasco y saca cada solución. Todo con transform y trazos.
-        mm.add('(min-width: 900px)', () => {
-          raiz.classList.add('is-scrub');
-          const entradas = q<SVGPathElement>('[data-entrada]');
-          const salidas = q<SVGPathElement>('[data-salida]');
-          const pEntrada = q<SVGCircleElement>('[data-p-entrada]');
-          const pSalida = q<SVGCircleElement>('[data-p-salida]');
-          const soluciones = q<SVGGElement>('[data-solucion]');
-          const liquido = raiz.querySelector('[data-liquido]');
-          const brillo = raiz.querySelector('[data-brillo]');
-
-          gsap.set([...entradas, ...salidas], { drawSVG: '0%' });
-          gsap.set(soluciones, { opacity: 0.25 });
-          gsap.set(liquido, { scaleY: 0, transformOrigin: '50% 100%' });
-          gsap.set(brillo, { opacity: 0, scale: 0.6, transformOrigin: '50% 50%' });
-
-          const tl = gsap.timeline({
+        raiz.classList.add('is-animado');
+        filas.forEach((fila) => {
+          const sol = fila.querySelector('[data-sol]');
+          const reto = fila.querySelector('[data-reto]');
+          const menisco = fila.querySelector('[data-menisco]');
+          const tachado = fila.querySelector('[data-tachado]');
+          // Todo en porcentajes: mezclar % y px en clip-path hace saltar la animación.
+          gsap.timeline({
             defaults: { ease: 'none' },
-            scrollTrigger: { trigger: raiz, start: 'top top', end: 'bottom bottom', scrub: 0.6 },
-          });
-          tl.to(entradas, { drawSVG: '100%', duration: 1, stagger: 0.12 }, 0);
-          pEntrada.forEach((p, i) => {
-            tl.fromTo(p, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 0.1 + i * 0.15)
-              .to(p, { motionPath: { path: entradas[i], align: entradas[i], alignOrigin: [0.5, 0.5] }, duration: 1, ease: 'power1.in' }, 0.1 + i * 0.15)
-              .to(p, { opacity: 0, duration: 0.1 }, 1.05 + i * 0.15);
-          });
-          tl.to(liquido, { scaleY: 1, duration: 0.9, ease: 'power2.out' }, 1.1)
-            .to(brillo, { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }, 1.3)
-            .to(brillo, { opacity: 0.35, duration: 0.6 }, 1.8)
-            .to(salidas, { drawSVG: '100%', duration: 1, stagger: 0.12 }, 1.9);
-          pSalida.forEach((p, i) => {
-            tl.fromTo(p, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 1.9 + i * 0.15)
-              .to(p, { motionPath: { path: salidas[i], align: salidas[i], alignOrigin: [0.5, 0.5] }, duration: 1, ease: 'power1.out' }, 1.9 + i * 0.15)
-              .to(p, { opacity: 0, duration: 0.1 }, 2.85 + i * 0.15);
-          });
-          tl.to(soluciones, { opacity: 1, duration: 0.3, stagger: 0.15 }, 2.6);
-          ScrollTrigger.refresh();
-
-          return () => raiz.classList.remove('is-scrub');
+            scrollTrigger: { trigger: fila, start: 'top 82%', end: 'top 38%', scrub: 0.5 },
+          })
+            .fromTo(sol, { clipPath: 'inset(-10% 100% -20% 0%)' }, { clipPath: 'inset(-10% 0% -20% 0%)' }, 0)
+            .fromTo(reto, { clipPath: 'inset(-10% 0% -20% 0%)' }, { clipPath: 'inset(-10% 0% -20% 100%)' }, 0)
+            .fromTo(menisco, { left: '0%', opacity: 1 }, { left: '100%' }, 0)
+            .to(menisco, { opacity: 0, duration: 0.08 }, 0.92)
+            .fromTo(tachado, { '--tachado': 0 }, { '--tachado': 1, duration: 0.5 }, 0.5);
         });
-
-        // Móvil: cada par se resuelve al cruzar la pantalla; el reto se tacha y la
-        // solución se destapa. El estado inicial lo pone el script, no el CSS.
-        mm.add('(max-width: 899px)', () => {
-          const pares = q<HTMLElement>('[data-par]');
-          pares.forEach((par) => {
-            par.classList.add('is-pendiente');
-            let hecho = false;
-            ScrollTrigger.create({
-              trigger: par,
-              start: 'center 70%',
-              onEnter: () => {
-                if (hecho) return;
-                hecho = true;
-                par.classList.remove('is-pendiente');
-              },
-            });
-          });
-          return () => pares.forEach((par) => par.classList.remove('is-pendiente'));
-        });
-
-        return () => mm?.revert();
       },
-      () => {
-        mm?.revert();
-        raiz.classList.remove('is-scrub');
-        q('[data-par]').forEach((el) => el.classList.remove('is-pendiente'));
-      },
+      () => raiz.classList.remove('is-animado'),
     );
   }
-  iniciar();
 </script>
 
 <style>
-  .retos { padding-block: 72px; }
-  .diagrama { display: block; width: 100%; height: auto; margin-top: 32px; overflow: visible; }
-  .col-titulo { font: 500 13px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; fill: var(--color-fg-muted); }
-  .entradas path, .salidas path { fill: none; stroke-width: 2; stroke-linecap: round; }
-  .entradas path { stroke: var(--color-reto); stroke-opacity: 0.6; }
-  .salidas path { stroke: var(--color-antidote); stroke-opacity: 0.7; }
-  .frasco { color: var(--color-antidote); }
-  .liquido { fill: var(--color-mid); }
-  .brillo { opacity: 0.35; }
-  .nodo text { font: 400 22px var(--font-display); fill: var(--color-fg); }
-  .reto circle { fill: var(--color-reto); }
-  .solucion circle { fill: var(--color-antidote); }
-  .nodo.solucion text { fill: var(--color-antidote); }
-  .particula { opacity: 0; }
-  .particula.reto { fill: var(--color-reto); }
-  .particula.solucion { fill: var(--color-glow); }
+  .filas { list-style: none; margin: 40px 0 0; padding: 0; border-top: 1px solid var(--color-line); }
+  .fila { padding: 22px 0 26px; border-bottom: 1px solid var(--color-line); }
+  .reto-label { display: flex; align-items: baseline; gap: 12px; margin: 0 0 6px; font: 600 12px/1 var(--font-sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-fg-muted); }
+  .tachado { position: relative; color: var(--color-reto); letter-spacing: 0.06em; }
+  /* Tachado que crece; en el estado final (sin JS) está completo. */
+  .tachado::after { content: ''; position: absolute; left: -2px; right: -2px; top: 50%; height: 2px; background: currentColor; transform: scaleX(var(--tachado, 1)); transform-origin: left; }
 
-  .pares { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-  .pares li { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; padding: 18px 20px; border-radius: 14px; background: var(--color-ink-raised); }
-  .pares .reto { color: var(--color-reto); position: relative; justify-self: start; }
-  /* Tachado que crece: el reto queda anulado cuando llega la solución. */
-  .pares .reto::after { content: ''; position: absolute; left: 0; right: 0; top: 55%; height: 2px; background: currentColor; transform-origin: left; transition: transform var(--t-slow) var(--ease-out) calc(var(--i, 0) * 0.15s); }
-  .pares .flecha { color: var(--color-fg-muted); }
-  .pares .solucion { color: var(--color-antidote); font-weight: 600; justify-self: end; clip-path: inset(0 0 0 0); transition: clip-path var(--t-slow) var(--ease-out) calc(0.2s + var(--i, 0) * 0.15s); }
-  .pares li:global(.is-pendiente) .reto::after { transform: scaleX(0); }
-  .pares li:global(.is-pendiente) .solucion { clip-path: inset(0 100% 0 0); }
+  .palabra { position: relative; display: inline-grid; margin: 0; font: 400 clamp(46px, 7.4vw, 120px)/1 var(--font-display); letter-spacing: -0.035em; }
+  .capa { grid-area: 1 / 1; white-space: nowrap; }
+  .sol { background-image: linear-gradient(100deg, var(--color-glow), var(--color-antidote) 40%, var(--color-mid)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .reto { color: var(--color-reto); display: none; }
+  .menisco { display: none; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  /* Escritorio: diagrama visible; la lista queda solo para lectores de pantalla. */
-  @media (min-width: 900px) {
-    .pares { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    .retos:global(.is-scrub) { height: 280vh; padding-block: 0; }
-    .retos:global(.is-scrub) .escenario { position: sticky; top: var(--nav-h); min-height: calc(100svh - var(--nav-h)); display: flex; align-items: center; padding-block: 32px; }
-    .retos:global(.is-scrub) .escenario > .wrap { width: 100%; }
-  }
-  @media (max-width: 899px) {
-    .retos { padding-block: 64px; }
-    .diagrama { display: none; }
-    .pares { margin-top: 28px; }
-  }
+  /* Con el script: aparece la capa del reto y la línea de líquido que la cruza. */
+  .retos:global(.is-animado) .reto { display: block; }
+  .retos:global(.is-animado) .menisco { display: block; position: absolute; top: -6%; bottom: -10%; width: 3px; margin-left: -1px; border-radius: 3px; background: var(--color-antidote); box-shadow: 0 0 18px 3px rgb(59 200 243 / 0.65); }
 </style>
