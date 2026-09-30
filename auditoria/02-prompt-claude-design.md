@@ -2,7 +2,7 @@
 
 ## Cómo usarlo
 
-1. En Claude Design adjunta: `favicon.svg` (isotipo del frasco), `antidoto.svg`, 4 a 6 fotos del carrusel, la foto de la fundadora, los logos de clientes y 2 capturas del sitio actual (desktop y móvil).
+1. En Claude Design adjunta: `marca/paleta-de-colores-antidoto.pdf` (guía oficial de color y fuentes), `antidoto.png` (logotipo correcto, ver §3.1), `favicon.svg` (isotipo del frasco), `antidoto.svg`, 4 a 6 fotos del carrusel, la foto de la fundadora, los logos de clientes y 2 capturas del sitio actual (desktop y móvil).
 2. Pega el **prompt principal** completo.
 3. Después del primer pase, itera por partes con los **prompts de iteración** del final. No pidas cambios globales hasta cerrar hero y sistema.
 
@@ -45,21 +45,33 @@ Cifras dadas por el cliente: +150 producciones, +200 eventos, +50 clientes, 3 id
 
 ## 3. Dirección creativa
 
-Concepto: "La fórmula". El isotipo es un frasco de laboratorio con líquido cian: el antídoto. Ese líquido es el hilo narrativo y el motivo principal del motion. Los retos del cliente entran al frasco y salen convertidos en soluciones. El scroll es la dosis: a medida que bajas, el frasco se llena y la historia avanza.
+Concepto: "La fórmula". El logotipo real ya contiene el concepto (ver `antidoto.png`, adjunto): el wordmark "antidoto" en minúsculas dibuja un infinito (∞) con sus dos "o" centrales, y esa segunda "o" se transforma en un frasco de laboratorio con líquido cian y un nivel marcado. Infinito + frasco = la fórmula que nunca se agota. Ese hallazgo tipográfico es el motivo principal del motion, no un frasco genérico aparte del logo. Los retos del cliente entran al frasco y salen convertidos en soluciones. El scroll es la dosis: a medida que bajas, el frasco se llena y la historia avanza.
 
 Tono: preciso y cálido a la vez. Laboratorio creativo, no clínica. Oficio audiovisual (encuadres, timecode, guías de cámara) combinado con calidez humana (fotos reales de gente, comida y talleres).
 
-Color (refina la marca actual, no la reemplaces):
+### 3.1 Logotipo: reglas de uso (referencia `antidoto.png`)
+
+- El logo correcto es el de `antidoto.png`: wordmark en minúsculas, geométrico y redondeado (familia Cal Sans o muy próxima), color único `#3BC8F3` sin degradado ni sombra.
+- No es un logotipo + isotipo separados: es una sola pieza. Las dos "o" del centro forman el símbolo de infinito; la segunda "o" continúa como el contorno de un frasco de laboratorio con una línea de nivel de líquido. No los separes ni los tires como piezas independientes salvo que hagas explícitamente el favicon/isotipo recortado (ver siguiente punto).
+- Favicon/isotipo: recorta solo la parte del frasco (la mitad derecha del wordmark, desde el segundo infinito) para usarlo como marca de agua, favicon o motivo de fondo. No inventes un frasco distinto al que ya dibuja el logo.
+- Exporta el `.svg` con el `viewBox` ajustado al arte real (bounding box ajustado, sin aire de lienzo): el archivo actual (`antidoto.svg`) tiene un lienzo de 3840x2160 con el logotipo centrado y mucho margen, por eso hoy el código compensa con márgenes negativos. No repitas ese error.
+- Genera también una versión en blanco puro (`#FFFFFF`) para fondos oscuros saturados o sobre foto/video, y una versión monocromo `--ink` para fondos claros. Hoy `antidoto_white.svg` es idéntico al de color (no existe la versión blanca real).
+- Área de resguardo mínima: el alto de la "a" minúscula alrededor de todo el logotipo. No pegues nav, CTAs ni bordes dentro de ese margen.
+- Tamaño mínimo legible: que el frasco y su nivel de líquido sigan distinguiéndose (aprox. 90 px de ancho en pantalla).
+
+Color: paleta oficial de la marca (ver `paleta-de-colores-antidoto.pdf`, adjunto). Son 5 tonos, del más claro al más oscuro: #80DCFF, #3BC8F3, #1C99CA, #0C5C7D y #0F181D. Refínala con variantes, no la reemplaces.
 - --ink #0F181D: fondo base, más una variante más profunda para separar secciones.
-- --antidote #49C1EC: el líquido y acento principal. Úsalo con disciplina.
+- --antidote #3BC8F3: el líquido y acento principal (color del logotipo). Úsalo con disciplina.
 - --deep #0C5C7D, --mid #1C99CA, --glow #80DCFF: soporte y degradados del líquido.
+- Contraste medido sobre --ink: #80DCFF 11,6:1, #3BC8F3 9,2:1 y #1C99CA 5,5:1 sirven para texto; #0C5C7D (2,4:1) solo para fondos, bordes y superficies, nunca para texto sobre --ink. Sobre fondo claro, ninguno de los cianes claros sirve para texto (#1C99CA da 3,3:1, solo texto grande); usa --ink o #0C5C7D (7,4:1).
 - --reto: un único acento cálido (coral o rojo anaranjado) SOLO para representar problemas en la narrativa de retos a soluciones.
 - Neutros cálidos para texto. Explora 1 o 2 secciones claras en blanco hueso cálido (testimonios o FAQ) para dar ritmo sin perder el carácter oscuro.
 - Nada de verdes, rosas o morados fuera de paleta. El verde de WhatsApp solo dentro de su icono.
 
-Tipografía (máximo 2 familias y 1 mono opcional):
-- Display: Cal Sans (ya es de la marca), solo en su peso real, sin negritas sintéticas.
-- Texto: una sans muy legible con soporte completo de español. Propón 2 opciones (por ejemplo Manrope, Figtree, Onest o Instrument Sans). Cuerpo de 16 px o más en móvil, interlineado 1,5 a 1,6.
+Tipografía: la guía de marca define Cal Sans, Modulus y Poppins. Úsalas así (máximo 2 familias en el texto corriente):
+- Display: Cal Sans, solo en su peso real, sin negritas sintéticas.
+- Texto e interfaz: Poppins, con los pesos que realmente cargues (400, 500 y 600 como máximo). Cuerpo de 16 px o más en móvil, interlineado 1,5 a 1,6.
+- Modulus: solo como acento de marca en tamaños grandes (cifras, etiquetas destacadas, palabras sueltas del hero). Nunca en párrafos ni por debajo de 20 px: es ancha y fina y hoy resta legibilidad.
 - Mono opcional para detalles de oficio audiovisual (timecode, contadores, etiquetas técnicas).
 - Escala fluida con clamp().
 
@@ -95,8 +107,8 @@ Tokens (defínelos y úsalos en todo el prototipo):
 1. Hero
 - H1 en texto HTML real, idéntico en desktop y móvil: "Creamos experiencias que conectan, inspiran y transforman". Subtítulo: "Formaciones vivenciales, producción audiovisual y catering corporativo para empresas, colegios y organizaciones."
 - CTA primario: "Cotizar por WhatsApp". Secundario: "Ver nuestro trabajo" (lleva al portafolio).
-- Visual: el frasco del isotipo a gran escala en SVG. Dentro, enmascarado por la forma del líquido, un montaje de clips reales (taller, rodaje, catering). El líquido tiene una ola sutil y burbujas que suben.
-- Entrada (1,2 s en total como máximo): el H1 se pinta visible desde el primer frame (sin fade que retrase el LCP); el líquido sube hasta su nivel mientras "conectan", "inspiran" y "transforman" se tiñen de --antidote una tras otra.
+- Visual: el frasco recortado del logotipo (ver §3.1, no un frasco genérico) a gran escala en SVG. Dentro, enmascarado por la forma del líquido, un montaje de clips reales (taller, rodaje, catering). El líquido tiene una ola sutil y burbujas que suben.
+- Entrada (1,2 s en total como máximo): el H1 se pinta visible desde el primer frame (sin fade que retrase el LCP); en paralelo, el wordmark completo del logo (infinito + frasco) se dibuja con un `pathLength` corto, y justo el tramo del frasco se queda como el elemento hero mientras el resto del trazo se desvanece; el líquido sube hasta su nivel mientras "conectan", "inspiran" y "transforman" se tiñen de --antidote una tras otra.
 - Scroll: al bajar, el frasco se inclina y vierte el líquido, que se convierte en la línea que guía hacia servicios.
 - Móvil: frasco más pequeño bajo el H1, ola en bucle lento, clip corto (1,5 MB o menos) o solo imagen. Nada de video vertical a pantalla completa.
 
@@ -185,13 +197,14 @@ Extra: imagen Open Graph
 - Texto incrustado en videos o imágenes.
 - Preloaders que bloqueen el contenido.
 - Carruseles automáticos sin control y muros infinitos de testimonios.
-- Negritas sintéticas y más de 2 familias tipográficas.
+- Negritas sintéticas y más de 2 familias en el texto corriente (Modulus solo como acento grande, ver §3).
 - Inventar clientes, cifras o testimonios.
 
 ## 9. Assets
 
-- Isotipo (frasco): https://antidotocolombia.com/favicon.svg
-- Logotipo: https://antidotocolombia.com/antidoto.svg (lienzo de 3840x2160 con mucho aire: recorta el viewBox y crea versión blanca y monocroma, hoy no existen).
+- Logotipo correcto (referencia de forma y color, usar como fuente de verdad): `antidoto.png` adjunto. Wordmark "antidoto" en `#3BC8F3`, las dos "o" centrales forman un infinito que se convierte en frasco (ver §3.1).
+- Isotipo (frasco) actual, solo como referencia de qué NO repetir: https://antidotocolombia.com/favicon.svg
+- Logotipo `.svg` actual, con el bug de lienzo descrito en §3.1: https://antidotocolombia.com/antidoto.svg (recorta el viewBox y crea versión blanca y monocroma, hoy no existen).
 - Fotos reales: https://antidotocolombia.com/img1.jpg a img11.jpg
 - Fundadora: adjunta.
 - Logos de clientes: https://antidotocolombia.com/client1.png a client19.png (no existe client9).

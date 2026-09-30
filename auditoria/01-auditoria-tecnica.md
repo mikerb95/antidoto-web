@@ -284,7 +284,7 @@ Alternativa con menos mantenimiento: poner Cloudflare delante del droplet (HTTP/
 
 - **Tipografía inconsistente**: CalSans (display), Modulus (cuerpo), Poppins (UI), más `Inter` y `Playfair` declaradas pero no cargadas. Las estadísticas de servicios caen a la fuente del sistema (Arial/Liberation), se nota el cambio. CalSans con `font-bold` genera negrita sintética.
 - **Iconografía mezclada**: emojis (🎬 📺 🚀 🎯 ⚡ ⭐ 🌎 📌 🤝 🎨 💡 🌍) conviven con iconos Lucide. Los emojis cambian según sistema operativo y abaratan la marca.
-- **Paleta con colores fuera de marca**: verde en "Más de 50 clientes satisfechos", rosa/morado en gradientes del botón y de Instagram, naranja `#ffaa40`. La marca real es cian `#49C1EC` sobre `#0F181D`.
+- **Paleta con colores fuera de marca**: verde en "Más de 50 clientes satisfechos", rosa/morado en gradientes del botón y de Instagram, naranja `#ffaa40`. La marca real es cian `#3BC8F3` sobre `#0F181D` (guía oficial en `marca/paleta-de-colores-antidoto.pdf`; el sitio actual usa `#49C1EC`, un tono cercano que conviene unificar).
 - **Logo mal exportado**: `antidoto.svg` tiene un lienzo de 3840x2160 con el logotipo en el centro, por eso el código usa márgenes negativos (`ml-[-27px]`) y un `h-24` dentro de un nav `h-16`. `antidoto_white.svg` es idéntico byte a byte a `antidoto.svg` (no hay versión blanca).
 - **Vacíos enormes** entre secciones (200 a 300 px sin contenido) y antes del footer.
 - **Cards de servicios sin imagen**: cuatro bloques de texto con borde cian brillante. Un estudio que vende producción audiovisual no muestra ni un fotograma de su trabajo en servicios.
