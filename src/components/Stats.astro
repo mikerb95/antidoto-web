@@ -1,0 +1,82 @@
+---
+import { t, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const s = t(Astro.props.locale);
+---
+<div class="wrap">
+  <ul class="stats" data-cifras>
+    {s.stats.map(([value, label]) => (
+      <li><strong data-cifra>{value}</strong><span>{label}</span></li>
+    ))}
+  </ul>
+</div>
+
+<script>
+  import { gsap, ScrollTrigger, pieza } from '../lib/motion/core';
+  import { piezas, desplazamiento, TIRA } from '../lib/motion/odometro';
+
+  // Odómetro: cada cifra "llega" rodando en vez de estar quieta. El HTML trae el valor
+  // final; el script lo reemplaza por columnas y conserva el texto en aria-label.
+  function iniciar() {
+    const franja = document.querySelector<HTMLElement>('[data-cifras]');
+    if (!franja) return;
+    const cifras = [...franja.querySelectorAll<HTMLElement>('[data-cifra]')];
+    const originales = cifras.map((c) => c.textContent ?? '');
+    pieza(
+      'odometro',
+      () => {
+        const tiras: Array<{ el: HTMLElement; y: number; i: number }> = [];
+        cifras.forEach((c, n) => {
+          const texto = originales[n];
+          c.setAttribute('aria-label', texto);
+          c.textContent = '';
+          piezas(texto).forEach((p, i) => {
+            const celda = document.createElement('span');
+            celda.setAttribute('aria-hidden', 'true');
+            if (p.tipo === 'fijo') {
+              celda.textContent = p.texto;
+            } else {
+              celda.className = 'col';
+              const tira = document.createElement('span');
+              tira.className = 'tira';
+              tira.textContent = TIRA;
+              celda.appendChild(tira);
+              tiras.push({ el: tira, y: desplazamiento(p.valor), i });
+            }
+            c.appendChild(celda);
+          });
+        });
+        // Arranca apenas la franja asoma: un "000" quieto en el borde se leería como el dato.
+        const st = ScrollTrigger.create({
+          trigger: franja,
+          start: 'top bottom',
+          onEnter: () => {
+            tiras.forEach(({ el, y, i }) =>
+              gsap.to(el, { yPercent: y, duration: 1.6, ease: 'expo.out', delay: 0.1 + i * 0.08 }),
+            );
+          },
+        });
+        return () => st.kill();
+      },
+      () => cifras.forEach((c, n) => (c.textContent = originales[n])),
+    );
+  }
+  document.addEventListener('astro:page-load', iniciar);
+</script>
+
+<style>
+  .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; list-style: none; margin: 0; padding: 0; background: var(--color-line); border: 1px solid var(--color-line); border-radius: 14px; overflow: hidden; position: relative; z-index: 1; }
+  li { background: var(--color-ink); padding: 18px 20px; }
+  strong { display: block; font: 400 clamp(28px, 1.6vw + 14px, 38px) / 1.1 var(--font-accent); font-variant-numeric: tabular-nums; }
+  li > span { font-size: 13px; color: var(--color-fg-muted); }
+  /* Columnas del odómetro: una celda de alto fijo que recorta la tira de dígitos. */
+  strong :global(.col) { display: inline-block; height: 1.1em; overflow: hidden; vertical-align: top; }
+  strong :global(.tira) { display: block; width: 1ch; word-break: break-all; line-height: 1.1em; text-align: center; }
+  @media (max-width: 860px) {
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    li:last-child { grid-column: 1 / -1; }
+  }
+</style>

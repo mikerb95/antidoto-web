@@ -1,0 +1,47 @@
+---
+import Logo from './Logo.astro';
+import { t, homePath, type Locale } from '../i18n/ui';
+import { waLink } from '../data/site';
+
+interface Props {
+  locale: Locale;
+  /** Ruta equivalente en el otro idioma. */
+  alternateHref: string;
+}
+const { locale, alternateHref } = Astro.props;
+const s = t(locale);
+const home = homePath[locale];
+---
+<header class="nav">
+  <div class="wrap row">
+    <a href={home} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
+    <nav aria-label={s.menuLabel}>
+      <ul>
+        <li><a href={`${home}#servicios`}>{s.navServices}</a></li>
+        <li><a href={`${home}#clientes`}>{s.navClients}</a></li>
+        <li><a href={`${home}#contacto`}>{s.navContact}</a></li>
+        <li><a href={alternateHref} hreflang={locale === 'es' ? 'en' : 'es'} aria-label={s.switchLangLabel}>{s.switchLang}</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary btn-sm quote" href={waLink(s.waDefault)} target="_blank" rel="noopener">{s.navQuote}</a>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; height: var(--nav-h);
+    background: color-mix(in srgb, var(--color-ink) 86%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--color-line);
+  }
+  .row { height: 100%; display: flex; align-items: center; gap: 28px; }
+  .home { display: block; color: var(--color-antidote); }
+  .home :global(.logo) { display: block; width: 132px; height: auto; }
+  ul { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
+  nav { margin-left: auto; }
+  ul a { display: block; padding: 10px 12px; text-decoration: none; font-size: 14px; color: var(--color-fg-muted); }
+  ul a:hover { color: var(--color-fg); }
+  @media (max-width: 760px) {
+    nav { display: none; }
+    .quote { margin-left: auto; }
+  }
+</style>
