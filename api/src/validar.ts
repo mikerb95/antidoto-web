@@ -1,7 +1,7 @@
 // Validación del lead que envía el cotizador. Función pura: devuelve los datos limpios o la
 // lista de errores, sin tocar la base.
 import { SERVICIOS, type ServicioId } from './db/schema';
-import { CONSENTIMIENTO_VERSION } from '../../src/data/consentimiento';
+import consentimiento from '../../src/data/consentimiento.json';
 
 export interface LeadEntrada {
   servicio: ServicioId;
@@ -90,7 +90,7 @@ export function validarLead(entrada: unknown): Resultado {
 
   if (!emailBruto && !telefonoBruto) errores.push('contacto');
 
-  if (d.consentimiento !== CONSENTIMIENTO_VERSION) errores.push('consentimiento');
+  if (d.consentimiento !== consentimiento.version) errores.push('consentimiento');
 
   const fechaBruta = texto(d.fecha, 7);
   const fecha = fechaBruta && /^\d{4}-(0[1-9]|1[0-2])$/.test(fechaBruta) ? fechaBruta : null;
