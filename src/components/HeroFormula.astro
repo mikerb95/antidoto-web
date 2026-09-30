@@ -37,7 +37,7 @@ const box = { x: cx - r, y: cy - r, size: r * 2 };
       <p class="sst"><i aria-hidden="true"></i>{s.heroSst}</p>
       <button class="pause-btn" type="button" aria-pressed="false" data-pause data-label-pause={s.pause} data-label-resume={s.resume}>{s.pause}</button>
     </div>
-    <svg class="flask" viewBox="2812 780 418 540" role="img" aria-label={s.heroFlaskLabel}>
+    <svg class="flask" viewBox="2836 780 394 540" role="img" aria-label={s.heroFlaskLabel}>
       <defs>
         <clipPath id="hero-liquid"><circle cx={cx} cy={cy} r={r} /></clipPath>
         <mask id="hero-level" maskUnits="userSpaceOnUse" x="2900" y="1000" width="240" height="240">
@@ -96,6 +96,8 @@ const box = { x: cx - r, y: cy - r, size: r * 2 };
   .sst i { width: 8px; height: 8px; border-radius: 50%; background: var(--color-antidote); flex: none; }
   .pause-btn { display: flex; margin-top: 16px; }
   .flask { display: block; width: 100%; height: auto; max-width: 600px; margin: 0 -40px -80px auto; color: var(--color-antidote); }
+  /* El trazo del infinito entra desde la izquierda: se desvanece en vez de cortarse en seco. */
+  .flask { mask-image: linear-gradient(90deg, transparent 0, #000 14%); }
 
   /* La puntuación viaja con su palabra: SplitText la trata como palabra aparte y podría bajarla sola de línea. */
   .nw { white-space: nowrap; }
