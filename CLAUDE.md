@@ -42,6 +42,7 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 
 - `.github/workflows/deploy.yml` sube `dist/` por FTP a `public_html` de Hostinger en cada push a `main`. Necesita los secrets `FTP_SERVER`, `FTP_USERNAME` y `FTP_PASSWORD`.
 - `.github/workflows/ci.yml` corre `check` y `build` en PRs y ramas.
+- Vista previa: Cloudflare Pages conectado al repo (build `npm run build`, salida `dist`, Node 22 por `.nvmrc`). Cada rama publica su propia URL `*.pages.dev`; `public/_headers` les pone `noindex`.
 - `public/.htaccess` trae redirecciones HTTPS y sin www, 404 real, cabeceras de seguridad (CSP en Report-Only) y caché.
 
 ## Pendiente
