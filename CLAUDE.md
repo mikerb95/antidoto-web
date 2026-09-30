@@ -38,6 +38,12 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - **Motion:** contenido visible por defecto (nada arranca en `opacity: 0` esperando un observer). Anima solo `transform`, `opacity` y `clip-path`. Todo bucle de más de 5 s tiene pausa y se detiene fuera de pantalla. Respeta `prefers-reduced-motion`. Tokens de duración y curvas en `global.css`.
 - **Rendimiento:** presupuesto de LCP ≤ 2,5 s en móvil 4G, JS inicial ≤ 170 KB gzip, carga inicial móvil ≤ 1,5 MB.
 
+## Motion y verificación visual
+
+- Para trabajo de motion usa la skill del proyecto `motion-landing` (`.claude/skills/motion-landing/`): método, recetas GSAP en `references/tecnicas.md` y verificación con capturas.
+- Capturas: `node .claude/skills/motion-landing/scripts/capturar.mjs pasos.json capturas/` con el sitio levantado (`npm run build && npm run preview`). Hojas de contacto: `python3 .claude/skills/motion-landing/scripts/hoja.py`.
+- En el contenedor en la nube no hay GPU: WebGL corre en SwiftShader y las capturas de piezas WebGL no reflejan la fluidez real. SVG y CSS se verifican bien.
+
 ## Despliegue
 
 - `.github/workflows/deploy.yml` sube `dist/` por FTP a `public_html` de Hostinger en cada push a `main`. Necesita los secrets `FTP_SERVER`, `FTP_USERNAME` y `FTP_PASSWORD`.

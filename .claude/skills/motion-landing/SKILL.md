@@ -100,7 +100,7 @@ Nada se entrega sin haberlo visto. Usa `scripts/capturar.mjs` (ejecútalo desde 
 del proyecto, que debe tener Playwright instalado):
 
 ```bash
-node ~/.claude/skills/motion-landing/scripts/capturar.mjs pasos.json <carpeta-salida>
+node .claude/skills/motion-landing/scripts/capturar.mjs pasos.json <carpeta-salida>
 ```
 
 El JSON de pasos admite: `url`, `viewport`, `dpr`, `mobile`, `touch`, `reduced`,
