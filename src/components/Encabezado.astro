@@ -1,0 +1,36 @@
+---
+// Encabezado de sección numerado: "/01 ── ETIQUETA", título y bajada. Da el ritmo de
+// ficha de laboratorio a todas las páginas.
+interface Props {
+  num: string;
+  kicker: string;
+  titulo: string;
+  lead?: string;
+  id?: string;
+  /** h1 en la cabecera de página, h2 en las secciones. */
+  nivel?: 1 | 2;
+  claro?: boolean;
+}
+const { num, kicker, titulo, lead, id, nivel = 2, claro = false } = Astro.props;
+const H = nivel === 1 ? 'h1' : 'h2';
+---
+<div class:list={['enc', { claro }]}>
+  <p class="kicker"><span class="num">/{num}</span><span class="raya" aria-hidden="true"></span><span>{kicker}</span></p>
+  <H id={id} class:list={['titulo', { grande: nivel === 1 }]}>{titulo}</H>
+  {lead && <p class="bajada">{lead}</p>}
+  <slot />
+</div>
+
+<style>
+  .enc { display: grid; gap: 14px; max-width: 780px; }
+  .kicker { display: flex; align-items: center; gap: 12px; margin: 0; font: 500 11px var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-fg-muted); }
+  .num { color: var(--color-antidote); }
+  .raya { width: 56px; height: 1px; background: linear-gradient(90deg, rgb(128 220 255 / 0.4), transparent); }
+  .titulo { margin: 0; font-size: clamp(32px, 2.8vw + 12px, 52px); line-height: 1.03; letter-spacing: -0.02em; }
+  .titulo.grande { font-size: clamp(40px, 4.4vw + 12px, 76px); line-height: 0.98; }
+  .bajada { margin: 0; color: var(--color-fg-muted); font-size: clamp(16px, 0.6vw + 12px, 18px); max-width: 40em; }
+  .claro .kicker { color: var(--color-bone-muted); }
+  .claro .num { color: var(--color-deep); }
+  .claro .raya { background: linear-gradient(90deg, rgb(12 92 125 / 0.5), transparent); }
+  .claro .bajada { color: var(--color-bone-muted); }
+</style>

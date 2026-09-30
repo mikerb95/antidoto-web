@@ -1,0 +1,103 @@
+---
+// Índice cinético de servicios (receta "índice cinético" de la skill motion-landing):
+// lista tipográfica grande y, con ratón, una ventana flotante que sigue al cursor con
+// inercia y muestra la foto del servicio. En táctil no hay ventana: cada fila lleva su
+// miniatura fija.
+import { Image } from 'astro:assets';
+import { SERVICIOS, servicioPath } from '../data/servicios';
+import { t, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+---
+<div class="indice" data-indice>
+  <div class="cabecera mono" aria-hidden="true">
+    <span>#</span><span>{s.servicioCols[0]}</span><span>{s.servicioCols[1]}</span><span>{s.servicioCols[2]}</span>
+  </div>
+  <ol>
+    {SERVICIOS.map((sv, i) => {
+      const txt = sv[locale];
+      return (
+        <li>
+          <a href={servicioPath(sv, locale)} data-fila={i}>
+            <span class="num mono">0{i + 1}</span>
+            <span class="nombre" style={`view-transition-name: servicio-${sv.id}-title`}>{txt.title}</span>
+            <span class="desc">{txt.lead}</span>
+            <span class="tags mono">{txt.facts.slice(0, 2).join(' · ')}</span>
+            <span class="flecha" aria-hidden="true">↗</span>
+            <span class="mini" aria-hidden="true"><Image src={sv.image} alt="" width={160} height={120} loading="lazy" /></span>
+          </a>
+        </li>
+      );
+    })}
+  </ol>
+  <div class="flotante" aria-hidden="true" data-flotante>
+    {SERVICIOS.map((sv) => <Image src={sv.image} alt="" widths={[360, 540]} sizes="360px" loading="lazy" data-previa />)}
+  </div>
+</div>
+
+<script>
+  import { gsap, pieza } from '../lib/motion/core';
+
+  const raiz = document.querySelector<HTMLElement>('[data-indice]');
+  if (raiz && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    pieza('indice', () => {
+      const flotante = raiz.querySelector<HTMLElement>('[data-flotante]')!;
+      const previas = [...flotante.querySelectorAll<HTMLElement>('[data-previa]')];
+      raiz.classList.add('is-cinetico');
+      const x = gsap.quickTo(flotante, 'x', { duration: 0.6, ease: 'power3.out' });
+      const y = gsap.quickTo(flotante, 'y', { duration: 0.6, ease: 'power3.out' });
+      raiz.addEventListener('pointermove', (e) => {
+        const r = raiz.getBoundingClientRect();
+        x(e.clientX - r.left + 24);
+        y(e.clientY - r.top - 90);
+      });
+      raiz.querySelectorAll<HTMLElement>('[data-fila]').forEach((fila) => {
+        fila.addEventListener('pointerenter', () => {
+          const n = Number(fila.dataset.fila);
+          previas.forEach((p, k) => p.classList.toggle('activa', k === n));
+          flotante.classList.add('visible');
+        });
+      });
+      raiz.addEventListener('pointerleave', () => flotante.classList.remove('visible'));
+    });
+  }
+</script>
+
+<style>
+  .indice { position: relative; }
+  .cabecera { display: grid; grid-template-columns: 56px minmax(0, 1.1fr) minmax(0, 1.2fr) 200px 32px; gap: 20px; padding: 0 8px 12px; border-bottom: 1px solid var(--color-line); }
+  ol { list-style: none; margin: 0; padding: 0; }
+  li { border-bottom: 1px solid var(--color-line); }
+  a { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1.1fr) minmax(0, 1.2fr) 200px 32px; gap: 20px; align-items: center; padding: 22px 8px; text-decoration: none; color: var(--color-fg); transition: background var(--t-base) var(--ease-out); border-radius: 12px; }
+  a:hover { background: rgb(59 200 243 / 0.06); }
+  .num { color: var(--color-antidote); }
+  .nombre { font: 400 clamp(24px, 1.6vw + 12px, 36px)/1.05 var(--font-display); letter-spacing: -0.01em; transition: transform var(--t-base) var(--ease-out), color var(--t-base) var(--ease-out); }
+  a:hover .nombre { transform: translateX(8px); color: var(--color-antidote); }
+  .desc { font-size: 14px; color: var(--color-fg-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tags { text-align: right; }
+  .flecha { font-size: 20px; color: var(--color-fg-muted); transition: transform var(--t-base) var(--ease-out), color var(--t-base) var(--ease-out); }
+  a:hover .flecha { transform: translate(3px, -3px); color: var(--color-antidote); }
+  .mini { display: none; }
+
+  .flotante { position: absolute; top: 0; left: 0; width: 280px; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; pointer-events: none; opacity: 0; scale: 0.9; transition: opacity var(--t-base) var(--ease-out), scale var(--t-base) var(--ease-out); box-shadow: 0 30px 60px rgb(0 0 0 / 0.5); border: 1px solid rgb(128 220 255 / 0.25); z-index: 2; display: none; }
+  .indice:global(.is-cinetico) .flotante { display: block; }
+  .flotante:global(.visible) { opacity: 1; scale: 1; }
+  .flotante img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity var(--t-base) var(--ease-out); }
+  .flotante img:global(.activa) { opacity: 1; }
+
+  @media (max-width: 900px) {
+    .cabecera { display: none; }
+    a { grid-template-columns: 36px minmax(0, 1fr) 88px; grid-template-areas: 'num nombre mini' 'num desc mini' 'num tags mini'; gap: 4px 14px; padding: 18px 4px; }
+    .num { grid-area: num; align-self: start; padding-top: 6px; }
+    .nombre { grid-area: nombre; }
+    .desc { grid-area: desc; }
+    .tags { grid-area: tags; text-align: left; }
+    .flecha { display: none; }
+    .mini { grid-area: mini; display: block; border-radius: 10px; overflow: hidden; align-self: center; }
+    .mini img { display: block; width: 88px; height: 66px; object-fit: cover; }
+  }
+</style>

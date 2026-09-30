@@ -1,0 +1,36 @@
+---
+import Base from '../../layouts/Base.astro';
+import Encabezado from '../Encabezado.astro';
+import ServiciosEscenas from '../ServiciosEscenas.astro';
+import Stats from '../Stats.astro';
+import ContactoCta from '../ContactoCta.astro';
+import { t, rutas, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const [title, description] = s.seo.servicios;
+const hud: Array<[string, string]> = [
+  ['base', s.hud.base],
+  ['mezcla', s.hud.mezcla],
+  ['dosis', s.hud.dosis],
+];
+---
+<Base locale={locale} pagina="servicios" title={title} description={description} alternates={rutas.servicios} scroll="suave" hud={hud}>
+  <section class="seccion cabecera" data-hud="base" aria-labelledby="pagina-title">
+    <div class="wrap">
+      <Encabezado num="01" kicker={s.servicesKicker} titulo={s.servicesTitle} lead={s.servicesLead} id="pagina-title" nivel={1} />
+      <div class="franja"><Stats locale={locale} /></div>
+    </div>
+  </section>
+  <div data-hud="mezcla"><ServiciosEscenas locale={locale} /></div>
+  <ContactoCta locale={locale} num="03" />
+</Base>
+
+<style>
+  .cabecera { padding-bottom: 24px; }
+  .franja { margin-top: 32px; }
+  .franja :global(.wrap) { padding-inline: 0; }
+</style>

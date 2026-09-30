@@ -40,14 +40,28 @@
   --t-base: 280ms;
   --t-slow: 480ms;
   --t-narrative: 1000ms;
-  --nav-h: 68px;
+  --nav-h: 76px;
   color-scheme: dark;
 }
 
+/* Navegación entre páginas: view transitions nativas entre documentos (sin router SPA).
+   Cada página se carga de verdad y el navegador anima el paso: la nueva sube como
+   líquido desde abajo sobre la anterior, que se hunde y se desenfoca. La barra de
+   navegación sale del grupo root (view-transition-name propio) y queda quieta. */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: vt-hundir 0.5s var(--ease-in-out) both; }
+::view-transition-new(root) { animation: vt-llenar 0.6s var(--ease-in-out) both; }
+@keyframes vt-hundir { to { opacity: 0; transform: translateY(-2%) scale(0.985); filter: blur(6px); } }
+@keyframes vt-llenar { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
 @layer base {
-  html { scroll-padding-top: calc(var(--nav-h) + 16px); }
+  html { scroll-padding-top: calc(var(--nav-h) + 16px); background: var(--color-ink-deep); }
   body {
-    background: var(--color-ink);
+    background: transparent;
+    min-height: 100svh;
     color: var(--color-fg);
     font-family: var(--font-sans);
     font-size: 16px;
@@ -63,6 +77,34 @@
   @media (max-width: 600px) { .wrap { padding-inline: 16px; } }
 
   .eyebrow { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-glow); }
+
+  /* Palabra de acento con degradado de la marca. Global a propósito: SplitText crea las
+     palabras en tiempo de ejecución y el recorte del degradado no llega a hijos transformados,
+     así que cada palabra partida recibe esta misma clase (ver efectos.ts). */
+  .texto-acento { background-image: linear-gradient(100deg, var(--color-glow), var(--color-antidote) 45%, var(--color-mid)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* Etiqueta de instrumento: mono pequeña en mayúsculas, como una ficha de laboratorio. */
+  .mono { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-fg-muted); }
+  .mono-acento { color: var(--color-antidote); }
+  .punto { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--color-antidote); box-shadow: 0 0 10px var(--color-antidote); flex: none; }
+  .punto-vivo { animation: latido 2.4s var(--ease-in-out) infinite; }
+  @keyframes latido { 50% { opacity: 0.35; } }
+
+  /* Tarjeta glass: vidrio de laboratorio sobre el fondo con brillos. */
+  .panel {
+    position: relative; border-radius: 18px;
+    background: linear-gradient(180deg, rgb(128 220 255 / 0.06), rgb(128 220 255 / 0.015));
+    border: 1px solid rgb(128 220 255 / 0.1);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+  .panel-fuerte { background: rgb(10 17 21 / 0.82); }
+  a.panel { text-decoration: none; transition: border-color var(--t-base) var(--ease-out), transform var(--t-base) var(--ease-out); }
+  a.panel:hover { border-color: rgb(59 200 243 / 0.4); }
+
+  /* Secciones más compactas que antes: el aire lo da la rejilla, no el vacío. */
+  .seccion { padding-block: 72px; position: relative; }
+  @media (max-width: 760px) { .seccion { padding-block: 56px; } }
   .lead { font-size: clamp(17px, 1.2vw + 10px, 20px); color: var(--color-fg-muted); max-width: 34em; }
 
   .btn {
@@ -91,6 +133,12 @@
   .pause-btn:hover { color: var(--color-fg); border-color: var(--color-antidote); }
 }
 
+/* Grano sutil sobre todo el sitio: quita el aspecto de plano digital a los degradados. */
+.grano {
+  position: fixed; inset: 0; z-index: 60; pointer-events: none; opacity: 0.04; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
 /* Movimiento reducido: sin bucles ni desplazamientos, fundidos casi instantáneos. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -101,4 +149,5 @@
     scroll-behavior: auto !important;
   }
   .pause-btn { display: none; }
+  .punto-vivo { animation: none; }
 }
