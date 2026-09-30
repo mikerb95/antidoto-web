@@ -23,7 +23,7 @@ Qué hacen: cuatro servicios para empresas, colegios, universidades y organizaci
 3. Catering corporativo: desayunos, refrigerios, almuerzos y estaciones en vivo para eventos empresariales, académicos y sociales. +200 eventos a nivel nacional, logística flexible.
 4. Diseño de productos y experiencias: de la idea al producto final. Prototipos, productos funcionales y experiencias a la medida con la identidad de cada marca.
 
-Diferenciador: la fundadora, María Paula Ramos, es ingeniera civil especialista en Gerencia de SST. Tiene 18 clientes con logo en el sitio, 11 de ellos de energía, ingeniería, transporte, seguros o consultoría SST: Enel, Claro, WOM, Stanley Black & Decker, Howden, Seguros Bolívar, Gallagher, Correcol, Cruz Verde, WSP, MAB Ingeniería, SGIN, Tabasco OC, SEQ Consultores, HSEQ Consultores, Bogotá Móvil, Capital Bus y La Lorenza (ver `marca/clientes.md`). El ángulo "SST, inducciones y planes de emergencia hechos con creatividad" tiene que notarse.
+Diferenciador: la fundadora, María Paula Ramos, es ingeniera civil especialista en Gerencia de SST. Tiene 18 clientes con logo en el sitio, 12 de ellos de energía, ingeniería, transporte, seguros o consultoría SST: Enel, Claro, WOM, Stanley Black & Decker, Howden, Seguros Bolívar, Gallagher, Correcol, Cruz Verde, WSP, MAB Ingeniería, SGIN, Tabasco OC, SEQ Consultores, HSEQ Consultores, Bogotá Móvil, Capital Bus y La Lorenza (ver `marca/clientes.md`). El ángulo "SST, inducciones y planes de emergencia hechos con creatividad" tiene que notarse.
 
 Público: líderes de talento humano, SST/HSEQ, comunicaciones internas y bienestar; rectores y coordinadores académicos.
 
