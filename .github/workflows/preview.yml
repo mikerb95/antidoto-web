@@ -39,7 +39,10 @@ jobs:
           cache: npm
       - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: npm ci
+      # Con la variable PUBLIC_API_URL el cotizador guarda leads en la API; sin ella solo abre WhatsApp.
       - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        env:
+          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
         run: npm run build
       # La primera vez crea el proyecto con main como rama de producción; después ya existe.
       - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''

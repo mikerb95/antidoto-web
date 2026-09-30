@@ -16,6 +16,9 @@ export const rutas: Record<Pagina, Record<Locale, string>> = {
   contacto: { es: '/contacto/', en: '/en/contact/' },
 };
 
+/** Política de tratamiento de datos (fuera del menú, enlazada en el pie y el cotizador). */
+export const rutaPolitica: Record<Locale, string> = { es: '/politica-de-datos/', en: '/en/data-policy/' };
+
 /** Ruta de la home de cada idioma. */
 export const homePath: Record<Locale, string> = { es: rutas.inicio.es, en: rutas.inicio.en };
 
@@ -120,7 +123,7 @@ export const ui = {
 
     contactoKicker: 'Contacto',
     contactoTitle: 'Cuéntanos tu reto',
-    contactoLead: 'Arma tu cotización en tres pasos y te la enviamos por WhatsApp, o escríbenos por el canal que prefieras.',
+    contactoLead: 'Arma tu cotización paso a paso y envíala por WhatsApp, o escríbenos por el canal que prefieras.',
     canalesKicker: 'Canales',
     canales: { whatsapp: 'WhatsApp', telefono: 'Teléfono', correo: 'Correo', instagram: 'Instagram', linkedin: 'LinkedIn' },
     cot: {
@@ -150,7 +153,19 @@ export const ui = {
           .join('\n'),
       privacidad:
         'No guardamos estos datos: el mensaje sale de tu navegador directo a WhatsApp.',
+      privacidadApi: 'Solo guardamos tus datos si marcas la autorización. Sin ella, el mensaje sale directo a WhatsApp.',
       elegir: 'Elige un servicio para continuar.',
+      pasoContacto: 'Contacto',
+      contactoLegend: 'Tus datos para responderte',
+      contactoLead: 'Opcional. Si nos autorizas, guardamos tu solicitud y te respondemos aunque no alcances a enviar el WhatsApp.',
+      nombre: 'Nombre',
+      empresa: 'Organización',
+      correo: 'Correo',
+      telefono: 'Teléfono o WhatsApp',
+      verPolitica: 'Leer la política de tratamiento de datos',
+      faltaContacto: 'Para guardar tu solicitud necesitamos tu nombre y un correo o teléfono válido.',
+      guardado: 'Guardamos tu solicitud. Te escribimos pronto.',
+      presentacion: (nombre: string, empresa: string) => `Soy ${nombre}${empresa ? `, de ${empresa}` : ''}.`,
     },
 
     ctaKicker: 'Siguiente paso',
@@ -172,6 +187,7 @@ export const ui = {
     footerContacto: 'Contacto directo',
     footerRedes: 'Redes',
     footerEstado: 'Atendiendo en Colombia',
+    footerPolitica: 'Tratamiento de datos',
 
     notFoundTitle: 'Esta página no existe',
     notFoundLead: 'Puede que el enlace esté mal escrito o que la página se haya movido.',
@@ -182,7 +198,7 @@ export const ui = {
       servicios: ['Servicios | Antídoto', 'Formaciones vivenciales, producción audiovisual, catering corporativo y diseño de productos y experiencias para empresas y colegios en Colombia.'],
       clientes: ['Clientes | Antídoto', 'Enel, Claro, Seguros Bolívar, WSP y otras 14 marcas de energía, ingeniería, transporte, seguros y SST trabajan con Antídoto.'],
       nosotros: ['Nosotros | Antídoto', 'Antídoto es un estudio creativo empresarial fundado en 2020 por María Paula Ramos, ingeniera civil especialista en Gerencia de SST.'],
-      contacto: ['Contacto y cotización | Antídoto', 'Cotiza formaciones, producción audiovisual, catering o diseño en tres pasos y recibe tu propuesta por WhatsApp.'],
+      contacto: ['Contacto y cotización | Antídoto', 'Cotiza formaciones, producción audiovisual, catering o diseño en pocos pasos y recibe tu propuesta por WhatsApp.'],
     },
     ogAlt: 'Antídoto, estudio creativo empresarial',
   },
@@ -286,7 +302,7 @@ export const ui = {
 
     contactoKicker: 'Contact',
     contactoTitle: 'Tell us your challenge',
-    contactoLead: 'Build your quote in three steps and send it on WhatsApp, or reach us on the channel you prefer.',
+    contactoLead: 'Build your quote step by step and send it on WhatsApp, or reach us on the channel you prefer.',
     canalesKicker: 'Channels',
     canales: { whatsapp: 'WhatsApp', telefono: 'Phone', correo: 'Email', instagram: 'Instagram', linkedin: 'LinkedIn' },
     cot: {
@@ -315,7 +331,19 @@ export const ui = {
           .filter(Boolean)
           .join('\n'),
       privacidad: 'We do not store this data: the message goes from your browser straight to WhatsApp.',
+      privacidadApi: 'We only store your details if you tick the authorization. Without it, the message goes straight to WhatsApp.',
       elegir: 'Choose a service to continue.',
+      pasoContacto: 'Contact',
+      contactoLegend: 'Your details so we can reply',
+      contactoLead: 'Optional. If you authorize us, we keep your request and reply even if you do not get to send the WhatsApp message.',
+      nombre: 'Name',
+      empresa: 'Organization',
+      correo: 'Email',
+      telefono: 'Phone or WhatsApp',
+      verPolitica: 'Read the data processing policy',
+      faltaContacto: 'To keep your request we need your name and a valid email or phone.',
+      guardado: 'We saved your request. We will be in touch soon.',
+      presentacion: (nombre: string, empresa: string) => `I am ${nombre}${empresa ? `, from ${empresa}` : ''}.`,
     },
 
     ctaKicker: 'Next step',
@@ -337,6 +365,7 @@ export const ui = {
     footerContacto: 'Direct contact',
     footerRedes: 'Social',
     footerEstado: 'Available in Colombia',
+    footerPolitica: 'Data policy',
 
     notFoundTitle: 'This page does not exist',
     notFoundLead: 'The link may be mistyped or the page may have moved.',
@@ -347,7 +376,7 @@ export const ui = {
       servicios: ['Services | Antídoto', 'Experiential training, video production, corporate catering and product and experience design for companies and schools in Colombia.'],
       clientes: ['Clients | Antídoto', 'Enel, Claro, Seguros Bolívar, WSP and 14 other energy, engineering, transport, insurance and safety brands work with Antídoto.'],
       nosotros: ['About | Antídoto', 'Antídoto is a creative studio founded in 2020 by María Paula Ramos, a civil engineer specialized in health and safety management.'],
-      contacto: ['Contact and quote | Antídoto', 'Get a quote for training, video, catering or design in three steps and receive your proposal on WhatsApp.'],
+      contacto: ['Contact and quote | Antídoto', 'Get a quote for training, video, catering or design in a few steps and receive your proposal on WhatsApp.'],
     },
     ogAlt: 'Antídoto, creative studio for organizations',
   },
