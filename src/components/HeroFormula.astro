@@ -26,10 +26,12 @@ const box = { x: cx - r, y: cy - r, size: r * 2 };
   <div class="wrap grid">
     <div class="copy">
       <p class="eyebrow">{s.heroEyebrow}</p>
-      <h1 id="hero-title">{w1}<span class="tint">{c1}</span>{w2}<span class="tint">{c2}</span>{w3}<span class="tint">{c3}</span></h1>
+      <h1 id="hero-title" data-titular>
+        {w1}<span class="nw"><span class="tint">{c1}</span>{w2.trim()}</span>{' '}<span class="tint">{c2}</span>{w3}<span class="tint">{c3}</span>
+      </h1>
       <p class="lead">{s.heroLead}</p>
       <div class="ctas">
-        <a class="btn btn-primary" href={waLink(s.waDefault)} target="_blank" rel="noopener"><WhatsappIcon />{s.heroCta}</a>
+        <a class="btn btn-primary" href={waLink(s.waDefault)} target="_blank" rel="noopener" data-magnetico><span class="btn-inner" data-magnetico-texto><WhatsappIcon />{s.heroCta}</span></a>
         <a class="btn btn-ghost" href={`${homePath[locale]}#servicios`}>{s.heroSecondary}</a>
       </div>
       <p class="sst"><i aria-hidden="true"></i>{s.heroSst}</p>
@@ -95,6 +97,8 @@ const box = { x: cx - r, y: cy - r, size: r * 2 };
   .pause-btn { display: flex; margin-top: 16px; }
   .flask { display: block; width: 100%; height: auto; max-width: 600px; margin: 0 -40px -80px auto; color: var(--color-antidote); }
 
+  /* La puntuación viaja con su palabra: SplitText la trata como palabra aparte y podría bajarla sola de línea. */
+  .nw { white-space: nowrap; }
   .tint { animation: tint var(--t-slow) var(--ease-out) both; }
   .tint:nth-of-type(1) { animation-delay: 0.35s; }
   .tint:nth-of-type(2) { animation-delay: 0.6s; }

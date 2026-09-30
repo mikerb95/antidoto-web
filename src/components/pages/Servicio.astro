@@ -23,15 +23,16 @@ const otros = SERVICIOS.filter((x) => x.id !== servicio.id);
   description={txt.lead}
   alternates={{ es: servicioPath(servicio, 'es'), en: servicioPath(servicio, 'en') }}
   waMessage={msg}
+  scroll="suave"
 >
   <section class="intro" data-hero>
     <div class="wrap grid">
       <div>
         <p class="eyebrow">{s.navServices}</p>
-        <h1 transition:name={`servicio-${servicio.id}-title`}>{txt.title}</h1>
+        <h1 transition:name={`servicio-${servicio.id}-title`} data-titular>{txt.title}</h1>
         <p class="lead">{txt.lead}</p>
         <ul class="facts">{txt.facts.map((f) => <li>{f}</li>)}</ul>
-        <a class="btn btn-primary" href={waLink(msg)} target="_blank" rel="noopener"><WhatsappIcon />{s.heroCta}</a>
+        <a class="btn btn-primary" href={waLink(msg)} target="_blank" rel="noopener" data-magnetico><span class="btn-inner" data-magnetico-texto><WhatsappIcon />{s.heroCta}</span></a>
       </div>
       <div class="photo" transition:name={`servicio-${servicio.id}-photo`}>
         <Image src={servicio.image} alt={txt.alt} widths={[480, 720, 960]} sizes="(max-width: 860px) 100vw, 520px" loading="eager" fetchpriority="high" />

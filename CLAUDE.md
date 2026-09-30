@@ -46,6 +46,10 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - Referencia de implementación: `mikerb95/dev-portfolio` (codebymike.net) usa el mismo stack; su motion compartido está en `src/lib/motion-reveal.ts` y los módulos por página en `src/lib/motion/`.
 - En el contenedor en la nube no hay GPU: WebGL corre en SwiftShader y las capturas de piezas WebGL no reflejan la fluidez real. SVG y CSS se verifican bien.
 
+## Git
+
+- Los commits van a nombre del dueño del repo: autor `Mike <69970540+mikerb95@users.noreply.github.com>`. Al empezar una sesión nueva, configúralo con `git config user.name "Mike"` y `git config user.email "69970540+mikerb95@users.noreply.github.com"` antes del primer commit.
+
 ## Despliegue
 
 - `.github/workflows/deploy.yml` sube `dist/` por FTP a `public_html` de Hostinger en cada push a `main`. Necesita los secrets `FTP_SERVER`, `FTP_USERNAME` y `FTP_PASSWORD`.

@@ -14,7 +14,7 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 ---
-<Base locale={locale} title={s.seoTitle} description={s.seoDescription} alternates={homePath} jsonLd={organizationSchema()}>
+<Base locale={locale} title={s.seoTitle} description={s.seoDescription} alternates={homePath} jsonLd={organizationSchema()} scroll="suave">
   <HeroFormula locale={locale} />
   <div class="stats-band"><Stats locale={locale} /></div>
   <Clientes locale={locale} />

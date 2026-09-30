@@ -14,7 +14,7 @@ const s = t(locale);
   <div class="wrap row">
     <h2 id="contacto-title">{s.ctaTitle}</h2>
     <div class="links">
-      <a class="btn btn-primary" href={waLink(message ?? s.waDefault)} target="_blank" rel="noopener"><WhatsappIcon />{s.ctaWhatsapp} {SITE.phoneDisplay}</a>
+      <a class="btn btn-primary" href={waLink(message ?? s.waDefault)} target="_blank" rel="noopener" data-magnetico><span class="btn-inner" data-magnetico-texto><WhatsappIcon />{s.ctaWhatsapp} {SITE.phoneDisplay}</span></a>
       <a class="btn btn-ghost" href={`mailto:${SITE.email}`}>{s.ctaEmail}: {SITE.email}</a>
     </div>
   </div>
