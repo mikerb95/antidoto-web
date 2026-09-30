@@ -2,14 +2,17 @@
 // "Retos → soluciones": el concepto de la marca ocurriendo. Los retos entran al frasco del
 // logotipo y salen convertidos en soluciones. En escritorio lo guía el scroll; en móvil,
 // cada tarjeta de reto se resuelve al cruzar la pantalla. El HTML ya trae todo resuelto.
+import Encabezado from './Encabezado.astro';
 import { t, type Locale } from '../i18n/ui';
 import { diagrama, LIENZO, FRASCO } from '../lib/motion/retos-geometria';
 import { WORDMARK_SIN_LIQUIDO, LIQUIDO } from '../data/logo';
 
 interface Props {
   locale: Locale;
+  num: string;
 }
 const s = t(Astro.props.locale);
+const { num } = Astro.props;
 const d = diagrama(s.retos.length);
 
 // El frasco recortado del logo se coloca para que el centro de su líquido caiga en FRASCO.
@@ -23,14 +26,10 @@ const frasco = {
 };
 const liq = { x: LIQUIDO.cx - LIQUIDO.r, y: LIQUIDO.cy - LIQUIDO.r, lado: LIQUIDO.r * 2 };
 ---
-<section class="retos" id="retos" aria-labelledby="retos-title" data-retos>
+<section class="retos" id="retos" aria-labelledby="retos-title" data-retos data-hud="reaccion">
   <div class="escenario">
     <div class="wrap">
-      <div class="head">
-        <p class="eyebrow">{s.retosEyebrow}</p>
-        <h2 id="retos-title">{s.retosTitle}</h2>
-        <p class="lead">{s.retosLead}</p>
-      </div>
+      <Encabezado num={num} kicker={s.retosKicker} titulo={s.retosTitle} lead={s.retosLead} id="retos-title" />
 
       <svg class="diagrama" viewBox={`0 0 ${LIENZO.ancho} ${LIENZO.alto}`} aria-hidden="true">
         <defs>
@@ -170,13 +169,11 @@ const liq = { x: LIQUIDO.cx - LIQUIDO.r, y: LIQUIDO.cy - LIQUIDO.r, lado: LIQUID
       },
     );
   }
-  document.addEventListener('astro:page-load', iniciar);
+  iniciar();
 </script>
 
 <style>
-  .retos { padding-block: 96px; border-top: 1px solid var(--color-line); }
-  .head { max-width: 720px; }
-  h2 { font-size: clamp(32px, 2.6vw + 10px, 48px); line-height: 1.05; margin: 12px 0 16px; }
+  .retos { padding-block: 72px; }
   .diagrama { display: block; width: 100%; height: auto; margin-top: 32px; overflow: visible; }
   .col-titulo { font: 500 13px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; fill: var(--color-fg-muted); }
   .entradas path, .salidas path { fill: none; stroke-width: 2; stroke-linecap: round; }

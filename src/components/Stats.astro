@@ -64,14 +64,14 @@ const s = t(Astro.props.locale);
       () => cifras.forEach((c, n) => (c.textContent = originales[n])),
     );
   }
-  document.addEventListener('astro:page-load', iniciar);
+  iniciar();
 </script>
 
 <style>
-  .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; list-style: none; margin: 0; padding: 0; background: var(--color-line); border: 1px solid var(--color-line); border-radius: 14px; overflow: hidden; position: relative; z-index: 1; }
-  li { background: var(--color-ink); padding: 18px 20px; }
+  .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; list-style: none; margin: 0; padding: 0; background: rgb(128 220 255 / 0.12); border: 1px solid rgb(128 220 255 / 0.12); border-radius: 16px; overflow: hidden; position: relative; z-index: 1; }
+  li { background: rgb(10 17 21 / 0.72); padding: 18px 20px; backdrop-filter: blur(12px); }
   strong { display: block; font: 400 clamp(28px, 1.6vw + 14px, 38px) / 1.1 var(--font-accent); font-variant-numeric: tabular-nums; }
-  li > span { font-size: 13px; color: var(--color-fg-muted); }
+  li > span { font: 500 10.5px var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-fg-muted); }
   /* Columnas del odómetro: una celda de alto fijo que recorta la tira de dígitos. */
   strong :global(.col) { display: inline-block; height: 1.1em; overflow: hidden; vertical-align: top; }
   strong :global(.tira) { display: block; width: 1ch; word-break: break-all; line-height: 1.1em; text-align: center; }
