@@ -4,10 +4,7 @@ import { SplitText } from 'gsap/SplitText';
 
 gsap.registerPlugin(SplitText);
 
-/**
- * Titulares `[data-titular]`: cada palabra sube desde una máscara. Las palabras con
- * `.tint` conservan su color de acento porque SplitText las envuelve sin quitarles la clase.
- */
+/** Titulares `[data-titular]`: cada palabra sube desde una máscara. */
 export function titulares(raiz: ParentNode = document) {
   raiz.querySelectorAll<HTMLElement>('[data-titular]').forEach((el) => {
     let split: SplitText | null = null;
@@ -15,8 +12,16 @@ export function titulares(raiz: ParentNode = document) {
       'titular',
       () => {
         split = new SplitText(el, { type: 'words', mask: 'words' });
+        // El degradado de acento no pasa a las palabras transformadas: cada palabra lo lleva
+        // y el contenedor lo suelta (si no, el texto queda transparente).
+        split.words.forEach((w) => {
+          const acento = w.parentElement?.closest('.texto-acento');
+          if (acento) {
+            w.classList.add('texto-acento');
+            (acento as HTMLElement).style.backgroundImage = 'none';
+          }
+        });
         gsap.from(split.words, { yPercent: 110, duration: 0.9, ease: 'expo.out', stagger: 0.05, delay: 0.1 });
-        return () => split?.revert();
       },
       () => split?.revert(),
     );
@@ -54,7 +59,6 @@ export function magneticos(raiz: ParentNode = document) {
         ty?.(fy * 0.45);
       };
       window.addEventListener('pointermove', mover, { passive: true });
-      return () => window.removeEventListener('pointermove', mover);
     });
   });
 }
