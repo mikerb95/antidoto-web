@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Bandeja · Antídoto</title>
+  <link rel="stylesheet" href="/admin/app.css">
+  <script src="/admin/app.js" defer></script>
+</head>
+<body>
+  <a class="saltar" href="#principal">Saltar al contenido</a>
+
+  <!-- Acceso: se muestra si no hay sesión. -->
+  <main class="entrar" id="acceso" hidden>
+    <div class="caja">
+      <p class="marca">Antídoto</p>
+      <h1>Bandeja de solicitudes</h1>
+      <p class="suave">Escribe tu correo del equipo y te enviamos un enlace para entrar.</p>
+      <form id="form-acceso">
+        <label for="acceso-email">Correo</label>
+        <input id="acceso-email" name="email" type="email" autocomplete="email" required>
+        <button class="btn" type="submit">Enviarme el enlace</button>
+      </form>
+      <p class="aviso" id="acceso-aviso" role="status" hidden></p>
+    </div>
+  </main>
+
+  <div id="app" hidden>
+    <header class="barra">
+      <p class="marca">Antídoto <span>Bandeja</span></p>
+      <nav aria-label="Secciones">
+        <a href="#leads" data-vista="leads">Solicitudes</a>
+        <a href="#metricas" data-vista="metricas">Métricas</a>
+        <a href="#equipo" data-vista="equipo" data-solo-admin hidden>Equipo</a>
+      </nav>
+      <div class="yo"><span id="yo-nombre"></span><button class="btn-texto" type="button" id="salir">Salir</button></div>
+    </header>
+
+    <main id="principal">
+      <section id="vista-leads" class="vista" aria-labelledby="t-leads">
+        <div class="cabeza">
+          <h1 id="t-leads">Solicitudes</h1>
+          <a class="btn-texto" href="/admin/leads.csv" download>Exportar CSV</a>
+        </div>
+        <div class="filtros" role="group" aria-label="Filtros">
+          <div class="chips" id="chips-estado"></div>
+          <label class="sr" for="f-servicio">Servicio</label>
+          <select id="f-servicio">
+            <option value="">Todos los servicios</option>
+            <option value="formaciones">Formaciones vivenciales</option>
+            <option value="audiovisual">Producción audiovisual</option>
+            <option value="catering">Catering corporativo</option>
+            <option value="diseno">Diseño de productos</option>
+          </select>
+          <label class="sr" for="f-q">Buscar</label>
+          <input id="f-q" type="search" placeholder="Buscar nombre, empresa, correo o teléfono">
+        </div>
+        <div class="dividido">
+          <div class="lista">
+            <table>
+              <thead><tr><th scope="col">Fecha</th><th scope="col">Quién</th><th scope="col">Servicio</th><th scope="col">Estado</th></tr></thead>
+              <tbody id="filas"></tbody>
+            </table>
+            <p class="vacio" id="vacio" hidden>No hay solicitudes con estos filtros.</p>
+            <div class="paginas"><button class="btn-texto" type="button" id="anterior">Anteriores</button><span id="pag-texto"></span><button class="btn-texto" type="button" id="siguiente">Siguientes</button></div>
+          </div>
+          <aside class="detalle" id="detalle" aria-labelledby="d-titulo" hidden></aside>
+        </div>
+      </section>
+
+      <section id="vista-metricas" class="vista" aria-labelledby="t-metricas" hidden>
+        <div class="cabeza">
+          <h1 id="t-metricas">Métricas</h1>
+          <label class="sr" for="m-dias">Periodo</label>
+          <select id="m-dias">
+            <option value="30">Últimos 30 días</option>
+            <option value="90" selected>Últimos 90 días</option>
+            <option value="365">Último año</option>
+          </select>
+        </div>
+        <div id="metricas"></div>
+      </section>
+
+      <section id="vista-equipo" class="vista" aria-labelledby="t-equipo" hidden>
+        <div class="cabeza"><h1 id="t-equipo">Equipo</h1></div>
+        <ul class="equipo" id="equipo"></ul>
+        <form class="nuevo" id="form-usuario">
+          <h2>Agregar persona</h2>
+          <label>Nombre<input name="nombre" required maxlength="120"></label>
+          <label>Correo<input name="email" type="email" required></label>
+          <label>Rol<select name="rol"><option value="equipo">Equipo</option><option value="admin">Admin</option></select></label>
+          <button class="btn" type="submit">Agregar</button>
+          <p class="aviso" id="usuario-aviso" role="status" hidden></p>
+        </form>
+      </section>
+    </main>
+  </div>
+  <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
+</body>
+</html>
