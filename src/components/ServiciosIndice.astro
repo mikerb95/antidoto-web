@@ -1,8 +1,7 @@
 ---
-// Índice cinético de servicios (receta "índice cinético" de la skill motion-landing):
-// lista tipográfica grande y, con ratón, una ventana flotante que sigue al cursor con
-// inercia y muestra la foto del servicio. En táctil no hay ventana: cada fila lleva su
-// miniatura fija.
+// Servicios en la home: cuatro tarjetas con foto real. Al apuntar o enfocar, el líquido de
+// la marca sube desde el fondo de la foto (clip-path) y destapa los datos del servicio; es
+// el mismo gesto del frasco que se llena. En táctil los datos se ven siempre.
 import { Image } from 'astro:assets';
 import { SERVICIOS, servicioPath } from '../data/servicios';
 import { t, type Locale } from '../i18n/ui';
@@ -13,91 +12,54 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 ---
-<div class="indice" data-indice>
-  <div class="cabecera mono" aria-hidden="true">
-    <span>#</span><span>{s.servicioCols[0]}</span><span>{s.servicioCols[1]}</span><span>{s.servicioCols[2]}</span>
-  </div>
-  <ol>
-    {SERVICIOS.map((sv, i) => {
-      const txt = sv[locale];
-      return (
-        <li>
-          <a href={servicioPath(sv, locale)} data-fila={i}>
-            <span class="num mono">0{i + 1}</span>
-            <span class="nombre" style={`view-transition-name: servicio-${sv.id}-title`}>{txt.title}</span>
-            <span class="desc">{txt.lead}</span>
-            <span class="tags mono">{txt.facts.slice(0, 2).join(' · ')}</span>
-            <span class="flecha" aria-hidden="true">↗</span>
-            <span class="mini" aria-hidden="true"><Image src={sv.image} alt="" width={160} height={120} loading="lazy" /></span>
-          </a>
-        </li>
-      );
-    })}
-  </ol>
-  <div class="flotante" aria-hidden="true" data-flotante>
-    {SERVICIOS.map((sv) => <Image src={sv.image} alt="" widths={[360, 540]} sizes="360px" loading="lazy" data-previa />)}
-  </div>
-</div>
-
-<script>
-  import { gsap, pieza } from '../lib/motion/core';
-
-  const raiz = document.querySelector<HTMLElement>('[data-indice]');
-  if (raiz && matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    pieza('indice', () => {
-      const flotante = raiz.querySelector<HTMLElement>('[data-flotante]')!;
-      const previas = [...flotante.querySelectorAll<HTMLElement>('[data-previa]')];
-      raiz.classList.add('is-cinetico');
-      const x = gsap.quickTo(flotante, 'x', { duration: 0.6, ease: 'power3.out' });
-      const y = gsap.quickTo(flotante, 'y', { duration: 0.6, ease: 'power3.out' });
-      raiz.addEventListener('pointermove', (e) => {
-        const r = raiz.getBoundingClientRect();
-        x(e.clientX - r.left + 24);
-        y(e.clientY - r.top - 90);
-      });
-      raiz.querySelectorAll<HTMLElement>('[data-fila]').forEach((fila) => {
-        fila.addEventListener('pointerenter', () => {
-          const n = Number(fila.dataset.fila);
-          previas.forEach((p, k) => p.classList.toggle('activa', k === n));
-          flotante.classList.add('visible');
-        });
-      });
-      raiz.addEventListener('pointerleave', () => flotante.classList.remove('visible'));
-    });
-  }
-</script>
+<ul class="tarjetas">
+  {SERVICIOS.map((sv, i) => {
+    const txt = sv[locale];
+    return (
+      <li>
+        <a class="tarjeta" href={servicioPath(sv, locale)}>
+          <span class="foto">
+            <Image src={sv.image} alt="" widths={[320, 480, 640]} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 300px" loading="lazy" />
+            <span class="liquido" aria-hidden="true">
+              <svg class="ola" viewBox="0 0 240 16" preserveAspectRatio="none"><path d="M0 8 q15 -8 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 V16 H0Z" /></svg>
+              <span class="datos">{txt.facts.map((f) => <span>{f}</span>)}</span>
+            </span>
+            <span class="num" aria-hidden="true">0{i + 1}</span>
+            {sv.provisional && <span class="tag">{s.provisional}</span>}
+          </span>
+          <span class="nombre" style={`view-transition-name: servicio-${sv.id}-title`}>{txt.title}</span>
+          <span class="desc">{txt.lead}</span>
+          <span class="mas">{s.serviceMore} <span aria-hidden="true">→</span></span>
+        </a>
+      </li>
+    );
+  })}
+</ul>
 
 <style>
-  .indice { position: relative; }
-  .cabecera { display: grid; grid-template-columns: 56px minmax(0, 1.1fr) minmax(0, 1.2fr) 200px 32px; gap: 20px; padding: 0 8px 12px; border-bottom: 1px solid var(--color-line); }
-  ol { list-style: none; margin: 0; padding: 0; }
-  li { border-bottom: 1px solid var(--color-line); }
-  a { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1.1fr) minmax(0, 1.2fr) 200px 32px; gap: 20px; align-items: center; padding: 22px 8px; text-decoration: none; color: var(--color-fg); transition: background var(--t-base) var(--ease-out); border-radius: 12px; }
-  a:hover { background: rgb(59 200 243 / 0.06); }
-  .num { color: var(--color-antidote); }
-  .nombre { font: 400 clamp(24px, 1.6vw + 12px, 36px)/1.05 var(--font-display); letter-spacing: -0.01em; transition: transform var(--t-base) var(--ease-out), color var(--t-base) var(--ease-out); }
-  a:hover .nombre { transform: translateX(8px); color: var(--color-antidote); }
-  .desc { font-size: 14px; color: var(--color-fg-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .tags { text-align: right; }
-  .flecha { font-size: 20px; color: var(--color-fg-muted); transition: transform var(--t-base) var(--ease-out), color var(--t-base) var(--ease-out); }
-  a:hover .flecha { transform: translate(3px, -3px); color: var(--color-antidote); }
-  .mini { display: none; }
+  .tarjetas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .tarjeta { display: flex; flex-direction: column; gap: 10px; height: 100%; text-decoration: none; color: var(--color-fg); }
+  .foto { position: relative; aspect-ratio: 3 / 4; border-radius: 18px; overflow: hidden; background: var(--color-ink-raised); border: 1px solid rgb(128 220 255 / 0.12); }
+  .foto img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--t-slow) var(--ease-out); }
+  .tarjeta:hover .foto img, .tarjeta:focus-visible .foto img { transform: scale(1.05); }
+  .num { position: absolute; top: 12px; left: 14px; font: 400 34px/1 var(--font-accent); color: var(--color-fg); text-shadow: 0 2px 12px rgb(0 0 0 / 0.5); }
 
-  .flotante { position: absolute; top: 0; left: 0; width: 280px; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; pointer-events: none; opacity: 0; scale: 0.9; transition: opacity var(--t-base) var(--ease-out), scale var(--t-base) var(--ease-out); box-shadow: 0 30px 60px rgb(0 0 0 / 0.5); border: 1px solid rgb(128 220 255 / 0.25); z-index: 2; display: none; }
-  .indice:global(.is-cinetico) .flotante { display: block; }
-  .flotante:global(.visible) { opacity: 1; scale: 1; }
-  .flotante img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity var(--t-base) var(--ease-out); }
-  .flotante img:global(.activa) { opacity: 1; }
+  .tag { position: absolute; top: 14px; right: 12px; font: 600 10.5px/1 var(--font-sans); letter-spacing: 0.08em; text-transform: uppercase; background: rgb(10 17 21 / 0.8); padding: 6px 8px; border-radius: 6px; }
 
-  @media (max-width: 900px) {
-    .cabecera { display: none; }
-    a { grid-template-columns: 36px minmax(0, 1fr) 88px; grid-template-areas: 'num nombre mini' 'num desc mini' 'num tags mini'; gap: 4px 14px; padding: 18px 4px; }
-    .num { grid-area: num; align-self: start; padding-top: 6px; }
-    .nombre { grid-area: nombre; }
-    .desc { grid-area: desc; }
-    .tags { grid-area: tags; text-align: left; }
-    .flecha { display: none; }
-    .mini { grid-area: mini; display: block; border-radius: 10px; overflow: hidden; align-self: center; }
-    .mini img { display: block; width: 88px; height: 66px; object-fit: cover; }
-  }
+  /* Líquido que sube: capa cian translúcida con una ola en el borde superior. */
+  .liquido { position: absolute; left: 0; right: 0; bottom: 0; height: 52%; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; background: linear-gradient(180deg, rgb(28 153 202 / 0.82), rgb(12 92 125 / 0.94)); clip-path: inset(100% 0 0 0); transition: clip-path 0.6s var(--ease-out); }
+  .ola { position: absolute; left: 0; right: 0; top: -15px; width: 100%; height: 16px; fill: rgb(28 153 202 / 0.82); }
+  .tarjeta:hover .liquido, .tarjeta:focus-visible .liquido { clip-path: inset(-20px 0 0 0); }
+  .datos { display: grid; gap: 4px; font-size: 13px; font-weight: 500; color: #fff; }
+  .datos span::before { content: '· '; color: var(--color-glow); }
+
+  .nombre { font: 400 22px/1.12 var(--font-display); letter-spacing: -0.01em; transition: color var(--t-base) var(--ease-out); }
+  .tarjeta:hover .nombre { color: var(--color-antidote); }
+  .desc { font-size: 14px; color: var(--color-fg-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .mas { margin-top: auto; font-size: 14px; font-weight: 600; color: var(--color-antidote); }
+
+  /* En táctil no hay hover: el líquido queda arriba con los datos a la vista. */
+  @media (hover: none) { .liquido { clip-path: inset(-20px 0 0 0); height: 42%; } }
+  @media (max-width: 1100px) { .tarjetas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .tarjetas { grid-template-columns: 1fr; } .foto { aspect-ratio: 16 / 11; } }
 </style>

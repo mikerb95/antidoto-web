@@ -13,10 +13,6 @@ const { locale } = Astro.props;
 const s = t(locale);
 const c = s.cot;
 const [title, description] = s.seo.contacto;
-const hud: Array<[string, string]> = [
-  ['base', s.hud.base],
-  ['mezcla', s.hud.mezcla],
-];
 const canales = [
   { k: s.canales.whatsapp, v: SITE.phoneDisplay, href: waLink(s.waDefault), externo: true },
   { k: s.canales.telefono, v: SITE.phoneDisplay, href: `tel:+${SITE.whatsapp}`, externo: false },
@@ -25,12 +21,12 @@ const canales = [
   { k: s.canales.linkedin, v: 'Antídoto Colombia', href: SITE.linkedin, externo: true },
 ];
 ---
-<Base locale={locale} pagina="contacto" title={title} description={description} alternates={rutas.contacto} hud={hud}>
-  <section class="seccion" data-hud="base" aria-labelledby="pagina-title">
+<Base locale={locale} pagina="contacto" title={title} description={description} alternates={rutas.contacto}>
+  <section class="seccion" aria-labelledby="pagina-title">
     <div class="wrap">
       <Encabezado num="01" kicker={s.contactoKicker} titulo={s.contactoTitle} lead={s.contactoLead} id="pagina-title" nivel={1} />
 
-      <div class="bento" data-hud="mezcla">
+      <div class="bento">
         <!-- El cotizador necesita JS para armar el mensaje: el script lo muestra. Sin JS
              quedan visibles los canales directos. -->
         <form class="cotizador panel" hidden data-cotizador data-wa={SITE.whatsapp} novalidate aria-labelledby="cot-title">
@@ -101,7 +97,6 @@ const canales = [
               </li>
             ))}
           </ul>
-          <p class="estado mono"><span class="punto punto-vivo"></span>{s.estado} · {s.ubicacion} · {s.idiomas}</p>
         </aside>
       </div>
     </div>

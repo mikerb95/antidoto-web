@@ -12,13 +12,12 @@ interface Props {
 const { locale, message, num = '04' } = Astro.props;
 const s = t(locale);
 ---
-<section class="seccion cta" aria-labelledby="cta-title" data-hud="dosis">
+<section class="seccion cta" aria-labelledby="cta-title">
   <div class="wrap">
     <div class="caja panel">
       <div class="texto">
-        <p class="kicker mono"><span class="mono-acento">/{num}</span> {s.ctaKicker}</p>
+        <p class="kicker mono mono-acento">{s.ctaKicker}</p>
         <h2 id="cta-title">{s.ctaTitle}</h2>
-        <p class="estado mono"><span class="punto punto-vivo"></span>{s.estado} · {s.ubicacion}</p>
       </div>
       <div class="acciones">
         <a class="btn btn-primary" href={rutas.contacto[locale]} data-magnetico><span class="btn-inner" data-magnetico-texto>{s.ctaCotizador} →</span></a>

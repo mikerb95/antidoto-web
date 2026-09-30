@@ -13,16 +13,11 @@ const { locale } = Astro.props;
 const s = t(locale);
 const [title, description] = s.seo.clientes;
 const sectores = SECTORES.map((sec) => ({ sec, nombre: s.sectors[sec], marcas: CLIENTES.filter((c) => c.sector === sec).map((c) => c.nombre) }));
-const hud: Array<[string, string]> = [
-  ['muestra', s.hud.muestra],
-  ['reaccion', s.hud.reaccion],
-  ['dosis', s.hud.dosis],
-];
 ---
-<Base locale={locale} pagina="clientes" title={title} description={description} alternates={rutas.clientes} scroll="suave" hud={hud}>
+<Base locale={locale} pagina="clientes" title={title} description={description} alternates={rutas.clientes} scroll="suave">
   <div class="arriba"><Clientes locale={locale} num="01" nivel={1} /></div>
 
-  <section class="seccion" data-hud="reaccion" aria-labelledby="sectores-title">
+  <section class="seccion" aria-labelledby="sectores-title">
     <div class="wrap">
       <Encabezado num="02" kicker={s.sectorsKicker} titulo={s.sectorsTitle} lead={s.sectorsLead} id="sectores-title" />
       <ul class="sectores">
