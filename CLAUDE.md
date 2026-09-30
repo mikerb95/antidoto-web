@@ -13,7 +13,7 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 
 - Astro 7, salida estática (`output: 'static'`, `trailingSlash: 'always'`, formato `directory`).
 - Tailwind 4 vía `@tailwindcss/vite`; los tokens de marca están en `@theme` en `src/styles/global.css`. Los componentes usan CSS con alcance local (`<style>` en cada `.astro`) que lee esos tokens.
-- Multipágina real: cada página es un documento. El paso entre páginas usa view transitions nativas entre documentos (`@view-transition { navigation: auto }` en `global.css`), sin `ClientRouter` ni router SPA. La nueva página sube como líquido (`clip-path`); la nav, el HUD y el botón de WhatsApp tienen `view-transition-name` propio y quedan quietos; los títulos de servicio comparten nombre para transformarse de una página a otra. Los scripts inicializan una vez al cargar (no hay `astro:page-load`).
+- Multipágina real: cada página es un documento. El paso entre páginas usa view transitions nativas entre documentos (`@view-transition { navigation: auto }` en `global.css`), sin `ClientRouter` ni router SPA. La nueva página sube como líquido (`clip-path`); la nav y la barra de WhatsApp tienen `view-transition-name` propio y quedan quietas; los títulos de servicio comparten nombre para transformarse de una página a otra. Los scripts inicializan una vez al cargar (no hay `astro:page-load`).
 - Imágenes con `astro:assets` (WebP y `srcset` en el build). Fotos en `src/assets/fotos/`, logos de clientes en `src/assets/clientes/` (en blanco; el CSS los pasa a tinta con `filter: brightness(0)` sobre fondos claros).
 - Sin React. El cotizador de `/contacto/` es JS propio: arma el mensaje y abre `wa.me`, sin enviar datos a ningún servidor.
 
@@ -21,7 +21,7 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 
 - `src/pages/`: rutas. Español: `/`, `/servicios/`, `/servicios/<slug>/`, `/clientes/`, `/nosotros/`, `/contacto/`. Inglés: `/en/`, `/en/services/`, `/en/services/<slug>/`, `/en/clients/`, `/en/about/`, `/en/contact/`. El mapa de rutas vive en `rutas` de `src/i18n/ui.ts`.
 - `src/components/pages/`: plantillas de página compartidas por idioma (`Home`, `PaginaServicios`, `Servicio`, `PaginaClientes`, `PaginaNosotros`, `PaginaContacto`).
-- Sistema visual (referencia: codebymike.net): `Ambiente` (brillos de color por página y grano), `Encabezado` ("/01 ── ETIQUETA"), clase `.panel` (tarjeta glass), `.mono` (etiquetas de ficha), `Hud` (indicador de fórmula fijo, desde 1400 px), `WhatsappFab`, `Nav` en píldora con menú móvil accesible.
+- Sistema visual propio, sacado del logo (frasco, líquido, infinito): `Ambiente` (tinta con brillos de marca y el wordmark como marca de agua), `Encabezado` (marcador de frasco con nivel de líquido), clase `.panel` (tarjeta de vidrio), `.mono` (etiqueta en Poppins), `.oficio` (Plex Mono, solo para timecode y fichas del visor), `Nav` (tubo de ensayo bajo el enlace activo, borde que se llena con la lectura, se compacta al bajar), `BarraWhatsapp` (barra inferior en móvil).
 - `src/i18n/ui.ts`: textos de interfaz por idioma.
 - `src/data/`: contenido (servicios, clientes, datos de contacto, JSON-LD, formas del logo).
 - `public/`: fuentes WOFF2, íconos, imagen OG, `.htaccess` para Hostinger, `robots.txt`, manifest.
@@ -44,7 +44,7 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - Para trabajo de motion usa la skill del proyecto `motion-landing` (`.claude/skills/motion-landing/`): método, recetas GSAP en `references/tecnicas.md` y verificación con capturas.
 - Capturas: `node .claude/skills/motion-landing/scripts/capturar.mjs pasos.json capturas/` con el sitio levantado (`npm run build && npm run preview`). Hojas de contacto: `python3 .claude/skills/motion-landing/scripts/hoja.py`.
 - Capturar sitios externos en el contenedor en la nube: Chromium no lee la CA del proxy del entorno. Agrega en `pasos.json` el campo `"angle"` con las banderas de GPU más `--ignore-certificate-errors-spki-list=<hash>`, donde el hash sale de `openssl x509 -in /root/.ccr/agent-proxy-ca.crt -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64`. Solo confía en esa CA; no desactives la verificación TLS.
-- Referencia de implementación: `mikerb95/dev-portfolio` (codebymike.net) usa el mismo stack; su motion compartido está en `src/lib/motion-reveal.ts` y los módulos por página en `src/lib/motion/`.
+- `mikerb95/dev-portfolio` (codebymike.net) es referencia del nivel de detalle y del stack, **no un modelo a copiar**: no clones sus componentes, animaciones ni patrones visuales (HUD, brillos por ruta, grano, encabezados "/01 ──", etiquetas mono por todas partes, botón flotante, índice con vista previa al cursor). Antídoto tiene su propio lenguaje, que sale de su logo y de su brief.
 - En el contenedor en la nube no hay GPU: WebGL corre en SwiftShader y las capturas de piezas WebGL no reflejan la fluidez real. SVG y CSS se verifican bien.
 
 ## Git

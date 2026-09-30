@@ -1,6 +1,10 @@
 ---
-// Barra de navegación tipo píldora. Sale del grupo root de la view transition
-// (view-transition-name propio): es igual en todas las páginas y no debe fundirse.
+// Barra de navegación de Antídoto, con el lenguaje del frasco:
+// - Bajo los enlaces corre un tubo de ensayo acostado; el líquido marca la página actual
+//   y se desliza hacia el enlace que apuntas (lo pedía el brief: "nivel de líquido bajo el enlace").
+// - El borde inferior se llena de líquido cian a medida que lees la página.
+// - Arriba es transparente y amplia; al bajar se compacta y toma fondo tinta con desenfoque.
+// Tiene view-transition-name propio: es igual en todas las páginas y no se funde al navegar.
 import Logo from './Logo.astro';
 import { t, rutas, otroIdioma, type Locale, type Pagina } from '../i18n/ui';
 
@@ -15,130 +19,204 @@ const s = t(locale);
 const items: Exclude<Pagina, 'inicio'>[] = ['servicios', 'clientes', 'nosotros', 'contacto'];
 const otro = otroIdioma(locale);
 ---
-<header class="nav">
-  <div class="pill">
+<header class="nav" data-nav>
+  <div class="barra wrap">
     <a href={rutas.inicio[locale]} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
-    <nav aria-label={s.menuLabel} class="links">
+
+    <nav aria-label={s.menuLabel} class="links" data-links>
       <ul>
         {items.map((k) => (
-          <li><a href={rutas[k][locale]} aria-current={actual === k ? 'page' : undefined}>{s.nav[k]}</a></li>
+          <li><a href={rutas[k][locale]} aria-current={actual === k ? 'page' : undefined} data-link>{s.nav[k]}</a></li>
         ))}
       </ul>
+      <span class="tubo" aria-hidden="true" data-tubo><span class="liquido"></span></span>
     </nav>
+
     <div class="acciones">
-      <div class="idioma" role="group" aria-label={s.langLabel}>
-        <span class="activo" aria-current="true">{locale.toUpperCase()}</span>
-        <a href={alternateHref} hreflang={otro} lang={otro} aria-label={s.switchLangLabel}>{otro.toUpperCase()}</a>
-      </div>
+      <a class="idioma" href={alternateHref} hreflang={otro} lang={otro} aria-label={s.switchLangLabel}>
+        <span class="actual">{locale.toUpperCase()}</span><span class="sep">/</span><span>{otro.toUpperCase()}</span>
+      </a>
       <a class="btn btn-primary btn-sm cta" href={rutas.contacto[locale]}>{s.navQuote}</a>
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu-movil" data-menu-abrir>
         <span class="sr">{s.menuOpen}</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16" /></svg>
+        <span class="rayas" aria-hidden="true"><i></i><i></i></span>
       </button>
     </div>
   </div>
+  <span class="lectura" aria-hidden="true"><span data-lectura></span></span>
 
   <div class="menu" id="menu-movil" hidden data-menu>
-    <div class="menu-top">
-      <span class="mono">{s.menuLabel}</span>
+    <div class="menu-top wrap">
+      <a href={rutas.inicio[locale]} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
       <button class="menu-btn visible" type="button" data-menu-cerrar>
         <span class="sr">{s.menuClose}</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        <span class="rayas cerrar" aria-hidden="true"><i></i><i></i></span>
       </button>
     </div>
-    <ul>
-      <li><a href={rutas.inicio[locale]} aria-current={actual === 'inicio' ? 'page' : undefined}><span class="mono">00</span>{locale === 'es' ? 'Inicio' : 'Home'}</a></li>
+    <ul class="wrap">
+      <li><a href={rutas.inicio[locale]} aria-current={actual === 'inicio' ? 'page' : undefined}>{locale === 'es' ? 'Inicio' : 'Home'}</a></li>
       {items.map((k, i) => (
-        <li style={`--i:${i + 1}`}><a href={rutas[k][locale]} aria-current={actual === k ? 'page' : undefined}><span class="mono">0{i + 1}</span>{s.nav[k]}</a></li>
+        <li style={`--i:${i + 1}`}><a href={rutas[k][locale]} aria-current={actual === k ? 'page' : undefined}>{s.nav[k]}</a></li>
       ))}
     </ul>
-    <a class="menu-idioma" href={alternateHref} hreflang={otro} lang={otro}>{s.switchLangLabel}</a>
+    <div class="menu-pie wrap">
+      <a class="btn btn-primary" href={rutas.contacto[locale]}>{s.navQuote}</a>
+      <a class="menu-idioma" href={alternateHref} hreflang={otro} lang={otro}>{s.switchLangLabel}</a>
+    </div>
   </div>
 </header>
 
 <script>
-  // Menú móvil a pantalla completa: aria-expanded, cierre con Esc, foco dentro y scroll
-  // del body bloqueado mientras está abierto.
-  const abrir = document.querySelector<HTMLButtonElement>('[data-menu-abrir]');
-  const cerrar = document.querySelector<HTMLButtonElement>('[data-menu-cerrar]');
-  const menu = document.querySelector<HTMLElement>('[data-menu]');
-  if (abrir && cerrar && menu) {
-    const enfocables = () => [...menu.querySelectorAll<HTMLElement>('a, button')];
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') cerrarMenu();
-      if (e.key !== 'Tab') return;
-      const f = enfocables();
-      const primero = f[0];
-      const ultimo = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === primero) {
-        e.preventDefault();
-        ultimo.focus();
-      } else if (!e.shiftKey && document.activeElement === ultimo) {
-        e.preventDefault();
-        primero.focus();
+  const nav = document.querySelector<HTMLElement>('[data-nav]');
+  if (nav) {
+    // Compactar al bajar y llenar el borde con el avance de lectura.
+    const lectura = nav.querySelector<HTMLElement>('[data-lectura]');
+    let pendiente = false;
+    const alScroll = () => {
+      pendiente = false;
+      const y = window.scrollY;
+      nav.classList.toggle('is-compacta', y > 24);
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (lectura) lectura.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`;
+    };
+    addEventListener('scroll', () => {
+      if (!pendiente) {
+        pendiente = true;
+        requestAnimationFrame(alScroll);
       }
-    };
-    const abrirMenu = () => {
-      menu.hidden = false;
-      abrir.setAttribute('aria-expanded', 'true');
-      document.documentElement.style.overflow = 'hidden';
-      document.addEventListener('keydown', onKey);
-      cerrar.focus();
-    };
-    const cerrarMenu = () => {
-      menu.hidden = true;
-      abrir.setAttribute('aria-expanded', 'false');
-      document.documentElement.style.overflow = '';
-      document.removeEventListener('keydown', onKey);
-      abrir.focus();
-    };
-    abrir.addEventListener('click', abrirMenu);
-    cerrar.addEventListener('click', cerrarMenu);
+    }, { passive: true });
+    alScroll();
+
+    // Tubo de ensayo: se posiciona bajo el enlace actual y sigue al que apuntas o enfocas.
+    const links = nav.querySelector<HTMLElement>('[data-links]');
+    const tubo = nav.querySelector<HTMLElement>('[data-tubo]');
+    if (links && tubo) {
+      const enlaces = [...links.querySelectorAll<HTMLElement>('[data-link]')];
+      const actual = enlaces.find((a) => a.getAttribute('aria-current') === 'page');
+      const ir = (a: HTMLElement | undefined, lleno: boolean) => {
+        if (!a) {
+          tubo.classList.remove('is-visible');
+          return;
+        }
+        tubo.style.setProperty('--x', `${a.offsetLeft}px`);
+        tubo.style.setProperty('--w', `${a.offsetWidth}px`);
+        tubo.classList.add('is-visible');
+        tubo.classList.toggle('is-lleno', lleno);
+      };
+      const volver = () => ir(actual, true);
+      enlaces.forEach((a) => {
+        a.addEventListener('pointerenter', () => ir(a, a === actual));
+        a.addEventListener('focus', () => ir(a, a === actual));
+      });
+      links.addEventListener('pointerleave', volver);
+      links.addEventListener('focusout', volver);
+      // Medir cuando ya cargaron las fuentes: antes, los anchos de los enlaces no son los finales.
+      document.fonts.ready.then(() => {
+        tubo.classList.add('sin-transicion');
+        volver();
+        requestAnimationFrame(() => tubo.classList.remove('sin-transicion'));
+      });
+    }
+
+    // Menú móvil a pantalla completa: aria-expanded, cierre con Esc, foco dentro y scroll
+    // del body bloqueado mientras está abierto.
+    const abrir = nav.querySelector<HTMLButtonElement>('[data-menu-abrir]');
+    const cerrar = nav.querySelector<HTMLButtonElement>('[data-menu-cerrar]');
+    const menu = nav.querySelector<HTMLElement>('[data-menu]');
+    if (abrir && cerrar && menu) {
+      const enfocables = () => [...menu.querySelectorAll<HTMLElement>('a, button')];
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') cerrarMenu();
+        if (e.key !== 'Tab') return;
+        const f = enfocables();
+        if (e.shiftKey && document.activeElement === f[0]) {
+          e.preventDefault();
+          f[f.length - 1].focus();
+        } else if (!e.shiftKey && document.activeElement === f[f.length - 1]) {
+          e.preventDefault();
+          f[0].focus();
+        }
+      };
+      const abrirMenu = () => {
+        menu.hidden = false;
+        abrir.setAttribute('aria-expanded', 'true');
+        document.documentElement.style.overflow = 'hidden';
+        document.addEventListener('keydown', onKey);
+        cerrar.focus();
+      };
+      const cerrarMenu = () => {
+        menu.hidden = true;
+        abrir.setAttribute('aria-expanded', 'false');
+        document.documentElement.style.overflow = '';
+        document.removeEventListener('keydown', onKey);
+        abrir.focus();
+      };
+      abrir.addEventListener('click', abrirMenu);
+      cerrar.addEventListener('click', cerrarMenu);
+    }
   }
 </script>
 
 <style>
-  .nav { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 12px); left: 0; right: 0; z-index: 40; padding-inline: 16px; view-transition-name: nav; pointer-events: none; }
-  .pill {
-    pointer-events: auto; max-width: 1200px; margin-inline: auto; height: 60px; padding: 0 8px 0 20px;
-    display: flex; align-items: center; gap: 24px; border-radius: 999px;
-    background: rgb(10 17 21 / 0.78); border: 1px solid rgb(128 220 255 / 0.12);
-    backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
-    box-shadow: 0 10px 40px rgb(0 0 0 / 0.45);
-  }
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 40; padding-top: env(safe-area-inset-top, 0px); view-transition-name: nav; transition: background var(--t-slow) var(--ease-out), backdrop-filter var(--t-slow) var(--ease-out); }
+  .nav:global(.is-compacta) { background: rgb(10 17 21 / 0.84); backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%); }
+  .barra { height: 84px; display: flex; align-items: center; gap: 32px; transition: height var(--t-slow) var(--ease-out); }
+  .nav:global(.is-compacta) .barra { height: 64px; }
   .home { display: block; color: var(--color-antidote); }
-  .home :global(.logo) { display: block; width: 118px; height: auto; }
-  .links { margin-left: auto; }
-  .links ul { display: flex; gap: 2px; list-style: none; margin: 0; padding: 0; }
-  .links a { display: block; padding: 10px 14px; border-radius: 999px; text-decoration: none; font-size: 14px; color: var(--color-fg-muted); transition: color var(--t-fast) var(--ease-out), background var(--t-fast) var(--ease-out); }
-  .links a:hover { color: var(--color-fg); }
-  .links a[aria-current='page'] { color: var(--color-fg); background: rgb(59 200 243 / 0.12); }
-  .acciones { display: flex; align-items: center; gap: 8px; }
-  .idioma { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; border: 1px solid var(--color-line); font: 500 11px/1 var(--font-mono); letter-spacing: 0.1em; }
-  .idioma > * { display: grid; place-items: center; min-width: 36px; height: 34px; border-radius: 999px; }
-  .idioma .activo { background: rgb(59 200 243 / 0.16); color: var(--color-antidote); }
-  .idioma a { color: var(--color-fg-muted); text-decoration: none; }
-  .idioma a:hover { color: var(--color-fg); }
-  .menu-btn { display: none; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--color-line); background: none; color: var(--color-fg); cursor: pointer; place-items: center; }
-  .menu-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+  .home :global(.logo) { display: block; width: 136px; height: auto; transition: width var(--t-slow) var(--ease-out); }
+  .nav:global(.is-compacta) .home :global(.logo) { width: 116px; }
+
+  .links { position: relative; margin-left: auto; }
+  .links ul { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; }
+  .links a { display: block; padding: 12px 14px 16px; text-decoration: none; font-size: 15px; font-weight: 500; color: var(--color-fg-muted); transition: color var(--t-fast) var(--ease-out); }
+  .links a:hover, .links a:focus-visible, .links a[aria-current='page'] { color: var(--color-fg); }
+
+  /* Tubo de ensayo acostado: contorno fino con líquido dentro. */
+  .tubo { position: absolute; left: 0; bottom: 4px; height: 7px; width: var(--w, 0); transform: translateX(var(--x, 0)); border-radius: 999px; border: 1px solid rgb(59 200 243 / 0.55); opacity: 0; overflow: hidden; transition: transform var(--t-slow) var(--ease-out), width var(--t-slow) var(--ease-out), opacity var(--t-base) var(--ease-out); }
+  .tubo:global(.is-visible) { opacity: 1; }
+  .tubo:global(.sin-transicion) { transition: none; }
+  .liquido { position: absolute; inset: 1px auto 1px 1px; width: 38%; border-radius: inherit; background: linear-gradient(90deg, var(--color-mid), var(--color-antidote)); transition: width var(--t-slow) var(--ease-out); }
+  .tubo:global(.is-lleno) .liquido { width: calc(100% - 2px); box-shadow: 0 0 10px rgb(59 200 243 / 0.7); }
+
+  .acciones { display: flex; align-items: center; gap: 14px; }
+  .idioma { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 4px; text-decoration: none; font: 600 12px/1 var(--font-sans); letter-spacing: 0.08em; color: var(--color-fg-muted); }
+  .idioma .actual { color: var(--color-antidote); }
+  .idioma .sep { opacity: 0.4; }
+  .idioma:hover span:last-child { color: var(--color-fg); }
+
+  /* Borde inferior que se llena con el avance de lectura. */
+  .lectura { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgb(128 220 255 / 0.08); opacity: 0; transition: opacity var(--t-slow) var(--ease-out); }
+  .nav:global(.is-compacta) .lectura { opacity: 1; }
+  .lectura span { position: absolute; inset: 0; transform: scaleX(0); transform-origin: left; background: linear-gradient(90deg, var(--color-deep), var(--color-antidote)); box-shadow: 0 0 12px rgb(59 200 243 / 0.6); }
+
+  .menu-btn { display: none; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--color-line); background: rgb(10 17 21 / 0.5); color: var(--color-fg); cursor: pointer; place-items: center; }
+  .rayas { position: relative; width: 20px; height: 12px; display: block; }
+  .rayas i { position: absolute; left: 0; right: 0; height: 2px; border-radius: 2px; background: currentColor; }
+  .rayas i:first-child { top: 0; }
+  .rayas i:last-child { bottom: 0; right: 6px; background: var(--color-antidote); }
+  .rayas.cerrar i { top: 5px; bottom: auto; right: 0; }
+  .rayas.cerrar i:first-child { transform: rotate(45deg); }
+  .rayas.cerrar i:last-child { transform: rotate(-45deg); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  .menu { position: fixed; inset: 0; z-index: 50; pointer-events: auto; background: rgb(10 17 21 / 0.97); backdrop-filter: blur(20px); padding: calc(env(safe-area-inset-top, 0px) + 22px) 20px 32px; display: flex; flex-direction: column; gap: 24px; }
+  .menu { position: fixed; inset: 0; z-index: 50; background: radial-gradient(120% 60% at 100% 0%, rgb(12 92 125 / 0.55), transparent 60%), var(--color-ink-deep); padding: calc(env(safe-area-inset-top, 0px) + 14px) 0 calc(env(safe-area-inset-bottom, 0px) + 28px); display: flex; flex-direction: column; gap: 28px; overflow-y: auto; }
   .menu[hidden] { display: none; }
   .menu-top { display: flex; justify-content: space-between; align-items: center; }
   .menu .visible { display: grid; }
-  .menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .menu ul { list-style: none; margin: 0; display: grid; gap: 2px; }
   .menu li { animation: entra var(--t-slow) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 60ms); }
   @keyframes entra { from { transform: translateY(16px); opacity: 0; } }
-  .menu ul a { display: flex; align-items: baseline; gap: 16px; padding: 12px 0; font: 400 36px/1.1 var(--font-display); text-decoration: none; border-bottom: 1px solid var(--color-line); }
+  .menu ul a { position: relative; display: block; padding: 14px 0; font: 400 38px/1.05 var(--font-display); text-decoration: none; color: var(--color-fg); border-bottom: 1px solid var(--color-line); }
   .menu ul a[aria-current='page'] { color: var(--color-antidote); }
-  .menu-idioma { margin-top: auto; color: var(--color-fg-muted); font-size: 15px; min-height: 44px; display: inline-flex; align-items: center; }
+  .menu ul a[aria-current='page']::after { content: ''; position: absolute; left: 0; bottom: -1px; width: 64px; height: 3px; border-radius: 3px; background: var(--color-antidote); box-shadow: 0 0 10px var(--color-antidote); }
+  .menu-pie { margin-top: auto; display: grid; gap: 14px; justify-items: start; }
+  .menu-idioma { color: var(--color-fg-muted); font-size: 15px; min-height: 44px; display: inline-flex; align-items: center; }
 
   @media (max-width: 900px) {
     .links, .idioma { display: none; }
     .acciones { margin-left: auto; }
     .menu-btn { display: grid; }
-    .pill { padding-left: 16px; }
+    .barra { height: 72px; }
   }
   @media (max-width: 380px) { .cta { display: none; } }
 </style>
