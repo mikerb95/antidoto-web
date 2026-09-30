@@ -1,12 +1,11 @@
 name: Deploy a Hostinger
 
-# Despliega dist/ por FTP a public_html en cada push a main.
+# Despliega dist/ por FTP a public_html. Manual (Actions > Deploy a Hostinger > Run workflow)
+# hasta el lanzamiento: una fusión a main no debe reemplazar el sitio en producción.
 # Secrets requeridos en GitHub (Settings > Secrets and variables > Actions):
 #   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD  (hPanel > Archivos > Cuentas FTP)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -16,15 +15,24 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      FTP_SERVER: ${{ secrets.FTP_SERVER }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - if: env.FTP_SERVER == ''
+        run: echo "::warning::Faltan los secrets FTP_SERVER, FTP_USERNAME y FTP_PASSWORD; no se despliega."
+      - if: env.FTP_SERVER != ''
+        uses: actions/checkout@v4
+      - if: env.FTP_SERVER != ''
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm run build
-      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - if: env.FTP_SERVER != ''
+        run: npm ci
+      - if: env.FTP_SERVER != ''
+        run: npm run build
+      - if: env.FTP_SERVER != ''
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
