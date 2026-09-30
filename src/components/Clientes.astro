@@ -1,34 +1,101 @@
 ---
 import { Image } from 'astro:assets';
-import { CLIENTES } from '../data/clientes';
+import { CLIENTES, SECTORES, contarPorSector } from '../data/clientes';
 import { t, type Locale } from '../i18n/ui';
 
 interface Props {
   locale: Locale;
 }
 const s = t(Astro.props.locale);
+const total = CLIENTES.length;
 ---
-<section class="clientes" id="clientes" aria-labelledby="clientes-title">
+<section class="clientes" id="clientes" aria-labelledby="clientes-title" data-clientes>
   <div class="wrap">
-    <h2 id="clientes-title">{s.clientsTitle}</h2>
-    <p>{s.clientsLead}</p>
+    <div class="head">
+      <div>
+        <h2 id="clientes-title">{s.clientsTitle}</h2>
+        <p>{s.clientsLead}</p>
+      </div>
+      <!-- El filtro solo sirve con JS: el script lo muestra; sin él la rejilla queda completa. -->
+      <div class="filtro" role="group" aria-label={s.clientsFilter} hidden data-filtro>
+        <button type="button" aria-pressed="true" data-sector="todos">{s.clientsAll} <span>{total}</span></button>
+        {SECTORES.map((sec) => (
+          <button type="button" aria-pressed="false" data-sector={sec}>{s.sectors[sec]} <span>{contarPorSector(sec)}</span></button>
+        ))}
+      </div>
+    </div>
+    <p class="conteo" aria-live="polite" data-conteo data-plantilla={s.clientsCount(0, total)}></p>
     <ul class="grid">
       {CLIENTES.map((c) => (
-        <li><Image src={c.logo} alt={c.nombre} height={68} loading="lazy" /></li>
+        <li data-sector={c.sector}><Image src={c.logo} alt={c.nombre} height={68} loading="lazy" /></li>
       ))}
     </ul>
   </div>
 </section>
 
+<script>
+  // Filtro por sector: los logos de otros sectores se apagan en su sitio (sin reordenar la
+  // rejilla), así se ve de un vistazo cuánto pesa cada sector entre los clientes.
+  function iniciar() {
+    const raiz = document.querySelector<HTMLElement>('[data-clientes]');
+    const filtro = raiz?.querySelector<HTMLElement>('[data-filtro]');
+    const conteo = raiz?.querySelector<HTMLElement>('[data-conteo]');
+    if (!raiz || !filtro || !conteo) return;
+    const botones = [...filtro.querySelectorAll<HTMLButtonElement>('button')];
+    const logos = [...raiz.querySelectorAll<HTMLElement>('li[data-sector]')];
+    // La plantilla trae "0 de 18 marcas": solo se cambia el primer número.
+    const plantilla = conteo.dataset.plantilla ?? '';
+
+    const elegir = (sector: string) => {
+      botones.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sector === sector)));
+      let n = 0;
+      logos.forEach((li) => {
+        const activo = sector === 'todos' || li.dataset.sector === sector;
+        li.classList.toggle('is-apagado', !activo);
+        if (activo) n++;
+      });
+      conteo.textContent = sector === 'todos' ? '' : plantilla.replace(/^0/, String(n));
+    };
+
+    filtro.hidden = false;
+    botones.forEach((b) => b.addEventListener('click', () => elegir(b.dataset.sector!)));
+    elegir('todos');
+  }
+  // El filtro no es motion: funciona también con movimiento reducido (solo sin transición).
+  document.addEventListener('astro:page-load', () => {
+    try {
+      iniciar();
+    } catch (err) {
+      console.warn('[clientes] filtro deshabilitado', err);
+    }
+  });
+</script>
+
 <style>
   .clientes { background: var(--color-bone); color: var(--color-ink); padding-block: 72px; }
+  .head { display: flex; justify-content: space-between; align-items: end; gap: 24px 40px; flex-wrap: wrap; margin-bottom: 28px; }
   h2 { font-size: clamp(26px, 1.6vw + 12px, 36px); margin: 0; }
-  p { color: var(--color-bone-muted); margin: 8px 0 32px; }
+  .head p { color: var(--color-bone-muted); margin: 8px 0 0; max-width: 32em; }
+  .filtro { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filtro[hidden] { display: none; }
+  .filtro button {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px;
+    border: 1px solid var(--color-bone-line); background: transparent; color: var(--color-ink);
+    font: 500 14px/1 var(--font-sans); cursor: pointer; transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+  }
+  .filtro button span { font: 500 12px/1 var(--font-mono); color: var(--color-bone-muted); }
+  .filtro button:hover { border-color: var(--color-ink); }
+  .filtro button[aria-pressed='true'] { background: var(--color-ink); color: var(--color-bone); border-color: var(--color-ink); }
+  .filtro button[aria-pressed='true'] span { color: var(--color-antidote); }
+  .conteo { min-height: 1.5em; margin: 0 0 12px; font: 500 13px var(--font-mono); letter-spacing: 0.06em; color: var(--color-bone-muted); }
   .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; list-style: none; margin: 0; padding: 0; background: var(--color-bone-line); border: 1px solid var(--color-bone-line); border-radius: 14px; overflow: hidden; }
-  li { background: var(--color-bone); display: grid; place-items: center; padding: 22px 14px; min-height: 92px; }
+  li { background: var(--color-bone); display: grid; place-items: center; padding: 22px 14px; min-height: 92px; transition: background var(--t-base) var(--ease-out); }
   /* Los logos llegan en blanco; brightness(0) los pasa a tinta sobre el fondo claro. */
-  img { max-height: 34px; max-width: 100%; width: auto; height: auto; filter: brightness(0); opacity: 0.72; transition: opacity var(--t-base) var(--ease-out); }
+  img { max-height: 34px; max-width: 100%; width: auto; height: auto; filter: brightness(0); opacity: 0.72; transition: opacity var(--t-base) var(--ease-out), transform var(--t-base) var(--ease-out); }
   li:hover img { opacity: 1; }
+  li.is-apagado { background: #ebe8e1; }
+  li.is-apagado img { opacity: 0.12; transform: scale(0.94); }
+  li:not(.is-apagado) img { opacity: 0.85; }
   @media (max-width: 860px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 480px) { li { padding: 16px 8px; min-height: 72px; } img { max-height: 26px; } }
 </style>
