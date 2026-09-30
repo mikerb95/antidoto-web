@@ -23,7 +23,7 @@ Qué hacen: cuatro servicios para empresas, colegios, universidades y organizaci
 3. Catering corporativo: desayunos, refrigerios, almuerzos y estaciones en vivo para eventos empresariales, académicos y sociales. +200 eventos a nivel nacional, logística flexible.
 4. Diseño de productos y experiencias: de la idea al producto final. Prototipos, productos funcionales y experiencias a la medida con la identidad de cada marca.
 
-Diferenciador: la fundadora, María Paula Ramos, es ingeniera civil especialista en Gerencia de SST. Muchos clientes son de energía, ingeniería, transporte y seguros (Enel, WSP, Capital Bus, Bogotá Móvil, Seguros Bolívar, Gallagher, Claro, WOM, Stanley Black & Decker, HSEQ, SEQ Consultores, Correcol, MAB Ingeniería). El ángulo "SST, inducciones y planes de emergencia hechos con creatividad" tiene que notarse.
+Diferenciador: la fundadora, María Paula Ramos, es ingeniera civil especialista en Gerencia de SST. Tiene 18 clientes con logo en el sitio, 11 de ellos de energía, ingeniería, transporte, seguros o consultoría SST: Enel, Claro, WOM, Stanley Black & Decker, Howden, Seguros Bolívar, Gallagher, Correcol, Cruz Verde, WSP, MAB Ingeniería, SGIN, Tabasco OC, SEQ Consultores, HSEQ Consultores, Bogotá Móvil, Capital Bus y La Lorenza (ver `marca/clientes.md`). El ángulo "SST, inducciones y planes de emergencia hechos con creatividad" tiene que notarse.
 
 Público: líderes de talento humano, SST/HSEQ, comunicaciones internas y bienestar; rectores y coordinadores académicos.
 
@@ -205,9 +205,9 @@ Extra: imagen Open Graph
 - Logotipo correcto (referencia de forma y color, usar como fuente de verdad): `antidoto.png` adjunto. Wordmark "antidoto" en `#3BC8F3`, las dos "o" centrales forman un infinito que se convierte en frasco (ver §3.1).
 - Isotipo (frasco) actual, solo como referencia de qué NO repetir: https://antidotocolombia.com/favicon.svg
 - Logotipo `.svg` actual, con el bug de lienzo descrito en §3.1: https://antidotocolombia.com/antidoto.svg (recorta el viewBox y crea versión blanca y monocroma, hoy no existen).
-- Fotos reales: https://antidotocolombia.com/img1.jpg a img11.jpg
+- Fotos reales: `marca/fotos/foto-1.jpg` a `foto-11.jpg` (contenido descrito en `marca/clientes.md`).
 - Fundadora: adjunta.
-- Logos de clientes: https://antidotocolombia.com/client1.png a client19.png (no existe client9).
+- Logos de clientes: `marca/clientes/`, un archivo por marca (lista y sectores en `marca/clientes.md`).
 - Reel vertical actual, con texto incrustado (úsalo solo como pieza del portafolio): https://antidotocolombia.com/hero.mp4
 
 ## 10. Entregables del primer pase
