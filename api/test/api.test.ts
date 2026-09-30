@@ -7,7 +7,9 @@ import { manejar } from '../src/index';
 import { seguimiento } from '../src/seguimiento';
 import { TIEMPO_MINIMO_MS } from '../src/validar';
 import { LIMITE_POR_HORA } from '../src/leads';
-import { CONSENTIMIENTO_VERSION } from '../../src/data/consentimiento';
+import consentimiento from '../../src/data/consentimiento.json';
+
+const CONSENTIMIENTO_VERSION = consentimiento.version;
 import type { Env } from '../src/env';
 
 const APP = 'https://api.test';

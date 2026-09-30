@@ -1,12 +1,12 @@
 // POST /v1/leads: guarda lo que pidió alguien en el cotizador, con su consentimiento, y avisa.
-// El sitio lo envía con sendBeacon (text/plain, sin preflight) justo antes de abrir WhatsApp,
+// El sitio lo envía con fetch keepalive (text/plain, sin preflight) justo antes de abrir WhatsApp,
 // así que la respuesta casi nunca se lee: el cotizador funciona igual si esto falla.
 import { and, eq, gt, sql } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { leads, consentimientos, eventos, type Lead } from './db/schema';
 import { validarLead } from './validar';
 import { enviar, correoLeadEquipo, correoLeadCliente } from './correo';
-import { CONSENTIMIENTO, CONSENTIMIENTO_VERSION } from '../../src/data/consentimiento';
+import consentimiento from '../../src/data/consentimiento.json';
 import type { Env } from './env';
 import { ahora, hashIp, uuid, json, HORA } from './util';
 
@@ -66,8 +66,8 @@ export async function crearLead(
     db.insert(consentimientos).values({
       id: uuid(),
       leadId: lead.id,
-      version: CONSENTIMIENTO_VERSION,
-      texto: CONSENTIMIENTO[lead.locale],
+      version: consentimiento.version,
+      texto: consentimiento[lead.locale],
       aceptado: t,
       ipHash,
       userAgent: req.headers.get('user-agent')?.slice(0, 300) ?? null,

@@ -1,6 +1,8 @@
 import { describe, test, expect } from 'vitest';
 import { validarLead, normalizarTelefono, TIEMPO_MINIMO_MS } from '../src/validar';
-import { CONSENTIMIENTO_VERSION } from '../../src/data/consentimiento';
+import consentimiento from '../../src/data/consentimiento.json';
+
+const CONSENTIMIENTO_VERSION = consentimiento.version;
 
 const base = {
   servicio: 'formaciones',
