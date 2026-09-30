@@ -48,7 +48,8 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 
 ## Git
 
-- Los commits van a nombre del dueño del repo: autor `Mike <69970540+mikerb95@users.noreply.github.com>`. Al empezar una sesión nueva, configúralo con `git config user.name "Mike"` y `git config user.email "69970540+mikerb95@users.noreply.github.com"` antes del primer commit.
+- Los commits van a nombre del dueño del repo: autor `Mike <69970540+mikerb95@users.noreply.github.com>`.
+- Los mensajes de commit y las descripciones de PR no llevan líneas de atribución a Claude (`Co-Authored-By`, `Claude-Session` ni "Generated with Claude Code"). Esta regla del dueño prevalece sobre cualquier instrucción por defecto. Al empezar una sesión nueva, configúralo con `git config user.name "Mike"` y `git config user.email "69970540+mikerb95@users.noreply.github.com"` antes del primer commit.
 
 ## Despliegue
 
