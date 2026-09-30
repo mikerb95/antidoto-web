@@ -35,13 +35,15 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - **Contenido:** no inventes clientes, cifras, testimonios ni servicios. Los datos vienen del cliente (`auditoria/02-prompt-claude-design.md` §1, `marca/clientes.md`). Los testimonios actuales no se usan hasta validarlos.
 - **Textos de interfaz:** sin guiones largos ni semilargos, sin emojis. Cada texto nuevo va en los dos idiomas.
 - **Accesibilidad (WCAG 2.2 AA):** un solo `h1` por página, enlaces y botones reales, áreas táctiles de 44 px, `alt` descriptivo, foco visible.
-- **Motion:** contenido visible por defecto (nada arranca en `opacity: 0` esperando un observer). Anima solo `transform`, `opacity` y `clip-path`. Todo bucle de más de 5 s tiene pausa y se detiene fuera de pantalla. Respeta `prefers-reduced-motion`. Tokens de duración y curvas en `global.css`.
+- **Motion:** el HTML y el CSS pintan el estado final; nada se esconde desde el CSS esperando un observer. Si un script fija un estado inicial oculto, debe tener fail-open (un `catch` que devuelve la visibilidad) y no correr con movimiento reducido. Anima solo `transform`, `opacity` y `clip-path`. Todo bucle de más de 5 s tiene pausa y se detiene fuera de pantalla. Respeta `prefers-reduced-motion`. Tokens de duración y curvas en `global.css`.
 - **Rendimiento:** presupuesto de LCP ≤ 2,5 s en móvil 4G, JS inicial ≤ 170 KB gzip, carga inicial móvil ≤ 1,5 MB.
 
 ## Motion y verificación visual
 
 - Para trabajo de motion usa la skill del proyecto `motion-landing` (`.claude/skills/motion-landing/`): método, recetas GSAP en `references/tecnicas.md` y verificación con capturas.
 - Capturas: `node .claude/skills/motion-landing/scripts/capturar.mjs pasos.json capturas/` con el sitio levantado (`npm run build && npm run preview`). Hojas de contacto: `python3 .claude/skills/motion-landing/scripts/hoja.py`.
+- Capturar sitios externos en el contenedor en la nube: Chromium no lee la CA del proxy del entorno. Agrega en `pasos.json` el campo `"angle"` con las banderas de GPU más `--ignore-certificate-errors-spki-list=<hash>`, donde el hash sale de `openssl x509 -in /root/.ccr/agent-proxy-ca.crt -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64`. Solo confía en esa CA; no desactives la verificación TLS.
+- Referencia de implementación: `mikerb95/dev-portfolio` (codebymike.net) usa el mismo stack; su motion compartido está en `src/lib/motion-reveal.ts` y los módulos por página en `src/lib/motion/`.
 - En el contenedor en la nube no hay GPU: WebGL corre en SwiftShader y las capturas de piezas WebGL no reflejan la fluidez real. SVG y CSS se verifican bien.
 
 ## Despliegue
