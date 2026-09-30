@@ -25,7 +25,7 @@ Extraído de antidotocolombia.com (build del 13/01/2026) el 30/09/2026. Los logo
 | Capital Bus | Transporte | `capital-bus.png` | client3.png |
 | La Lorenza | Turismo y hospitalidad (Villa de Leyva) | `la-lorenza.png` | client14.png |
 
-**Lectura para el diseño:** 11 de los 18 son de energía, ingeniería, transporte, seguros o consultoría SST. Confirma el ángulo "SST, inducciones y planes de emergencia con creatividad". Hay marcas grandes (Enel, Claro, Stanley Black & Decker, Seguros Bolívar, Gallagher, Cruz Verde, Howden) que conviene poner primero en la franja de logos.
+**Lectura para el diseño:** 12 de los 18 son de energía, ingeniería, transporte, seguros o consultoría SST. Confirma el ángulo "SST, inducciones y planes de emergencia con creatividad". Hay marcas grandes (Enel, Claro, Stanley Black & Decker, Seguros Bolívar, Gallagher, Cruz Verde, Howden) que conviene poner primero en la franja de logos.
 
 **Problemas en los archivos:**
 - Logos en PNG de 68 a 319 px, con fondo blanco y márgenes distintos. Para el rediseño hay que conseguir versiones vectoriales (SVG) o PNG a 2x, y pasarlas a monocromo con el mismo alto óptico.
