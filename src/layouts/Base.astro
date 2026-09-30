@@ -5,8 +5,7 @@ import '../styles/global.css';
 import Ambiente from '../components/Ambiente.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import Hud from '../components/Hud.astro';
-import WhatsappFab from '../components/WhatsappFab.astro';
+import BarraWhatsapp from '../components/BarraWhatsapp.astro';
 import { t, otroIdioma, type Locale, type Pagina } from '../i18n/ui';
 import { SITE } from '../data/site';
 
@@ -24,10 +23,8 @@ interface Props {
   noindex?: boolean;
   /** Scroll suave (Lenis) en páginas de marketing; las de lectura conservan el nativo. */
   scroll?: 'suave' | 'nativo';
-  /** Secciones para el HUD de fórmula: [data-hud, etiqueta]. */
-  hud?: Array<[string, string]>;
 }
-const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, scroll = 'nativo', hud } = Astro.props;
+const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, scroll = 'nativo' } = Astro.props;
 const s = t(locale);
 const canonical = new URL(alternates[locale], SITE.url).href;
 const ogImage = new URL('/og/antidoto-og.jpg', SITE.url).href;
@@ -69,14 +66,13 @@ const otro = otroIdioma(locale);
   </head>
   <body data-scroll={scroll}>
     <a class="skip" href="#main">{s.skip}</a>
-    <Ambiente semilla={alternates.es} />
+    <Ambiente lado={pagina === 'nosotros' || pagina === 'contacto' ? 'izquierda' : 'derecha'} />
     <Nav locale={locale} actual={pagina} alternateHref={alternates[otro]} />
     <main id="main">
       <slot />
     </main>
     <Footer locale={locale} />
-    {hud && <Hud titulo={`${s.hud.titulo} · ${title.split('|')[0].trim()}`} items={hud} />}
-    <WhatsappFab locale={locale} message={waMessage} />
+    <BarraWhatsapp locale={locale} message={waMessage} />
   </body>
 </html>
 
@@ -91,5 +87,5 @@ const otro = otroIdioma(locale);
 <style>
   .skip { position: absolute; left: 16px; top: -60px; z-index: 60; background: var(--color-antidote); color: var(--color-ink); padding: 10px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; }
   .skip:focus { top: 8px; }
-  main { padding-top: 96px; }
+  main { padding-top: 84px; }
 </style>

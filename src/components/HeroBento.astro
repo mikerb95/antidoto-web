@@ -29,10 +29,9 @@ const tomas = await Promise.all(
 );
 const { cx, cy, r } = LIQUIDO;
 ---
-<section class="hero" data-hud="base" aria-labelledby="hero-title">
+<section class="hero" aria-labelledby="hero-title">
   <div class="wrap grid">
     <div class="copy">
-      <p class="estado mono"><span class="punto punto-vivo"></span>{s.estado} · {s.ubicacion} · {s.idiomas}</p>
       <ul class="insignias">
         {s.insignias.map((i) => <li class="panel"><span class="mono mono-acento">●</span>{i}</li>)}
       </ul>
@@ -57,10 +56,10 @@ const { cx, cy, r } = LIQUIDO;
         ))}
         <div class="hud-visor" aria-hidden="true">
           <span class="esq tl"></span><span class="esq tr"></span><span class="esq bl"></span><span class="esq br"></span>
-          <p class="arriba mono"><span data-ficha-texto>{tomas[0].ficha}</span><span data-contador>1/{tomas.length}</span></p>
-          <p class="abajo mono"><span class="rec"><i></i>REC <span data-timecode>00:00:00:00</span></span><span data-nombre-texto>{tomas[0].nombre}</span></p>
+          <p class="arriba oficio"><span data-ficha-texto>{tomas[0].ficha}</span><span data-contador>1/{tomas.length}</span></p>
+          <p class="abajo oficio"><span class="rec"><i></i>REC <span data-timecode>00:00:00:00</span></span><span data-nombre-texto>{tomas[0].nombre}</span></p>
           <div class="barras">{tomas.map((_, i) => <span class:list={{ llena: i === 0 }} data-barra></span>)}</div>
-          <p class="provisional mono" data-provisional-texto hidden></p>
+          <p class="provisional oficio" data-provisional-texto hidden></p>
         </div>
         <button class="pausa" type="button" aria-pressed="false" data-visor-pausa data-label-pause={s.pause} data-label-resume={s.resume} aria-label={s.pause}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pausa" d="M8 5v14M16 5v14" /><path class="i-play" d="M7 5l12 7-12 7z" /></svg>
