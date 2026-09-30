@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import HeroFormula from '../HeroFormula.astro';
+import Stats from '../Stats.astro';
+import Clientes from '../Clientes.astro';
+import ServiciosLista from '../ServiciosLista.astro';
+import ContactoCta from '../ContactoCta.astro';
+import { t, homePath, type Locale } from '../../i18n/ui';
+import { organizationSchema } from '../../data/schema';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+---
+<Base locale={locale} title={s.seoTitle} description={s.seoDescription} alternates={homePath} jsonLd={organizationSchema()}>
+  <HeroFormula locale={locale} />
+  <div class="stats-band"><Stats locale={locale} /></div>
+  <Clientes locale={locale} />
+  <ServiciosLista locale={locale} />
+  <ContactoCta locale={locale} />
+</Base>
+
+<style>
+  .stats-band { padding-block: 0 56px; background: var(--color-ink); position: relative; }
+</style>

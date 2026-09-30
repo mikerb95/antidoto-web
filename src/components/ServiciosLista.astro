@@ -1,0 +1,61 @@
+---
+import { Image } from 'astro:assets';
+import { SERVICIOS, servicioPath } from '../data/servicios';
+import { t, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+---
+<section class="servicios" id="servicios" aria-labelledby="servicios-title">
+  <div class="wrap">
+    <div class="head">
+      <h2 id="servicios-title">{s.servicesTitle}</h2>
+      <p class="eyebrow">{s.servicesEyebrow}</p>
+    </div>
+    <div class="rows">
+      {SERVICIOS.map((sv) => {
+        const txt = sv[locale];
+        const href = servicioPath(sv, locale);
+        return (
+          <article class="row">
+            <h3 transition:name={`servicio-${sv.id}-title`}><a href={href}><i aria-hidden="true"></i>{txt.title}</a></h3>
+            <div>
+              <p>{txt.lead}</p>
+              <ul>{txt.facts.map((f) => <li>{f}</li>)}</ul>
+              <a class="more" href={href} aria-label={`${s.serviceMore}: ${txt.title}`}>{s.serviceMore} →</a>
+            </div>
+            <a class="photo" href={href} tabindex="-1" aria-hidden="true" transition:name={`servicio-${sv.id}-photo`}>
+              <Image src={sv.image} alt="" widths={[280, 420, 560]} sizes="(max-width: 860px) 100vw, 220px" loading="lazy" />
+            </a>
+          </article>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<style>
+  .servicios { padding-block: 96px; }
+  .head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: 40px; }
+  h2 { font-size: clamp(32px, 2.6vw + 10px, 48px); line-height: 1.05; max-width: 14em; margin: 0; }
+  .rows { border-top: 1px solid var(--color-line); }
+  .row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) 220px; gap: 32px; padding-block: 28px; border-bottom: 1px solid var(--color-line); align-items: center; }
+  h3 { font-size: clamp(24px, 1.4vw + 12px, 32px); line-height: 1.1; margin: 0; }
+  h3 a { display: flex; gap: 12px; align-items: center; text-decoration: none; }
+  h3 a:hover { color: var(--color-antidote); }
+  h3 i { width: 10px; height: 10px; border-radius: 50%; background: var(--color-antidote); flex: none; }
+  p { margin: 0 0 12px; color: var(--color-fg-muted); }
+  ul { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+  li { font-size: 13px; padding: 5px 10px; border-radius: 999px; background: var(--color-ink-raised); }
+  .more { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--color-antidote); text-decoration: none; }
+  .photo { display: block; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: var(--color-ink-raised); }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--t-slow) var(--ease-out); }
+  .row:hover .photo img { transform: scale(1.05); }
+  @media (max-width: 860px) {
+    .row { grid-template-columns: 1fr; gap: 14px; }
+    .photo { order: -1; max-width: 420px; }
+  }
+</style>
