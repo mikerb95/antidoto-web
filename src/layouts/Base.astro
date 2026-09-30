@@ -17,8 +17,10 @@ interface Props {
   waMessage?: string;
   jsonLd?: Record<string, unknown>;
   noindex?: boolean;
+  /** Scroll suave (Lenis) en páginas de marketing; las de lectura conservan el nativo. */
+  scroll?: 'suave' | 'nativo';
 }
-const { locale, title, description, alternates, waMessage, jsonLd, noindex = false } = Astro.props;
+const { locale, title, description, alternates, waMessage, jsonLd, noindex = false, scroll = 'nativo' } = Astro.props;
 const s = t(locale);
 const canonical = new URL(alternates[locale], SITE.url).href;
 const ogImage = new URL('/og/antidoto-og.jpg', SITE.url).href;
@@ -59,7 +61,7 @@ const other: Locale = locale === 'es' ? 'en' : 'es';
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
     <ClientRouter />
   </head>
-  <body>
+  <body data-scroll={scroll}>
     <a class="skip" href="#main">{s.skip}</a>
     <Nav locale={locale} alternateHref={alternates[other]} />
     <main id="main">
@@ -69,6 +71,16 @@ const other: Locale = locale === 'es' ? 'en' : 'es';
     <MobileBar locale={locale} message={waMessage} />
   </body>
 </html>
+
+<script>
+  import '../lib/motion/core';
+  import { titulares, magneticos } from '../lib/motion/efectos';
+
+  document.addEventListener('astro:page-load', () => {
+    titulares();
+    magneticos();
+  });
+</script>
 
 <style>
   .skip { position: absolute; left: 16px; top: -60px; z-index: 50; background: var(--color-antidote); color: var(--color-ink); padding: 10px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; }
