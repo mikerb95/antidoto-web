@@ -1,0 +1,30 @@
+---
+import WhatsappIcon from './WhatsappIcon.astro';
+import { t, type Locale } from '../i18n/ui';
+import { SITE, waLink } from '../data/site';
+
+interface Props {
+  locale: Locale;
+  message?: string;
+}
+const { locale, message } = Astro.props;
+const s = t(locale);
+---
+<section class="cta" id="contacto" aria-labelledby="contacto-title">
+  <div class="wrap row">
+    <h2 id="contacto-title">{s.ctaTitle}</h2>
+    <div class="links">
+      <a class="btn btn-primary" href={waLink(message ?? s.waDefault)} target="_blank" rel="noopener"><WhatsappIcon />{s.ctaWhatsapp} {SITE.phoneDisplay}</a>
+      <a class="btn btn-ghost" href={`mailto:${SITE.email}`}>{s.ctaEmail}: {SITE.email}</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta { padding-block: 80px; background: var(--color-ink-deep); border-top: 1px solid var(--color-line); }
+  .row { display: flex; justify-content: space-between; gap: 32px; align-items: center; flex-wrap: wrap; }
+  h2 { font-size: clamp(28px, 2.2vw + 10px, 42px); max-width: 16em; line-height: 1.08; margin: 0; }
+  .links { display: flex; gap: 10px; flex-wrap: wrap; min-width: 0; }
+  .links .btn { max-width: 100%; }
+  @media (max-width: 480px) { .links .btn { width: 100%; font-size: 14px; } }
+</style>

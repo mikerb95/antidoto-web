@@ -1,0 +1,116 @@
+// Textos de interfaz por idioma. El contenido de servicios vive en src/data/servicios.ts.
+
+export const LOCALES = ['es', 'en'] as const;
+export type Locale = (typeof LOCALES)[number];
+
+export const ui = {
+  es: {
+    htmlLang: 'es-CO',
+    ogLocale: 'es_CO',
+    skip: 'Saltar al contenido',
+    navServices: 'Servicios',
+    navClients: 'Clientes',
+    navContact: 'Contacto',
+    navQuote: 'Cotizar',
+    menuLabel: 'Principal',
+    homeLabel: 'Antídoto, inicio',
+    switchLang: 'English',
+    switchLangLabel: 'Ver el sitio en inglés',
+    heroEyebrow: 'Estudio creativo empresarial · Colombia, desde 2020',
+    heroTitle: ['Creamos experiencias que ', 'conectan', ', ', 'inspiran', ' y ', 'transforman'],
+    heroLead:
+      'Formaciones vivenciales, producción audiovisual y catering corporativo para empresas, colegios y organizaciones.',
+    heroCta: 'Cotizar por WhatsApp',
+    heroSecondary: 'Ver nuestros servicios',
+    heroSst: 'Inducciones SST y planes de emergencia, hechos con creatividad',
+    heroFlaskLabel: 'El frasco del logotipo de Antídoto con fotos de talleres, rodajes y catering dentro del líquido',
+    pause: 'Pausar animación',
+    resume: 'Reanudar animación',
+    stats: [
+      ['+150', 'producciones'],
+      ['+200', 'eventos'],
+      ['+50', 'clientes'],
+      ['3', 'idiomas'],
+      ['2020', 'desde'],
+    ],
+    clientsTitle: 'Han confiado en nosotros',
+    clientsLead: 'Energía, ingeniería, transporte, seguros y SST: marcas que trabajan con Antídoto.',
+    servicesTitle: 'Cuatro servicios, una sola fórmula',
+    servicesEyebrow: 'Para talento humano, SST, comunicaciones y rectorías',
+    serviceMore: 'Ver servicio',
+    ctaTitle: 'Cuéntanos tu reto y te enviamos una propuesta',
+    ctaWhatsapp: 'WhatsApp',
+    ctaEmail: 'Correo',
+    waDefault: 'Hola Antídoto, quiero cotizar un servicio.',
+    waService: (s: string) => `Hola Antídoto, quiero cotizar ${s.toLowerCase()}.`,
+    serviceFor: 'Qué incluye',
+    otherServices: 'Otros servicios',
+    footerTagline: 'Estudio creativo empresarial en Colombia.',
+    notFoundTitle: 'Esta página no existe',
+    notFoundLead: 'Puede que el enlace esté mal escrito o que la página se haya movido.',
+    notFoundCta: 'Volver al inicio',
+    seoTitle: 'Antídoto | Formaciones, audiovisual y catering para empresas',
+    seoDescription:
+      'Estudio creativo empresarial en Colombia: formaciones vivenciales, producción audiovisual, catering corporativo y diseño de experiencias para empresas.',
+    ogTitle: 'Antídoto: experiencias que conectan, inspiran y transforman',
+    ogAlt: 'Antídoto, estudio creativo empresarial',
+  },
+  en: {
+    htmlLang: 'en',
+    ogLocale: 'en_US',
+    skip: 'Skip to content',
+    navServices: 'Services',
+    navClients: 'Clients',
+    navContact: 'Contact',
+    navQuote: 'Get a quote',
+    menuLabel: 'Main',
+    homeLabel: 'Antídoto, home',
+    switchLang: 'Español',
+    switchLangLabel: 'Ver el sitio en español',
+    heroEyebrow: 'Creative studio for organizations · Colombia, since 2020',
+    heroTitle: ['We create experiences that ', 'connect', ', ', 'inspire', ' and ', 'transform'],
+    heroLead:
+      'Experiential training, video production and corporate catering for companies, schools and organizations.',
+    heroCta: 'Get a quote on WhatsApp',
+    heroSecondary: 'See our services',
+    heroSst: 'Health and safety inductions and emergency plans, made with creativity',
+    heroFlaskLabel: 'The flask from the Antídoto logo with photos of workshops, shoots and catering inside the liquid',
+    pause: 'Pause animation',
+    resume: 'Resume animation',
+    stats: [
+      ['150+', 'productions'],
+      ['200+', 'events'],
+      ['50+', 'clients'],
+      ['3', 'languages'],
+      ['2020', 'since'],
+    ],
+    clientsTitle: 'Trusted by',
+    clientsLead: 'Energy, engineering, transport, insurance and health and safety brands that work with Antídoto.',
+    servicesTitle: 'Four services, one formula',
+    servicesEyebrow: 'For HR, health and safety, communications and school leaders',
+    serviceMore: 'See service',
+    ctaTitle: 'Tell us your challenge and we will send you a proposal',
+    ctaWhatsapp: 'WhatsApp',
+    ctaEmail: 'Email',
+    waDefault: 'Hi Antídoto, I would like a quote.',
+    waService: (s: string) => `Hi Antídoto, I would like a quote for ${s.toLowerCase()}.`,
+    serviceFor: 'What it includes',
+    otherServices: 'Other services',
+    footerTagline: 'Creative studio for organizations in Colombia.',
+    notFoundTitle: 'This page does not exist',
+    notFoundLead: 'The link may be mistyped or the page may have moved.',
+    notFoundCta: 'Back to home',
+    seoTitle: 'Antídoto | Training, video and catering for companies',
+    seoDescription:
+      'Creative studio in Colombia: experiential training, video production, corporate catering and experience design for companies and schools.',
+    ogTitle: 'Antídoto: experiences that connect, inspire and transform',
+    ogAlt: 'Antídoto, creative studio for organizations',
+  },
+} as const;
+
+export function t(locale: Locale) {
+  return ui[locale];
+}
+
+/** Ruta de la home de cada idioma. */
+export const homePath: Record<Locale, string> = { es: '/', en: '/en/' };

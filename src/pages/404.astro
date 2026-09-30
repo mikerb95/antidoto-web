@@ -1,0 +1,22 @@
+---
+import Base from '../layouts/Base.astro';
+import { t } from '../i18n/ui';
+
+const s = t('es');
+---
+<Base locale="es" title={`${s.notFoundTitle} | Antídoto`} description={s.notFoundLead} alternates={{ es: '/404/', en: '/404/' }} noindex>
+  <section class="nf">
+    <div class="wrap">
+      <p class="eyebrow">404</p>
+      <h1>{s.notFoundTitle}</h1>
+      <p class="lead">{s.notFoundLead}</p>
+      <a class="btn btn-primary" href="/">{s.notFoundCta}</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf { padding-block: 120px; }
+  h1 { font-size: clamp(36px, 3vw + 12px, 60px); margin-block: 14px 16px; }
+  .lead { margin-bottom: 28px; }
+</style>

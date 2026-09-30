@@ -1,0 +1,12 @@
+---
+import { WORDMARK, WORDMARK_VIEWBOX } from '../data/logo';
+
+interface Props {
+  class?: string;
+  label?: string;
+}
+const { class: className, label = 'antidoto' } = Astro.props;
+---
+<svg class={className} viewBox={WORDMARK_VIEWBOX} role="img" aria-label={label}>
+  <g fill="currentColor" set:html={WORDMARK} />
+</svg>

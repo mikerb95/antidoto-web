@@ -1,0 +1,42 @@
+---
+import Logo from './Logo.astro';
+import { t, type Locale } from '../i18n/ui';
+import { SITE, waLink } from '../data/site';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const year = new Date().getFullYear();
+---
+<footer class="foot">
+  <div class="wrap grid">
+    <div>
+      <Logo class="logo" />
+      <p>{s.footerTagline}</p>
+    </div>
+    <ul>
+      <li><a href={waLink(s.waDefault)} target="_blank" rel="noopener">WhatsApp {SITE.phoneDisplay}</a></li>
+      <li><a href={`tel:+${SITE.whatsapp}`}>{SITE.phoneDisplay}</a></li>
+      <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+    </ul>
+    <ul>
+      <li><a href={SITE.instagram} target="_blank" rel="noopener">Instagram</a></li>
+      <li><a href={SITE.linkedin} target="_blank" rel="noopener">LinkedIn</a></li>
+    </ul>
+    <p class="copy">© {year} Antídoto</p>
+  </div>
+</footer>
+
+<style>
+  .foot { padding-block: 48px calc(48px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--color-line); background: var(--color-ink-deep); font-size: 14px; color: var(--color-fg-muted); }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 32px; }
+  .grid :global(.logo) { width: 120px; height: auto; color: var(--color-antidote); display: block; margin-bottom: 12px; }
+  p { margin: 0; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  a { color: var(--color-fg); text-decoration: none; display: inline-block; padding-block: 8px; }
+  a:hover { color: var(--color-antidote); }
+  .copy { grid-column: 1 / -1; padding-top: 24px; border-top: 1px solid var(--color-line); }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; gap: 16px; } .foot { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } }
+</style>
