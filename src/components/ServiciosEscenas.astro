@@ -1,0 +1,217 @@
+---
+// Servicios como ventana fija con escenas. En escritorio, los cuatro pasos corren a la
+// izquierda y la ventana de la derecha se queda quieta y cambia de escena con un barrido
+// que sube como líquido; la barra lateral es el nivel del frasco. En móvil no hay nada
+// fijo: cada paso lleva su propia escena y su firma se anima al entrar en pantalla.
+import Escena from './Escena.astro';
+import { SERVICIOS, servicioPath } from '../data/servicios';
+import { t, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+---
+<section class="servicios" id="servicios" aria-labelledby="servicios-title">
+  <div class="wrap">
+    <div class="head">
+      <h2 id="servicios-title">{s.servicesTitle}</h2>
+      <p class="eyebrow">{s.servicesEyebrow}</p>
+    </div>
+
+    <div class="stage" data-servicios>
+      <ol class="pasos">
+        {SERVICIOS.map((sv, i) => {
+          const txt = sv[locale];
+          const href = servicioPath(sv, locale);
+          return (
+            <li class="paso" data-paso={i}>
+              <p class="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</p>
+              <h3 transition:name={`servicio-${sv.id}-title`}><a href={href}>{txt.title}</a></h3>
+              <p class="lead-s">{txt.lead}</p>
+              <ul class="facts">{txt.facts.map((f) => <li>{f}</li>)}</ul>
+              <a class="more" href={href} aria-label={`${s.serviceMore}: ${txt.title}`}>{s.serviceMore} →</a>
+              <div class="escena-movil"><Escena servicio={sv} alt={txt.alt} provisionalLabel={s.provisional} /></div>
+            </li>
+          );
+        })}
+      </ol>
+
+      <div class="ventana" aria-hidden="true" data-ventana>
+        <div class="pila">
+          {SERVICIOS.map((sv) => <Escena servicio={sv} alt="" provisionalLabel={s.provisional} />)}
+        </div>
+        <div class="nivel"><span data-nivel></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, ScrollTrigger, pieza } from '../lib/motion/core';
+  import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+
+  gsap.registerPlugin(DrawSVGPlugin);
+
+  // Firma de cada escena: lo que se dibuja al activarse (los bucles viven en el CSS).
+  function firma(escena: HTMLElement) {
+    const tl = gsap.timeline();
+    const trazos = escena.querySelectorAll('.trazo');
+    const nodos = escena.querySelectorAll('.nodo');
+    const relleno = escena.querySelector('.relleno');
+    const foto = escena.querySelector('[data-foto]');
+    if (trazos.length) tl.fromTo(trazos, { drawSVG: '0%' }, { drawSVG: '100%', duration: 0.9, ease: 'power2.inOut' }, 0.15);
+    if (nodos.length) tl.fromTo(nodos, { scale: 0, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.4, ease: 'back.out(2)', stagger: 0.08 }, 0.1);
+    if (relleno) tl.fromTo(relleno, { opacity: 0 }, { opacity: 0.22, duration: 0.4 }, 0.9);
+    // Empuje de cámara suave sobre la foto: el encuadre "llega" como en un plano.
+    if (foto) tl.fromTo(foto, { scale: 1.06 }, { scale: 1, duration: 1.2, ease: 'power2.out' }, 0);
+    return tl;
+  }
+
+  // Timecode a 25 fps mientras la escena de audiovisual está activa (máx. 6 s).
+  function timecode(escena: HTMLElement) {
+    const el = escena.querySelector<SVGTextElement>('[data-timecode]');
+    if (!el) return () => {};
+    const p = (n: number) => String(n).padStart(2, '0');
+    let f = 0;
+    const id = window.setInterval(() => {
+      f++;
+      el.textContent = `00:00:${p(Math.floor(f / 25) % 60)}:${p(f % 25)}`;
+      if (f >= 150) window.clearInterval(id);
+    }, 40);
+    return () => window.clearInterval(id);
+  }
+
+  function activar(escena: HTMLElement) {
+    escena.classList.remove('is-activa');
+    void escena.offsetWidth; // reinicia los bucles CSS
+    escena.classList.add('is-activa');
+    firma(escena);
+    return timecode(escena);
+  }
+
+  function iniciar() {
+    const stage = document.querySelector<HTMLElement>('[data-servicios]');
+    if (!stage) return;
+    let mm: gsap.MatchMedia | null = null;
+
+    pieza(
+      'servicios',
+      () => {
+        mm = gsap.matchMedia();
+
+        mm.add('(min-width: 900px)', () => {
+          stage.classList.add('is-escenas');
+          const escenas = [...stage.querySelectorAll<HTMLElement>('[data-ventana] [data-escena]')];
+          const pasos = [...stage.querySelectorAll<HTMLElement>('[data-paso]')];
+          let actual = -1;
+          let pararTimecode = () => {};
+
+          const mostrar = (i: number) => {
+            if (i === actual) return;
+            const antes = actual;
+            actual = i;
+            pasos.forEach((p, n) => p.classList.toggle('is-actual', n === i));
+            // Cierra TODAS las demás con set (no solo la anterior): con scroll rápido,
+            // cerrar solo la previa deja escenas congeladas a medio barrido.
+            escenas.forEach((e, n) => {
+              gsap.killTweensOf(e);
+              if (n !== i && n !== antes) gsap.set(e, { clipPath: 'inset(100% 0% 0% 0%)', zIndex: 0 });
+            });
+            if (antes >= 0) gsap.set(escenas[antes], { zIndex: 1 });
+            gsap.set(escenas[i], { zIndex: 2 });
+            gsap.fromTo(escenas[i], { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: 'power3.inOut' });
+            pararTimecode();
+            pararTimecode = activar(escenas[i]);
+          };
+
+          escenas.forEach((e, n) => gsap.set(e, { clipPath: n === 0 ? 'inset(0% 0% 0% 0%)' : 'inset(100% 0% 0% 0%)' }));
+          const triggers = pasos.map((paso, i) =>
+            ScrollTrigger.create({
+              trigger: paso,
+              start: 'top 55%',
+              end: 'bottom 55%',
+              onToggle: (self) => self.isActive && mostrar(i),
+            }),
+          );
+          // Nivel del frasco: sube con el avance por los cuatro servicios.
+          const nivel = gsap.fromTo('[data-nivel]', { scaleY: 0 }, {
+            scaleY: 1, ease: 'none', transformOrigin: '50% 100%',
+            scrollTrigger: { trigger: stage, start: 'top 55%', end: 'bottom 55%', scrub: 0.4 },
+          });
+          mostrar(0);
+
+          return () => {
+            pararTimecode();
+            triggers.forEach((t) => t.kill());
+            nivel.scrollTrigger?.kill();
+            stage.classList.remove('is-escenas');
+            escenas.forEach((e) => gsap.set(e, { clearProps: 'clipPath,zIndex' }));
+            pasos.forEach((p) => p.classList.remove('is-actual'));
+          };
+        });
+
+        // Móvil: la firma de cada escena se anima una vez al entrar en pantalla.
+        mm.add('(max-width: 899px)', () => {
+          const escenas = [...stage.querySelectorAll<HTMLElement>('.escena-movil [data-escena]')];
+          const paradas: Array<() => void> = [];
+          const triggers = escenas.map((e) => {
+            let hecho = false;
+            return ScrollTrigger.create({
+              trigger: e,
+              start: 'top 75%',
+              onEnter: () => {
+                if (hecho) return;
+                hecho = true;
+                paradas.push(activar(e));
+              },
+            });
+          });
+          return () => {
+            paradas.forEach((f) => f());
+            triggers.forEach((t) => t.kill());
+          };
+        });
+
+        return () => mm?.revert();
+      },
+      () => {
+        mm?.revert();
+        stage.classList.remove('is-escenas');
+      },
+    );
+  }
+  document.addEventListener('astro:page-load', iniciar);
+</script>
+
+<style>
+  .servicios { padding-block: 96px; }
+  .head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: 40px; }
+  h2 { font-size: clamp(32px, 2.6vw + 10px, 48px); line-height: 1.05; max-width: 14em; margin: 0; }
+  .pasos { list-style: none; margin: 0; padding: 0; display: grid; gap: 56px; }
+  .num { margin: 0 0 8px; font: 500 13px var(--font-mono); letter-spacing: 0.1em; color: var(--color-glow); }
+  h3 { font-size: clamp(26px, 1.6vw + 14px, 38px); line-height: 1.08; margin: 0 0 12px; }
+  h3 a { text-decoration: none; }
+  h3 a:hover { color: var(--color-antidote); }
+  .lead-s { margin: 0 0 14px; color: var(--color-fg-muted); max-width: 32em; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+  .facts li { font-size: 13px; padding: 5px 10px; border-radius: 999px; background: var(--color-ink-raised); }
+  .more { display: inline-flex; align-items: center; min-height: 44px; margin-top: 6px; font-size: 14px; font-weight: 600; color: var(--color-antidote); text-decoration: none; }
+  .escena-movil { margin-top: 20px; }
+  .ventana { display: none; }
+
+  /* Escritorio con JS: dos columnas, ventana fija y escenas apiladas en una celda. */
+  @media (min-width: 900px) {
+    .stage:global(.is-escenas) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 64px; align-items: start; }
+    .stage:global(.is-escenas) .escena-movil { display: none; }
+    .stage:global(.is-escenas) .pasos { gap: 0; }
+    .stage:global(.is-escenas) .paso { min-height: 72vh; display: flex; flex-direction: column; justify-content: center; opacity: 0.35; transition: opacity var(--t-slow) var(--ease-out); }
+    .stage:global(.is-escenas) .paso:global(.is-actual) { opacity: 1; }
+    .stage:global(.is-escenas) .ventana { display: grid; grid-template-columns: minmax(0, 1fr) 6px; gap: 16px; position: sticky; top: calc(var(--nav-h) + (100svh - var(--nav-h)) / 2); transform: translateY(-50%); }
+    .pila { display: grid; }
+    .pila > :global(*) { grid-area: 1 / 1; }
+    .nivel { position: relative; border-radius: 6px; background: var(--color-ink-raised); overflow: hidden; }
+    .nivel span { position: absolute; inset: 0; background: linear-gradient(0deg, var(--color-mid), var(--color-antidote)); transform-origin: 50% 100%; }
+  }
+</style>

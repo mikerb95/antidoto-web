@@ -4,7 +4,7 @@ import HeroFormula from '../HeroFormula.astro';
 import Stats from '../Stats.astro';
 import Clientes from '../Clientes.astro';
 import Retos from '../Retos.astro';
-import ServiciosLista from '../ServiciosLista.astro';
+import ServiciosEscenas from '../ServiciosEscenas.astro';
 import ContactoCta from '../ContactoCta.astro';
 import { t, homePath, type Locale } from '../../i18n/ui';
 import { organizationSchema } from '../../data/schema';
@@ -20,7 +20,7 @@ const s = t(locale);
   <div class="stats-band"><Stats locale={locale} /></div>
   <Clientes locale={locale} />
   <Retos locale={locale} />
-  <ServiciosLista locale={locale} />
+  <ServiciosEscenas locale={locale} />
   <ContactoCta locale={locale} />
 </Base>
 

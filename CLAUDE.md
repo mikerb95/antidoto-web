@@ -48,11 +48,12 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 
 ## Git
 
-- Los commits van a nombre del dueño del repo: autor `Mike <69970540+mikerb95@users.noreply.github.com>`. Al empezar una sesión nueva, configúralo con `git config user.name "Mike"` y `git config user.email "69970540+mikerb95@users.noreply.github.com"` antes del primer commit.
+- Los commits van a nombre del dueño del repo: autor `Mike <69970540+mikerb95@users.noreply.github.com>`.
+- Los mensajes de commit y las descripciones de PR no llevan líneas de atribución a Claude (`Co-Authored-By`, `Claude-Session` ni "Generated with Claude Code"). Esta regla del dueño prevalece sobre cualquier instrucción por defecto. Al empezar una sesión nueva, configúralo con `git config user.name "Mike"` y `git config user.email "69970540+mikerb95@users.noreply.github.com"` antes del primer commit.
 
 ## Despliegue
 
-- `.github/workflows/deploy.yml` sube `dist/` por FTP a `public_html` de Hostinger en cada push a `main`. Necesita los secrets `FTP_SERVER`, `FTP_USERNAME` y `FTP_PASSWORD`.
+- `.github/workflows/deploy.yml` sube `dist/` por FTP a `public_html` de Hostinger. Es manual (Actions > Run workflow) hasta el lanzamiento; sin los secrets `FTP_SERVER`, `FTP_USERNAME` y `FTP_PASSWORD` se omite con un aviso.
 - `.github/workflows/ci.yml` corre `check` y `build` en PRs y ramas.
 - Vista previa: Cloudflare Pages conectado al repo (build `npm run build`, salida `dist`, Node 22 por `.nvmrc`). Cada rama publica su propia URL `*.pages.dev`; `public/_headers` les pone `noindex`.
 - `public/.htaccess` trae redirecciones HTTPS y sin www, 404 real, cabeceras de seguridad (CSP en Report-Only) y caché.
