@@ -1,0 +1,59 @@
+---
+// HUD de fórmula: indicador fijo abajo a la izquierda que marca en qué parte de la página
+// estás, como el "SYS" de codebymike.net pero en el idioma del laboratorio. Decorativo
+// (aria-hidden): la estructura real la dan los encabezados. Solo en escritorio.
+interface Props {
+  titulo: string;
+  /** [clave de la sección (data-hud), etiqueta] */
+  items: Array<[string, string]>;
+}
+const { titulo, items } = Astro.props;
+---
+<aside class="hud panel panel-fuerte" aria-hidden="true" data-hud-panel>
+  <p class="t">{titulo}</p>
+  {items.map(([clave, etiqueta]) => (
+    <p class="linea" data-hud-linea={clave}><span>{etiqueta}</span><span class="estado">·</span></p>
+  ))}
+</aside>
+
+<script>
+  const lineas = [...document.querySelectorAll<HTMLElement>('[data-hud-linea]')];
+  const secciones = lineas
+    .map((l) => document.querySelector<HTMLElement>(`[data-hud="${l.dataset.hudLinea}"]`))
+    .filter((s): s is HTMLElement => !!s);
+  if (lineas.length && secciones.length) {
+    // La sección actual es la última cuyo borde superior ya pasó el 45 % de la pantalla.
+    const actualizar = () => {
+      const corte = window.innerHeight * 0.45;
+      let actual = 0;
+      secciones.forEach((s, i) => {
+        if (s.getBoundingClientRect().top < corte) actual = i;
+      });
+      lineas.forEach((l, i) => {
+        const estado = l.querySelector('.estado')!;
+        l.dataset.estado = i < actual ? 'hecho' : i === actual ? 'actual' : 'pendiente';
+        estado.textContent = i < actual ? '✓' : i === actual ? '●' : '·';
+      });
+    };
+    let pendiente = false;
+    addEventListener('scroll', () => {
+      if (pendiente) return;
+      pendiente = true;
+      requestAnimationFrame(() => {
+        pendiente = false;
+        actualizar();
+      });
+    }, { passive: true });
+    actualizar();
+  }
+</script>
+
+<style>
+  .hud { position: fixed; left: 14px; bottom: 16px; z-index: 30; width: 116px; padding: 10px 12px; border-radius: 12px; font: 500 10px/1.7 var(--font-mono); letter-spacing: 0.08em; text-transform: lowercase; view-transition-name: hud; }
+  .t { margin: 0 0 4px; color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: 0.2em; font-size: 9.5px; }
+  .linea { margin: 0; display: flex; justify-content: space-between; color: rgb(167 182 186 / 0.55); transition: color var(--t-base) var(--ease-out); }
+  .linea[data-estado='hecho'] { color: var(--color-fg-muted); }
+  .linea[data-estado='hecho'] .estado { color: var(--color-antidote); }
+  .linea[data-estado='actual'] { color: var(--color-antidote); }
+  @media (max-width: 1399px) { .hud { display: none; } }
+</style>

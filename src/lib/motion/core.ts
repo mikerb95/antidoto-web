@@ -1,4 +1,6 @@
-// Motion compartido del sitio: GSAP, Lenis y el ciclo de vida con <ClientRouter />.
+// Motion compartido del sitio: GSAP y Lenis. El sitio es multipágina con view transitions
+// nativas entre documentos: cada página se carga de verdad, así que cada script inicializa
+// una vez al cargar y no hay nada que limpiar al navegar.
 //
 // Cada pieza animada se registra con `pieza()`: si el usuario pidió menos movimiento no
 // corre nada, y si la inicialización falla se llama a su `restaurar` para devolver la
@@ -16,7 +18,6 @@ export { gsap, ScrollTrigger };
 export const reducido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let lenis: Lenis | null = null;
-const limpiezas: Array<() => void> = [];
 
 function raf(time: number) {
   lenis?.raf(time * 1000);
@@ -28,18 +29,17 @@ function raf(time: number) {
  */
 function iniciarScroll() {
   if (reducido() || document.body.dataset.scroll !== 'suave') return;
-  lenis = new Lenis({ anchors: { offset: -80 } });
+  lenis = new Lenis({ anchors: { offset: -90 } });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add(raf);
   gsap.ticker.lagSmoothing(0);
 }
 
-/** Registra una pieza de motion con su limpieza y su respaldo si falla. */
+/** Registra una pieza de motion con su respaldo si falla (fail-open). */
 export function pieza(nombre: string, iniciar: () => void | (() => void), restaurar?: () => void) {
   if (reducido()) return;
   try {
-    const limpiar = iniciar();
-    if (limpiar) limpiezas.push(limpiar);
+    iniciar();
   } catch (err) {
     console.warn(`[motion] ${nombre} deshabilitado tras un fallo`, err);
     try {
@@ -66,22 +66,6 @@ export function soloVisible(el: Element, anim: { play: () => unknown; pause: () 
   };
 }
 
-document.addEventListener('astro:page-load', () => {
-  iniciarScroll();
-  // Las medidas cambian cuando llegan las fuentes; ScrollTrigger recalcula entonces.
-  document.fonts.ready.then(() => ScrollTrigger.refresh());
-});
-
-document.addEventListener('astro:before-swap', () => {
-  limpiezas.splice(0).forEach((fn) => {
-    try {
-      fn();
-    } catch {
-      /* ignorar: la página se va */
-    }
-  });
-  ScrollTrigger.getAll().forEach((t) => t.kill());
-  gsap.ticker.remove(raf);
-  lenis?.destroy();
-  lenis = null;
-});
+iniciarScroll();
+// Las medidas cambian cuando llegan las fuentes; ScrollTrigger recalcula entonces.
+document.fonts.ready.then(() => ScrollTrigger.refresh());
