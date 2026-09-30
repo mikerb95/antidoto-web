@@ -1,101 +1,55 @@
 ---
+// Cuadrícula de marcas clientes sobre fondo claro. Sin filtro: todas las marcas a la vista.
+// En la home muestra una parte y enlaza a /clientes/; en esa página va completa.
 import { Image } from 'astro:assets';
-import { CLIENTES, SECTORES, contarPorSector } from '../data/clientes';
-import { t, type Locale } from '../i18n/ui';
+import Encabezado from './Encabezado.astro';
+import { CLIENTES } from '../data/clientes';
+import { t, rutas, type Locale } from '../i18n/ui';
 
 interface Props {
   locale: Locale;
+  num: string;
+  /** Cuántas marcas mostrar; sin valor, todas. */
+  limite?: number;
+  /** Nivel del título (1 cuando la sección abre la página /clientes/). */
+  nivel?: 1 | 2;
 }
-const s = t(Astro.props.locale);
-const total = CLIENTES.length;
+const { locale, num, limite, nivel = 2 } = Astro.props;
+const s = t(locale);
+const lista = limite ? CLIENTES.slice(0, limite) : CLIENTES;
 ---
-<section class="clientes" id="clientes" aria-labelledby="clientes-title" data-clientes>
+<section class="clientes" aria-labelledby="clientes-title" data-hud="muestra">
   <div class="wrap">
     <div class="head">
-      <div>
-        <h2 id="clientes-title">{s.clientsTitle}</h2>
-        <p>{s.clientsLead}</p>
-      </div>
-      <!-- El filtro solo sirve con JS: el script lo muestra; sin él la rejilla queda completa. -->
-      <div class="filtro" role="group" aria-label={s.clientsFilter} hidden data-filtro>
-        <button type="button" aria-pressed="true" data-sector="todos">{s.clientsAll} <span>{total}</span></button>
-        {SECTORES.map((sec) => (
-          <button type="button" aria-pressed="false" data-sector={sec}>{s.sectors[sec]} <span>{contarPorSector(sec)}</span></button>
-        ))}
-      </div>
+      <Encabezado num={num} kicker={s.clientsKicker} titulo={s.clientsTitle} lead={s.clientsLead} id="clientes-title" nivel={nivel} claro />
+      <p class="total mono"><strong>{CLIENTES.length}</strong> {s.marcas(CLIENTES.length).replace(/^\d+\s/, '')}</p>
     </div>
-    <p class="conteo" aria-live="polite" data-conteo data-plantilla={s.clientsCount(0, total)}></p>
     <ul class="grid">
-      {CLIENTES.map((c) => (
-        <li data-sector={c.sector}><Image src={c.logo} alt={c.nombre} height={68} loading="lazy" /></li>
+      {lista.map((c, i) => (
+        <li>
+          <span class="n mono" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+          <Image src={c.logo} alt={c.nombre} height={68} loading="lazy" />
+        </li>
       ))}
     </ul>
+    {limite && <a class="todos" href={rutas.clientes[locale]}>{s.clientsAll} →</a>}
   </div>
 </section>
 
-<script>
-  // Filtro por sector: los logos de otros sectores se apagan en su sitio (sin reordenar la
-  // rejilla), así se ve de un vistazo cuánto pesa cada sector entre los clientes.
-  function iniciar() {
-    const raiz = document.querySelector<HTMLElement>('[data-clientes]');
-    const filtro = raiz?.querySelector<HTMLElement>('[data-filtro]');
-    const conteo = raiz?.querySelector<HTMLElement>('[data-conteo]');
-    if (!raiz || !filtro || !conteo) return;
-    const botones = [...filtro.querySelectorAll<HTMLButtonElement>('button')];
-    const logos = [...raiz.querySelectorAll<HTMLElement>('li[data-sector]')];
-    // La plantilla trae "0 de 18 marcas": solo se cambia el primer número.
-    const plantilla = conteo.dataset.plantilla ?? '';
-
-    const elegir = (sector: string) => {
-      botones.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sector === sector)));
-      let n = 0;
-      logos.forEach((li) => {
-        const activo = sector === 'todos' || li.dataset.sector === sector;
-        li.classList.toggle('is-apagado', !activo);
-        if (activo) n++;
-      });
-      conteo.textContent = sector === 'todos' ? '' : plantilla.replace(/^0/, String(n));
-    };
-
-    filtro.hidden = false;
-    botones.forEach((b) => b.addEventListener('click', () => elegir(b.dataset.sector!)));
-    elegir('todos');
-  }
-  // El filtro no es motion: funciona también con movimiento reducido (solo sin transición).
-  document.addEventListener('astro:page-load', () => {
-    try {
-      iniciar();
-    } catch (err) {
-      console.warn('[clientes] filtro deshabilitado', err);
-    }
-  });
-</script>
-
 <style>
-  .clientes { background: var(--color-bone); color: var(--color-ink); padding-block: 72px; }
-  .head { display: flex; justify-content: space-between; align-items: end; gap: 24px 40px; flex-wrap: wrap; margin-bottom: 28px; }
-  h2 { font-size: clamp(26px, 1.6vw + 12px, 36px); margin: 0; }
-  .head p { color: var(--color-bone-muted); margin: 8px 0 0; max-width: 32em; }
-  .filtro { display: flex; flex-wrap: wrap; gap: 8px; }
-  .filtro[hidden] { display: none; }
-  .filtro button {
-    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px;
-    border: 1px solid var(--color-bone-line); background: transparent; color: var(--color-ink);
-    font: 500 14px/1 var(--font-sans); cursor: pointer; transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
-  }
-  .filtro button span { font: 500 12px/1 var(--font-mono); color: var(--color-bone-muted); }
-  .filtro button:hover { border-color: var(--color-ink); }
-  .filtro button[aria-pressed='true'] { background: var(--color-ink); color: var(--color-bone); border-color: var(--color-ink); }
-  .filtro button[aria-pressed='true'] span { color: var(--color-antidote); }
-  .conteo { min-height: 1.5em; margin: 0 0 12px; font: 500 13px var(--font-mono); letter-spacing: 0.06em; color: var(--color-bone-muted); }
-  .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; list-style: none; margin: 0; padding: 0; background: var(--color-bone-line); border: 1px solid var(--color-bone-line); border-radius: 14px; overflow: hidden; }
-  li { background: var(--color-bone); display: grid; place-items: center; padding: 22px 14px; min-height: 92px; transition: background var(--t-base) var(--ease-out); }
+  .clientes { background: var(--color-bone); color: var(--color-ink); padding-block: 64px; }
+  .head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: 28px; }
+  .total { margin: 0; color: var(--color-bone-muted); }
+  .total strong { display: block; font: 400 56px/1 var(--font-accent); letter-spacing: 0; color: var(--color-deep); text-transform: none; }
+  .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; list-style: none; margin: 0; padding: 0; background: var(--color-bone-line); border: 1px solid var(--color-bone-line); border-radius: 16px; overflow: hidden; }
+  li { position: relative; background: var(--color-bone); display: grid; place-items: center; padding: 26px 14px; min-height: 104px; transition: background var(--t-base) var(--ease-out); }
+  li:hover { background: #fff; }
+  .n { position: absolute; top: 8px; left: 10px; font-size: 9.5px; color: var(--color-bone-muted); opacity: 0.7; }
   /* Los logos llegan en blanco; brightness(0) los pasa a tinta sobre el fondo claro. */
-  img { max-height: 34px; max-width: 100%; width: auto; height: auto; filter: brightness(0); opacity: 0.72; transition: opacity var(--t-base) var(--ease-out), transform var(--t-base) var(--ease-out); }
+  img { max-height: 36px; max-width: 100%; width: auto; height: auto; filter: brightness(0); opacity: 0.75; transition: opacity var(--t-base) var(--ease-out); }
   li:hover img { opacity: 1; }
-  li.is-apagado { background: #ebe8e1; }
-  li.is-apagado img { opacity: 0.12; transform: scale(0.94); }
-  li:not(.is-apagado) img { opacity: 0.85; }
+  .todos { display: inline-flex; align-items: center; min-height: 44px; margin-top: 16px; font-weight: 600; color: var(--color-deep); text-decoration: none; }
+  .todos:hover { text-decoration: underline; }
   @media (max-width: 860px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  @media (max-width: 480px) { li { padding: 16px 8px; min-height: 72px; } img { max-height: 26px; } }
+  @media (max-width: 480px) { li { padding: 18px 8px; min-height: 80px; } img { max-height: 26px; } }
 </style>
