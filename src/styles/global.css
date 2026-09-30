@@ -1,0 +1,104 @@
+@import 'tailwindcss';
+
+/* Fuentes de marca (marca/README.md). WOFF2 con subset latino, servidas desde /fonts. */
+@font-face { font-family: 'Cal Sans'; src: url('/fonts/cal-sans-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Poppins'; src: url('/fonts/poppins-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Poppins'; src: url('/fonts/poppins-500.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Poppins'; src: url('/fonts/poppins-600.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Modulus'; src: url('/fonts/modulus-500.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('/fonts/plex-mono-500.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+
+/* Tokens de marca. Contraste medido sobre --color-ink en marca/README.md. */
+@theme {
+  --color-ink: #0f181d;
+  --color-ink-deep: #0a1115;
+  --color-ink-raised: #15232a;
+  --color-deep: #0c5c7d;
+  --color-mid: #1c99ca;
+  --color-antidote: #3bc8f3;
+  --color-glow: #80dcff;
+  --color-fg: #edf2f1;
+  --color-fg-muted: #a7b6ba;
+  --color-line: rgb(128 220 255 / 0.14);
+  --color-bone: #f1efe9;
+  --color-bone-line: #d9d6ce;
+  --color-bone-muted: #4a5a60;
+  --color-reto: #ff7a59;
+
+  --font-display: 'Cal Sans', 'Poppins', system-ui, sans-serif;
+  --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-accent: 'Modulus', 'Poppins', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Tokens de movimiento (auditoria/02-prompt-claude-design.md §4). */
+:root {
+  --t-fast: 180ms;
+  --t-base: 280ms;
+  --t-slow: 480ms;
+  --t-narrative: 1000ms;
+  --nav-h: 68px;
+  color-scheme: dark;
+}
+
+@layer base {
+  html { scroll-padding-top: calc(var(--nav-h) + 16px); }
+  body {
+    background: var(--color-ink);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.01em; text-wrap: balance; }
+  :focus-visible { outline: 2px solid var(--color-antidote); outline-offset: 3px; border-radius: 6px; }
+}
+
+@layer components {
+  .wrap { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
+  @media (max-width: 600px) { .wrap { padding-inline: 16px; } }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-glow); }
+  .lead { font-size: clamp(17px, 1.2vw + 10px, 20px); color: var(--color-fg-muted); max-width: 34em; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 48px; padding: 0 22px; border-radius: 999px;
+    font: 600 15px/1 var(--font-sans); text-decoration: none; cursor: pointer;
+    border: 1.5px solid transparent; position: relative; overflow: hidden; isolation: isolate;
+  }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+  .btn-inner { display: inline-flex; align-items: center; gap: 10px; }
+  .btn-primary { background: var(--color-antidote); color: var(--color-ink); }
+  .btn-primary::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; background: var(--color-glow);
+    transform: translateY(101%); transition: transform var(--t-base) var(--ease-out);
+  }
+  .btn-primary:hover::before { transform: none; }
+  .btn-ghost { border-color: rgb(237 242 241 / 0.28); color: var(--color-fg); transition: border-color var(--t-base) var(--ease-out); }
+  .btn-ghost:hover { border-color: var(--color-antidote); }
+  .btn-sm { min-height: 44px; padding: 0 18px; font-size: 14px; }
+
+  .pause-btn {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px;
+    background: none; border: 1px solid var(--color-line); color: var(--color-fg-muted);
+    font: 500 13px/1 var(--font-sans); cursor: pointer;
+  }
+  .pause-btn:hover { color: var(--color-fg); border-color: var(--color-antidote); }
+}
+
+/* Movimiento reducido: sin bucles ni desplazamientos, fundidos casi instantáneos. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pause-btn { display: none; }
+}

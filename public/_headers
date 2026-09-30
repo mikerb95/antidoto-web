@@ -1,0 +1,7 @@
+# Solo aplica en Cloudflare Pages (vista previa). En Hostinger este archivo se ignora.
+# Evita que Google indexe las URLs de vista previa *.pages.dev.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex

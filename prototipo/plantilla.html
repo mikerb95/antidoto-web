@@ -1,0 +1,549 @@
+<title>Rediseño Antídoto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cal+Sans&family=Poppins:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+@font-face{font-family:"Modulus";src:url(data:font/ttf;base64,{{MODULUS}}) format("truetype");font-display:swap}
+/* Layout: prototipo de sitio dark-first; barra de herramientas fija arriba, cada dirección es una home completa. */
+:root{
+  --ink:#0F181D; --ink-2:#0A1115; --ink-3:#15232A;
+  --deep:#0C5C7D; --mid:#1C99CA; --antidote:#3BC8F3; --glow:#80DCFF;
+  --fg:#EDF2F1; --fg-2:#A7B6BA; --line:rgba(128,220,255,.14);
+  --bone:#F1EFE9; --bone-fg:#0F181D; --bone-2:#4A5A60;
+  --reto:#FF7A59;
+  --display:"Cal Sans","Poppins",system-ui,sans-serif;
+  --body:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --accent:"Modulus","Poppins",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --t-fast:180ms; --t-base:280ms; --t-slow:480ms; --t-narr:1000ms;
+  --e-out:cubic-bezier(.22,1,.36,1); --e-io:cubic-bezier(.65,0,.35,1);
+  --nav-h:68px; --tool-h:52px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:calc(var(--nav-h) + var(--tool-h))}
+body{background:var(--ink);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--antidote);outline-offset:3px;border-radius:6px}
+.wrap{width:100%;max-width:1200px;margin-inline:auto;padding-inline:24px}
+@media (max-width:600px){.wrap{padding-inline:16px}}
+.skip{position:absolute;left:16px;top:-60px;background:var(--antidote);color:var(--ink);padding:10px 14px;border-radius:8px;z-index:50;font-weight:600;text-decoration:none}
+.skip:focus{top:calc(var(--tool-h) + 8px)}
+
+/* ---------- barra de revisión ---------- */
+.tool{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--ink-2);border-bottom:1px solid var(--line);min-height:var(--tool-h)}
+.tool .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:8px}
+.tool b{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2)}
+.seg{display:flex;gap:4px;background:var(--ink-3);border-radius:10px;padding:4px;flex-wrap:wrap}
+.seg button{font:500 14px/1 var(--body);color:var(--fg-2);background:none;border:0;padding:9px 12px;border-radius:7px;cursor:pointer;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--antidote);color:var(--ink)}
+.tool label{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--fg-2);margin-left:auto;cursor:pointer}
+.tool input{accent-color:var(--antidote);width:18px;height:18px}
+
+/* ---------- componentes comunes ---------- */
+.nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--tool-h));z-index:30;height:var(--nav-h);background:color-mix(in srgb,var(--ink) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav .wrap{height:100%;display:flex;align-items:center;gap:28px}
+.nav .logo{display:block;width:132px;height:auto;color:var(--antidote)}
+.nav ul{display:flex;gap:4px;list-style:none;margin:0 0 0 auto;padding:0}
+.nav ul a{display:block;padding:10px 12px;text-decoration:none;font-size:14px;color:var(--fg-2);position:relative}
+.nav ul a:hover{color:var(--fg)}
+.nav ul a[aria-current]{color:var(--fg)}
+.nav ul a[aria-current]::after{content:"";position:absolute;left:12px;right:12px;bottom:4px;height:2px;border-radius:2px;background:var(--antidote)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;border-radius:999px;font:600 15px/1 var(--body);text-decoration:none;cursor:pointer;border:1.5px solid transparent;position:relative;overflow:hidden;isolation:isolate;transition:color var(--t-base) var(--e-out)}
+.btn-p{background:var(--antidote);color:var(--ink)}
+.btn-p::before{content:"";position:absolute;inset:0;background:var(--glow);transform:translateY(101%);transition:transform var(--t-base) var(--e-out);z-index:-1}
+.btn-p:hover::before{transform:none}
+.btn-g{border-color:rgba(237,242,241,.28);color:var(--fg)}
+.btn-g:hover{border-color:var(--antidote)}
+.btn-s{min-height:44px;padding:0 18px;font-size:14px}
+.btn svg{width:18px;height:18px;flex:none}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--glow)}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.01em;text-wrap:balance;margin:0}
+.lead{font-size:clamp(17px,1.2vw + 10px,20px);color:var(--fg-2);max-width:34em;margin:0}
+.tint{animation:tint var(--t-slow) var(--e-out) both}
+.tint:nth-of-type(1){animation-delay:.35s}.tint:nth-of-type(2){animation-delay:.6s}.tint:nth-of-type(3){animation-delay:.85s}
+@keyframes tint{from{color:var(--fg)}to{color:var(--antidote)}}
+
+/* marquee de logos */
+.logos{padding-block:40px;border-block:1px solid var(--line)}
+.logos-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.logos-head p{margin:0;font-size:14px;color:var(--fg-2)}
+.pause{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--line);color:var(--fg-2);border-radius:999px;min-height:44px;padding:0 16px;font:500 13px/1 var(--body);cursor:pointer}
+.pause:hover{color:var(--fg);border-color:var(--antidote)}
+.marquee{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.track{display:flex;width:max-content;animation:slide 60s linear infinite}
+.marquee:hover .track,.marquee:focus-within .track,.paused .track{animation-play-state:paused}
+.set{display:flex;align-items:center;gap:56px;padding-right:56px}
+.set img{height:34px;width:auto;opacity:.62;transition:opacity var(--t-base) var(--e-out)}
+.set img:hover{opacity:1}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* barra móvil WhatsApp */
+.mbar{display:none}
+@media (max-width:760px){
+  .nav ul{display:none}
+  .nav .btn{margin-left:auto}
+  .mbar{display:flex;position:sticky;bottom:0;z-index:30;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--ink-2) 92%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line)}
+  .mbar .btn{width:100%}
+}
+
+/* ---------- Dirección A: editorial ---------- */
+.dir[hidden]{display:none}
+.a-hero{padding-block:56px 40px}
+.a-hero .grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:48px;align-items:center}
+.a-hero h1{font-size:clamp(40px,4.4vw + 8px,72px);line-height:1.02;margin-block:18px 22px}
+.a-hero .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.sst{display:inline-flex;gap:10px;align-items:center;margin-top:28px;font-size:14px;color:var(--fg-2);padding:10px 14px;border:1px solid var(--line);border-radius:10px}
+.sst i{width:8px;height:8px;border-radius:50%;background:var(--antidote);flex:none}
+.flask{width:100%;height:auto;display:block;max-width:440px;margin-inline:auto;color:var(--antidote)}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:48px}
+.stats div{background:var(--ink);padding:18px 20px}
+.stats strong{display:block;font:400 30px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.stats span{font-size:13px;color:var(--fg-2)}
+@media (max-width:860px){.a-hero .grid{grid-template-columns:1fr}.a-hero .flask{max-width:260px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats div:last-child{grid-column:1/-1}}
+
+.a-serv{padding-block:88px}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap;margin-bottom:40px}
+.sec-head h2{font-size:clamp(32px,2.6vw + 10px,48px);line-height:1.05;max-width:14em}
+.rows{border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.3fr) 200px;gap:32px;padding-block:28px;border-bottom:1px solid var(--line);align-items:center}
+.row h3{font-size:clamp(24px,1.4vw + 12px,32px);line-height:1.1;display:flex;gap:12px;align-items:center}
+.row h3 i{width:10px;height:10px;border-radius:50%;background:var(--antidote);flex:none}
+.row p{margin:0 0 12px;color:var(--fg-2)}
+.row ul{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
+.row li{font-size:13px;padding:5px 10px;border-radius:999px;background:var(--ink-3);color:var(--fg)}
+.row .ph{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:var(--ink-3)}
+.row .ph img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.85);transform:scale(1.02);transition:transform var(--t-slow) var(--e-out)}
+.row:hover .ph img{transform:scale(1.07)}
+.row .more{display:inline-flex;margin-top:14px;font-size:14px;font-weight:600;color:var(--antidote);text-decoration:none;gap:6px;min-height:44px;align-items:center}
+.tag{position:absolute;left:8px;bottom:8px;font:500 11px/1 var(--mono);background:rgba(10,17,21,.8);padding:6px 8px;border-radius:6px;color:var(--fg)}
+@media (max-width:860px){.row{grid-template-columns:1fr;gap:14px}.row .ph{order:-1;max-width:420px}}
+
+.cta-band{padding-block:72px;background:var(--ink-2);border-top:1px solid var(--line)}
+.cta-band .wrap{display:flex;justify-content:space-between;gap:32px;align-items:center;flex-wrap:wrap}
+.cta-band h2{font-size:clamp(28px,2.2vw + 10px,42px);max-width:16em;line-height:1.08}
+.contact{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---------- Dirección B: expresiva ---------- */
+.b-hero{position:relative;overflow:hidden;padding-block:48px 0;background:radial-gradient(120% 90% at 85% 40%,#10303D 0%,var(--ink) 55%)}
+.b-hero .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end}
+.b-hero .copy{padding-bottom:72px}
+.b-hero h1{font-size:clamp(44px,5.4vw + 6px,88px);line-height:.98;margin-block:16px 22px}
+.b-hero .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.b-hero .flask{max-width:620px;margin:0 -40px -120px auto}
+.b-hero .hctl{margin-top:20px}
+@media (max-width:860px){.b-hero .grid{grid-template-columns:1fr}.b-hero .copy{padding-bottom:8px}.b-hero .flask{max-width:340px;margin:0 auto -70px}.b-hero .copy{order:0}}
+
+.b-logos{background:var(--bone);color:var(--bone-fg);padding-block:64px}
+.b-logos h2{font-size:clamp(26px,1.6vw + 12px,36px)}
+.b-logos p{color:var(--bone-2);margin:8px 0 32px}
+.lgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:#D9D6CE;border:1px solid #D9D6CE;border-radius:14px;overflow:hidden}
+.lgrid div{background:var(--bone);display:grid;place-items:center;padding:22px 14px;min-height:92px}
+.lgrid img{max-height:34px;max-width:100%;width:auto;filter:brightness(0);opacity:.72;transition:opacity var(--t-base) var(--e-out)}
+.lgrid div:hover img{opacity:1}
+@media (max-width:860px){.lgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:480px){.lgrid div{padding:16px 8px;min-height:72px}.lgrid img{max-height:26px}}
+
+.b-serv{padding-block:96px}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.card{position:relative;border-radius:18px;overflow:hidden;min-height:440px;display:flex;flex-direction:column;justify-content:flex-end;background:var(--ink-3);isolation:isolate}
+.card>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform var(--t-slow) var(--e-out)}
+.card::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(15,24,29,.05) 20%,rgba(15,24,29,.72) 58%,rgba(15,24,29,.96) 100%)}
+.card:hover>img{transform:scale(1.04)}
+.card .body{padding:28px}
+.card h3{font-size:clamp(26px,1.4vw + 14px,34px);line-height:1.06}
+.card p{color:var(--fg-2);margin:10px 0 14px;max-width:30em}
+.card ul{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0 0 18px;padding:0}
+.card li{font-size:13px;padding:5px 10px;border-radius:999px;background:rgba(237,242,241,.1);backdrop-filter:blur(4px)}
+.sig{position:absolute;top:20px;right:20px;width:132px;height:88px;color:var(--antidote)}
+.sig .tc{font:500 11px var(--mono);fill:var(--fg)}
+@media (max-width:860px){.cards{grid-template-columns:1fr}.card{min-height:400px}}
+
+.b-num{padding-block:80px;border-top:1px solid var(--line)}
+.nums{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:24px}
+.num{display:flex;gap:14px;align-items:flex-end}
+.num strong{display:block;font:400 clamp(40px,3vw + 12px,60px)/1 var(--accent);font-variant-numeric:tabular-nums;color:var(--fg)}
+.num span{display:block;font-size:14px;color:var(--fg-2);margin-top:6px}
+.mini{width:22px;height:54px;flex:none;border:1.5px solid var(--mid);border-radius:4px 4px 11px 11px;position:relative;overflow:hidden}
+.mini i{position:absolute;left:0;right:0;bottom:0;background:var(--antidote);height:var(--lv);animation:fill var(--t-narr) var(--e-out) both}
+@keyframes fill{from{height:0}}
+@media (max-width:860px){.nums{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- SVG: líquido y animaciones ---------- */
+.wave{animation:wave 6s linear infinite}
+@keyframes wave{to{transform:translateX(-120px)}}
+.rise-a{animation:riseA 1.2s var(--e-out) both .2s}
+@keyframes riseA{from{transform:translateY(96px)}}
+.rise-b{animation:riseB 1.2s var(--e-out) both .2s}
+@keyframes riseB{from{transform:translateY(160px)}}
+.bub{animation:bub 4.8s var(--e-io) infinite;opacity:0}
+.bub:nth-child(2){animation-delay:1.3s}.bub:nth-child(3){animation-delay:2.6s}.bub:nth-child(4){animation-delay:3.7s}
+@keyframes bub{0%{transform:translateY(0);opacity:0}15%{opacity:.9}100%{transform:translateY(-120px);opacity:0}}
+.lvl{animation:riseA 1.2s var(--e-out) both .2s}
+.xf{animation:xf 12s linear infinite;opacity:0}
+.xf:nth-child(1){animation-delay:0s}.xf:nth-child(2){animation-delay:4s}.xf:nth-child(3){animation-delay:8s}
+@keyframes xf{0%{opacity:0}6%{opacity:1}33%{opacity:1}40%{opacity:0}100%{opacity:0}}
+.hero-paused .wave,.hero-paused .bub,.hero-paused .xf{animation-play-state:paused}
+.draw{stroke-dasharray:1;stroke-dashoffset:0}
+.play .draw{animation:draw 1s var(--e-out) both}
+.play .draw.d2{animation-delay:.25s}.play .draw.d3{animation-delay:.5s}
+@keyframes draw{from{stroke-dashoffset:1}}
+.node{transform-box:fill-box;transform-origin:center}
+.play .node{animation:pop var(--t-slow) var(--e-out) both}
+@keyframes pop{from{transform:scale(0)}}
+.rec{animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.steam{animation:steam 2.4s var(--e-io) infinite}
+.steam.s2{animation-delay:.8s}.steam.s3{animation-delay:1.6s}
+@keyframes steam{0%{transform:translateY(8px);opacity:0}40%{opacity:1}100%{transform:translateY(-14px);opacity:0}}
+.shape-fill{opacity:.22}
+.play .shape-fill{animation:fadein var(--t-slow) var(--e-out) both 1s}
+@keyframes fadein{from{opacity:0}}
+.offscreen .sig *{animation-play-state:paused!important}
+
+/* ---------- Sistema ---------- */
+.sys{padding-block:72px}
+.sys h2{font-size:clamp(30px,2.4vw + 10px,44px);margin-bottom:12px}
+.sys>.wrap>p{color:var(--fg-2);max-width:44em;margin:0 0 40px}
+.sys h3{font-size:22px;margin:48px 0 16px}
+.sw{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.sw div{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.sw i{display:block;height:88px}
+.sw p{margin:0;padding:10px 12px;font-size:13px;line-height:1.45}
+.sw code{font-family:var(--mono);font-size:12.5px;color:var(--fg)}
+.sw small{display:block;color:var(--fg-2);font-size:12px}
+@media (max-width:760px){.sw{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.types{display:grid;gap:16px}
+.type{display:grid;grid-template-columns:160px minmax(0,1fr);gap:20px;align-items:baseline;padding-block:14px;border-bottom:1px solid var(--line)}
+.type small{font-family:var(--mono);font-size:12px;color:var(--fg-2)}
+@media (max-width:600px){.type{grid-template-columns:1fr;gap:4px}}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line)}
+th{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-2)}
+td code{font-family:var(--mono);font-size:13px;color:var(--glow)}
+tr:last-child td{border-bottom:0}
+.rec-box{margin-top:48px;padding:28px;border-radius:16px;background:var(--ink-3);border:1px solid var(--line)}
+.rec-box h3{margin:0 0 10px}
+.rec-box p{margin:0 0 10px;color:var(--fg-2);max-width:48em}
+.rec-box p:last-child{margin:0}
+
+footer.foot{padding-block:32px;border-top:1px solid var(--line);font-size:13px;color:var(--fg-2)}
+
+/* reduced motion: real y simulado */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:1ms!important}
+  .track{animation:none!important;flex-wrap:wrap;width:auto}.track .set[aria-hidden]{display:none}.set{flex-wrap:wrap;row-gap:24px}
+  .xf{opacity:0!important}.xf:nth-child(1){opacity:1!important}.bub{display:none}
+}
+.rm *,.rm *::before,.rm *::after{animation-duration:1ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:1ms!important}
+.rm .track{animation:none!important;flex-wrap:wrap;width:auto}.rm .track .set[aria-hidden]{display:none}.rm .set{flex-wrap:wrap;row-gap:24px}
+.rm .xf{opacity:0!important}.rm .xf:nth-child(1){opacity:1!important}.rm .bub{display:none}
+.rm .pause{display:none}
+</style>
+
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<div class="tool" role="region" aria-label="Controles del prototipo">
+  <div class="wrap">
+    <b>Prototipo</b>
+    <div class="seg" role="group" aria-label="Elegir vista">
+      <button type="button" id="v-a" data-view="a" aria-pressed="true">A · Editorial</button>
+      <button type="button" id="v-b" data-view="b" aria-pressed="false">B · Expresiva</button>
+      <button type="button" id="v-s" data-view="s" aria-pressed="false">Sistema</button>
+    </div>
+    <label for="rm"><input type="checkbox" id="rm"> Simular movimiento reducido</label>
+  </div>
+</div>
+
+<main id="main">
+
+<!-- ================= DIRECCIÓN A ================= -->
+<div class="dir" id="dir-a">
+  <header class="nav">
+    <div class="wrap">
+      <a href="#dir-a" aria-label="Antídoto, inicio"><svg class="logo" viewBox="679 791 2532 519" role="img" aria-label="antidoto"><g fill="currentColor">{{LOGO_FULL}}</g></svg></a>
+      <nav aria-label="Principal"><ul>
+        <li><a href="#a-serv" aria-current="true">Servicios</a></li>
+        <li><a href="#a-logos">Clientes</a></li>
+        <li><a href="#a-cta">Contacto</a></li>
+      </ul></nav>
+      <a class="btn btn-p btn-s" href="{{WA}}" target="_blank" rel="noopener">Cotizar</a>
+    </div>
+  </header>
+
+  <section class="a-hero" aria-labelledby="a-h1">
+    <div class="wrap">
+      <div class="grid">
+        <div>
+          <p class="eyebrow">Estudio creativo empresarial · Colombia, desde 2020</p>
+          <h1 id="a-h1">Creamos experiencias que <span class="tint">conectan</span>, <span class="tint">inspiran</span> y <span class="tint">transforman</span></h1>
+          <p class="lead">Formaciones vivenciales, producción audiovisual y catering corporativo para empresas, colegios y organizaciones.</p>
+          <div class="ctas">
+            <a class="btn btn-p" href="{{WA}}" target="_blank" rel="noopener">{{WA_ICON}}Cotizar por WhatsApp</a>
+            <a class="btn btn-g" href="#a-serv">Ver nuestro trabajo</a>
+          </div>
+          <p class="sst"><i aria-hidden="true"></i>Inducciones SST y planes de emergencia, hechos con creatividad</p>
+        </div>
+        <svg class="flask" viewBox="2812 780 538 540" role="img" aria-label="El frasco del logotipo de Antídoto llenándose de líquido">
+          <defs>
+            <clipPath id="a-liq"><circle cx="3019.12" cy="1118.03" r="88.37"/></clipPath>
+            <linearGradient id="a-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3BC8F3"/><stop offset="1" stop-color="#1C99CA"/></linearGradient>
+          </defs>
+          <g fill="currentColor">{{LOGO_NOLIQ}}</g>
+          <g clip-path="url(#a-liq)">
+            <g class="rise-a">
+              <path class="wave" fill="url(#a-grad)" d="M2900 1112 q30 -9 60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 V1260 H2900Z"/>
+              <g fill="#80DCFF"><circle class="bub" cx="2990" cy="1190" r="5"/><circle class="bub" cx="3040" cy="1196" r="4"/><circle class="bub" cx="3015" cy="1200" r="3"/><circle class="bub" cx="3060" cy="1185" r="3.5"/></g>
+            </g>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="15" fill="#A7B6BA">
+            <path d="M3262 1030 V1206" stroke="#1C99CA" stroke-width="2" fill="none"/>
+            <path d="M3262 1030 h14 M3262 1074 h8 M3262 1118 h14 M3262 1162 h8 M3262 1206 h14" stroke="#1C99CA" stroke-width="2"/>
+            <text x="3284" y="1035">100</text><text x="3284" y="1123">50</text><text x="3284" y="1211">0</text>
+            <text x="3250" y="1010" font-size="13" letter-spacing="1.5">DOSIS</text>
+            <g class="lvl"><path d="M3118 1115 H3256" stroke="#80DCFF" stroke-width="1.5" stroke-dasharray="4 5"/><circle cx="3262" cy="1115" r="5" fill="#80DCFF"/></g>
+          </g>
+        </svg>
+      </div>
+      <div class="stats" role="list">
+        <div role="listitem"><strong>+150</strong><span>producciones</span></div>
+        <div role="listitem"><strong>+200</strong><span>eventos</span></div>
+        <div role="listitem"><strong>+50</strong><span>clientes</span></div>
+        <div role="listitem"><strong>3</strong><span>idiomas</span></div>
+        <div role="listitem"><strong>2020</strong><span>desde</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="logos" id="a-logos" aria-labelledby="a-lg">
+    <div class="wrap">
+      <div class="logos-head"><h2 id="a-lg" style="font:400 15px/1.3 var(--body);color:var(--fg-2)">Han confiado en nosotros</h2>
+        <button class="pause" type="button" aria-pressed="false" data-target="a-mq">Pausar</button></div>
+      <div class="marquee" id="a-mq"><div class="track"><div class="set" data-logos></div><div class="set" aria-hidden="true" data-logos></div></div></div>
+    </div>
+  </section>
+
+  <section class="a-serv" id="a-serv" aria-labelledby="a-sv">
+    <div class="wrap">
+      <div class="sec-head"><h2 id="a-sv">Cuatro servicios, una sola fórmula</h2><p class="eyebrow">Para talento humano, SST, comunicaciones y rectorías</p></div>
+      <div class="rows">
+        <article class="row"><h3><i aria-hidden="true"></i>Formaciones vivenciales</h3>
+          <div><p>Aprender haciendo: programas participativos para fortalecer equipos, cultura, comunicación e inclusión.</p><ul><li>Español, portugués e inglés</li><li>Con apoyo de IA</li><li>Empresas y colegios</li></ul><a class="more" href="{{WA}}" target="_blank" rel="noopener">Cotizar formación →</a></div>
+          <div class="ph"><img data-foto="formaciones" alt="Equipo celebrando con una bandera de Colombia junto a la maqueta que construyeron en un taller" width="400" height="300" loading="lazy"></div></article>
+        <article class="row"><h3><i aria-hidden="true"></i>Producción audiovisual</h3>
+          <div><p>Inducciones, planes de emergencia, capacitaciones y videos institucionales.</p><ul><li>+150 producciones</li><li>4K y tomas con dron</li><li>Estrategia digital con IA</li></ul><a class="more" href="{{WA}}" target="_blank" rel="noopener">Cotizar producción →</a></div>
+          <div class="ph"><img data-foto="audiovisual" alt="Grabación al aire libre con cámara y luz de estudio" width="400" height="300" loading="lazy"></div></article>
+        <article class="row"><h3><i aria-hidden="true"></i>Catering corporativo</h3>
+          <div><p>Desayunos, refrigerios, almuerzos y estaciones en vivo para eventos empresariales y académicos.</p><ul><li>+200 eventos</li><li>Cobertura nacional</li><li>Logística flexible</li></ul><a class="more" href="{{WA}}" target="_blank" rel="noopener">Cotizar catering →</a></div>
+          <div class="ph"><img data-foto="catering" alt="Equipo de Antídoto sirviendo un buffet con flores y pasabocas" width="400" height="300" loading="lazy"></div></article>
+        <article class="row"><h3><i aria-hidden="true"></i>Diseño de productos y experiencias</h3>
+          <div><p>De la idea al producto final: prototipos, productos funcionales y experiencias con la identidad de cada marca.</p><ul><li>Prototipos</li><li>Productos funcionales</li><li>Experiencias a medida</li></ul><a class="more" href="{{WA}}" target="_blank" rel="noopener">Cotizar diseño →</a></div>
+          <div class="ph"><img data-foto="pieza" alt="Figura armada con piezas de construcción" width="400" height="300" loading="lazy"><span class="tag">Foto provisional</span></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band" id="a-cta" aria-labelledby="a-ct">
+    <div class="wrap">
+      <h2 id="a-ct">Cuéntanos tu reto y te enviamos una propuesta</h2>
+      <div class="contact">
+        <a class="btn btn-p" href="{{WA}}" target="_blank" rel="noopener">{{WA_ICON}}WhatsApp +57 312 556 8016</a>
+        <a class="btn btn-g" href="https://www.instagram.com/antidoto.colombia/" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+  </section>
+  <div class="mbar"><a class="btn btn-p" href="{{WA}}" target="_blank" rel="noopener">{{WA_ICON}}Cotizar por WhatsApp</a></div>
+</div>
+
+<!-- ================= DIRECCIÓN B ================= -->
+<div class="dir" id="dir-b" hidden>
+  <header class="nav">
+    <div class="wrap">
+      <a href="#dir-b" aria-label="Antídoto, inicio"><svg class="logo" viewBox="679 791 2532 519" role="img" aria-label="antidoto"><g fill="currentColor">{{LOGO_FULL}}</g></svg></a>
+      <nav aria-label="Principal"><ul>
+        <li><a href="#b-serv" aria-current="true">Servicios</a></li>
+        <li><a href="#b-logos">Clientes</a></li>
+        <li><a href="#b-num">Cifras</a></li>
+      </ul></nav>
+      <a class="btn btn-p btn-s" href="{{WA}}" target="_blank" rel="noopener">Cotizar</a>
+    </div>
+  </header>
+
+  <section class="b-hero" id="b-hero" aria-labelledby="b-h1">
+    <div class="wrap">
+      <div class="grid">
+        <div class="copy">
+          <p class="eyebrow">La fórmula Antídoto</p>
+          <h1 id="b-h1">Creamos experiencias que <span class="tint">conectan</span>, <span class="tint">inspiran</span> y <span class="tint">transforman</span></h1>
+          <p class="lead">Formaciones vivenciales, producción audiovisual y catering corporativo para empresas, colegios y organizaciones.</p>
+          <div class="ctas">
+            <a class="btn btn-p" href="{{WA}}" target="_blank" rel="noopener">{{WA_ICON}}Cotizar por WhatsApp</a>
+            <a class="btn btn-g" href="#b-serv">Ver nuestro trabajo</a>
+          </div>
+          <button class="pause hctl" type="button" aria-pressed="false" data-target="b-hero">Pausar animación</button>
+        </div>
+        <svg class="flask" viewBox="2812 780 418 540" role="img" aria-label="El frasco del logotipo con fotos reales de talleres, rodajes y catering dentro del líquido">
+          <defs>
+            <clipPath id="b-liq"><circle cx="3019.12" cy="1118.03" r="88.37"/></clipPath>
+            <mask id="b-mask" maskUnits="userSpaceOnUse" x="2900" y="1000" width="240" height="240"><g class="rise-b"><path class="wave" fill="#fff" d="M2900 1062 q30 -9 60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 V1260 H2900Z"/></g></mask>
+            <filter id="duo" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 1 0"/><feComponentTransfer><feFuncR type="table" tableValues="0.06 0.5"/><feFuncG type="table" tableValues="0.16 0.86"/><feFuncB type="table" tableValues="0.22 1"/></feComponentTransfer></filter>
+          </defs>
+          <g fill="currentColor">{{LOGO_NOLIQ}}</g>
+          <g clip-path="url(#b-liq)">
+            <g filter="url(#duo)" mask="url(#b-mask)">
+              <image class="xf" data-foto-svg="taller" x="2930" y="1029" width="178" height="178" preserveAspectRatio="xMidYMid slice"/>
+              <image class="xf" data-foto-svg="audiovisual" x="2930" y="1029" width="178" height="178" preserveAspectRatio="xMidYMid slice"/>
+              <image class="xf" data-foto-svg="catering" x="2930" y="1029" width="178" height="178" preserveAspectRatio="xMidYMid slice"/>
+            </g>
+
+            <g fill="#80DCFF"><circle class="bub" cx="2985" cy="1195" r="5"/><circle class="bub" cx="3045" cy="1200" r="4"/><circle class="bub" cx="3012" cy="1204" r="3"/><circle class="bub" cx="3066" cy="1188" r="3.5"/></g>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="b-logos" id="b-logos" aria-labelledby="b-lg">
+    <div class="wrap">
+      <h2 id="b-lg">Han confiado en nosotros</h2>
+      <p>Energía, ingeniería, transporte, seguros y SST: 18 marcas que trabajan con Antídoto.</p>
+      <div class="lgrid" data-lgrid></div>
+    </div>
+  </section>
+
+  <section class="b-serv" id="b-serv" aria-labelledby="b-sv">
+    <div class="wrap">
+      <div class="sec-head"><h2 id="b-sv">Cuatro servicios, una sola fórmula</h2><p class="eyebrow">Cada uno con su propia animación firma</p></div>
+      <div class="cards">
+        <article class="card" data-sig><img data-foto="formaciones" alt="Equipo celebrando con una bandera de Colombia junto a la maqueta que construyeron en un taller" loading="lazy">
+          <svg class="sig" viewBox="0 0 132 88" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path class="draw" pathLength="1" d="M20 60 L50 24 L86 40 L112 18 M50 24 L66 70 L86 40 M20 60 L66 70"/>
+            <g fill="currentColor" stroke="none"><circle class="node" cx="20" cy="60" r="6"/><circle class="node" cx="50" cy="24" r="6"/><circle class="node" cx="86" cy="40" r="6"/><circle class="node" cx="112" cy="18" r="6"/><circle class="node" cx="66" cy="70" r="6"/></g>
+          </svg>
+          <div class="body"><h3>Formaciones vivenciales</h3><p>Aprender haciendo: programas participativos para fortalecer equipos, cultura, comunicación e inclusión.</p><ul><li>3 idiomas</li><li>Con apoyo de IA</li><li>Empresas y colegios</li></ul><a class="btn btn-p btn-s" href="{{WA}}" target="_blank" rel="noopener">Cotizar formación</a></div></article>
+        <article class="card" data-sig><img data-foto="audiovisual" alt="Grabación al aire libre con cámara y luz de estudio" loading="lazy">
+          <svg class="sig" viewBox="0 0 132 88" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 18 V4 H18 M114 4 H128 V18 M128 70 V84 H114 M18 84 H4 V70"/>
+            <circle class="rec" cx="18" cy="22" r="5" fill="#FF7A59" stroke="none"/><text x="28" y="26" class="tc" stroke="none">REC</text>
+            <text x="66" y="80" text-anchor="middle" class="tc" stroke="none" data-tc>00:00:00:00</text>
+            <path d="M58 44 h16 M66 36 v16" stroke-width="1.2"/>
+          </svg>
+          <div class="body"><h3>Producción audiovisual</h3><p>Inducciones, planes de emergencia, capacitaciones y videos institucionales.</p><ul><li>+150 producciones</li><li>4K y dron</li><li>Estrategia digital con IA</li></ul><a class="btn btn-p btn-s" href="{{WA}}" target="_blank" rel="noopener">Cotizar producción</a></div></article>
+        <article class="card" data-sig><img data-foto="mesa" alt="Mesa servida con jugo de naranja y un florero" loading="lazy">
+          <svg class="sig" viewBox="0 0 132 88" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path class="steam" d="M48 50 q-6 -8 0 -16 t0 -16"/><path class="steam s2" d="M66 50 q-6 -8 0 -16 t0 -16"/><path class="steam s3" d="M84 50 q-6 -8 0 -16 t0 -16"/>
+            <path d="M26 62 H106 M34 62 q32 26 64 0"/>
+          </svg>
+          <div class="body"><h3>Catering corporativo</h3><p>Desayunos, refrigerios, almuerzos y estaciones en vivo para eventos empresariales y académicos.</p><ul><li>+200 eventos</li><li>Cobertura nacional</li><li>Logística flexible</li></ul><a class="btn btn-p btn-s" href="{{WA}}" target="_blank" rel="noopener">Cotizar catering</a></div></article>
+        <article class="card" data-sig><img data-foto="pieza" alt="Figura armada con piezas de construcción" loading="lazy">
+          <svg class="sig" viewBox="0 0 132 88" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+            <path class="shape-fill" fill="currentColor" stroke="none" d="M30 70 C30 30 50 14 66 14 C82 14 102 30 102 70 Z"/>
+            <path class="draw" pathLength="1" d="M30 70 C30 30 50 14 66 14 C82 14 102 30 102 70 Z"/>
+            <g fill="#0F181D" stroke="currentColor" stroke-width="1.5"><rect x="26" y="66" width="8" height="8"/><rect x="62" y="10" width="8" height="8"/><rect x="98" y="66" width="8" height="8"/></g>
+          </svg>
+          <div class="body"><h3>Diseño de productos y experiencias</h3><p>De la idea al producto final: prototipos, productos funcionales y experiencias a medida.</p><ul><li>Prototipos</li><li>Productos</li><li>Experiencias</li></ul><a class="btn btn-p btn-s" href="{{WA}}" target="_blank" rel="noopener">Cotizar diseño</a></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="b-num" id="b-num" aria-labelledby="b-nm">
+    <div class="wrap">
+      <h2 id="b-nm" class="eyebrow" style="font-family:var(--mono);margin-bottom:28px">La fórmula en cifras</h2>
+      <div class="nums">
+        <div class="num"><span class="mini" aria-hidden="true"><i style="--lv:90%"></i></span><div><strong>+150</strong><span>producciones</span></div></div>
+        <div class="num"><span class="mini" aria-hidden="true"><i style="--lv:100%"></i></span><div><strong>+200</strong><span>eventos</span></div></div>
+        <div class="num"><span class="mini" aria-hidden="true"><i style="--lv:55%"></i></span><div><strong>+50</strong><span>clientes</span></div></div>
+        <div class="num"><span class="mini" aria-hidden="true"><i style="--lv:35%"></i></span><div><strong>3</strong><span>idiomas</span></div></div>
+        <div class="num"><span class="mini" aria-hidden="true"><i style="--lv:70%"></i></span><div><strong>2020</strong><span>desde</span></div></div>
+      </div>
+    </div>
+  </section>
+  <div class="mbar"><a class="btn btn-p" href="{{WA}}" target="_blank" rel="noopener">{{WA_ICON}}Cotizar por WhatsApp</a></div>
+</div>
+
+<!-- ================= SISTEMA ================= -->
+<div class="dir" id="dir-s" hidden>
+  <section class="sys" aria-labelledby="s-h">
+    <div class="wrap">
+      <h2 id="s-h">Sistema de diseño</h2>
+      <p>Tokens compartidos por las dos direcciones. Paleta y fuentes salen de la guía de marca; el contraste está medido contra el fondo base.</p>
+
+      <h3>Color</h3>
+      <div class="sw">
+        <div><i style="background:#80DCFF"></i><p><code>--glow #80DCFF</code><small>Texto de acento · 11,6:1</small></p></div>
+        <div><i style="background:#3BC8F3"></i><p><code>--antidote #3BC8F3</code><small>Logo y acento · 9,2:1</small></p></div>
+        <div><i style="background:#1C99CA"></i><p><code>--mid #1C99CA</code><small>Degradados, iconos · 5,5:1</small></p></div>
+        <div><i style="background:#0C5C7D"></i><p><code>--deep #0C5C7D</code><small>Superficies · no para texto</small></p></div>
+        <div><i style="background:#0F181D;box-shadow:inset 0 0 0 1px rgba(128,220,255,.2)"></i><p><code>--ink #0F181D</code><small>Fondo base</small></p></div>
+      </div>
+      <p style="color:var(--fg-2);font-size:14px;margin-top:14px">Fuera de paleta solo <code style="font-family:var(--mono);color:var(--reto)">--reto #FF7A59</code> (problemas en la narrativa retos a soluciones) y <code style="font-family:var(--mono)">--bone #F1EFE9</code> para secciones claras.</p>
+
+      <h3>Tipografía</h3>
+      <div class="types">
+        <div class="type"><small>Cal Sans · display</small><span style="font:400 44px/1.05 var(--display)">Experiencias que conectan</span></div>
+        <div class="type"><small>Poppins · texto</small><span style="font:400 17px/1.6 var(--body);max-width:36em">Programas participativos para fortalecer equipos, cultura y comunicación. Cuerpo de 16 px o más en móvil.</span></div>
+        <div class="type"><small>Modulus · acento</small><span style="font:400 48px/1 var(--accent)">+150 · 2020</span></div>
+        <div class="type"><small>Plex Mono · oficio</small><span style="font:500 15px var(--mono);letter-spacing:.06em">REC 00:01:24:12 · DOSIS 50</span></div>
+      </div>
+
+      <h3>Movimiento</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Token</th><th>Valor</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td><code>--t-fast</code></td><td>180 ms</td><td>Hover, foco, cambios pequeños</td></tr>
+          <tr><td><code>--t-base</code></td><td>280 ms</td><td>Botones, tarjetas, menú</td></tr>
+          <tr><td><code>--t-slow</code></td><td>480 ms</td><td>Entradas de sección</td></tr>
+          <tr><td><code>--t-narr</code></td><td>700 a 1200 ms</td><td>Hero y secuencias ligadas al scroll</td></tr>
+          <tr><td><code>--e-out</code></td><td>cubic-bezier(.22, 1, .36, 1)</td><td>Entradas</td></tr>
+          <tr><td><code>--e-io</code></td><td>cubic-bezier(.65, 0, .35, 1)</td><td>Cambios de estado</td></tr>
+          <tr><td>Movimiento reducido</td><td>Fundido de 200 ms o menos</td><td>Sin bucles, marquee como lista, primera foto fija</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="rec-box">
+        <h3>Recomendación</h3>
+        <p><strong style="color:var(--fg)">Base A con el hero de B.</strong> La estructura editorial de A lee más rápido, pesa menos y se ve seria ante clientes como Enel o Seguros Bolívar. Su lista de servicios cabe bien en móvil.</p>
+        <p>El hero de B (fotos reales dentro del líquido del frasco) es el momento más memorable de las dos y cuenta la fórmula sin palabras. La sección clara de logos de B también funciona mejor que el marquee: se ven todas las marcas a la vez y no hay bucle que pausar.</p>
+        <p>Pendiente con el cliente: fotos de diseño de productos y de rodajes, foto de la fundadora y logos de clientes en SVG.</p>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer class="foot"><div class="wrap">Prototipo de rediseño para antidotocolombia.com · fotos y logos del sitio actual · cifras dadas por el cliente</div></footer>
+
+<script>
+const FOTOS={{FOTOS}};
+const LOGOS={{LOGOS}};
+const ORDER=[["enel","Enel"],["claro","Claro"],["stanley-black-decker","Stanley Black & Decker"],["seguros-bolivar","Seguros Bolívar"],["gallagher","Gallagher"],["cruz-verde","Cruz Verde"],["howden","Howden"],["wsp","WSP"],["wom","WOM"],["correcol","Correcol"],["mab-ingenieria","MAB Ingeniería"],["sgin","SGIN"],["tabasco-oc","Tabasco OC"],["seq-consultores","SEQ Consultores"],["hseq-consultores","HSEQ Consultores"],["bogota-movil","Bogotá Móvil"],["capital-bus","Capital Bus"],["la-lorenza","La Lorenza"]];
+const src=k=>"data:image/png;base64,"+LOGOS[k];
+document.querySelectorAll("[data-foto]").forEach(i=>{i.src="data:image/webp;base64,"+FOTOS[i.dataset.foto]});
+document.querySelectorAll("[data-foto-svg]").forEach(i=>{i.setAttribute("href","data:image/webp;base64,"+FOTOS[i.dataset.fotoSvg])});
+document.querySelectorAll("[data-logos]").forEach(s=>{const hidden=s.hasAttribute("aria-hidden");ORDER.forEach(([k,n])=>{const im=new Image();im.src=src(k);im.alt=hidden?"":n;im.height=34;s.appendChild(im)})});
+document.querySelectorAll("[data-lgrid]").forEach(g=>{ORDER.forEach(([k,n])=>{const d=document.createElement("div");const im=new Image();im.src=src(k);im.alt=n;d.appendChild(im);g.appendChild(d)})});
+
+// vistas
+const views={a:"dir-a",b:"dir-b",s:"dir-s"};
+function show(v){Object.entries(views).forEach(([k,id])=>{document.getElementById(id).hidden=k!==v;document.getElementById("v-"+k).setAttribute("aria-pressed",k===v)});
+  const d=document.getElementById(views[v]);d.querySelectorAll(".tint,.rise-a,.rise-b,.lvl,.mini i").forEach(e=>{e.style.animation="none";e.offsetWidth;e.style.animation=""});
+  try{localStorage.setItem("antidoto-view",v)}catch(e){}}
+document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{show(b.dataset.view);window.scrollTo({top:0})}));
+let start="a";const h=location.hash.replace("#","");if(views[h])start=h;else{try{const s=localStorage.getItem("antidoto-view");if(views[s])start=s}catch(e){}}
+show(start);
+
+// movimiento reducido simulado
+const rm=document.getElementById("rm");rm.addEventListener("change",()=>document.documentElement.classList.toggle("rm",rm.checked));
+
+// pausas
+document.querySelectorAll(".pause").forEach(b=>b.addEventListener("click",()=>{const t=document.getElementById(b.dataset.target);const p=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",p);b.textContent=p?(b.classList.contains("hctl")?"Reanudar animación":"Reanudar"):(b.classList.contains("hctl")?"Pausar animación":"Pausar");t.classList.toggle(t.id==="b-hero"?"hero-paused":"paused",p)}));
+
+// animaciones firma: se disparan al entrar y se pausan fuera de pantalla
+const io=new IntersectionObserver(es=>es.forEach(e=>{e.target.classList.toggle("offscreen",!e.isIntersecting);if(e.isIntersecting)e.target.classList.add("play")}),{threshold:.35});
+document.querySelectorAll("[data-sig]").forEach(c=>io.observe(c));
+
+// timecode 25 fps
+const tc=document.querySelector("[data-tc]");let f=0;
+setInterval(()=>{const card=tc.closest("[data-sig]");if(document.documentElement.classList.contains("rm")||matchMedia("(prefers-reduced-motion: reduce)").matches||card.classList.contains("offscreen")||document.getElementById("dir-b").hidden)return;f++;const p=n=>String(n).padStart(2,"0");tc.textContent=`00:${p(Math.floor(f/1500)%60)}:${p(Math.floor(f/25)%60)}:${p(f%25)}`},40);
+</script>
