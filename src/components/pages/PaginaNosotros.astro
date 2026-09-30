@@ -12,18 +12,12 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 const [title, description] = s.seo.nosotros;
-const hud: Array<[string, string]> = [
-  ['base', s.hud.base],
-  ['mezcla', s.hud.mezcla],
-  ['reaccion', s.hud.reaccion],
-  ['dosis', s.hud.dosis],
-];
 const datos = locale === 'es'
   ? [['Formación', 'Ingeniería civil'], ['Especialización', 'Gerencia de SST'], ['Fundada', String(SITE.foundingYear)], ['Idiomas', 'Español, portugués e inglés']]
   : [['Degree', 'Civil engineering'], ['Specialization', 'Health and safety management'], ['Founded', String(SITE.foundingYear)], ['Languages', 'Spanish, Portuguese and English']];
 ---
-<Base locale={locale} pagina="nosotros" title={title} description={description} alternates={rutas.nosotros} scroll="suave" hud={hud}>
-  <section class="seccion" data-hud="base" aria-labelledby="pagina-title">
+<Base locale={locale} pagina="nosotros" title={title} description={description} alternates={rutas.nosotros} scroll="suave">
+  <section class="seccion" aria-labelledby="pagina-title">
     <div class="wrap">
       <Encabezado num="01" kicker={s.nosotrosKicker} titulo={s.nosotrosTitle} lead={s.nosotrosLead} id="pagina-title" nivel={1} />
 
@@ -47,7 +41,7 @@ const datos = locale === 'es'
     </div>
   </section>
 
-  <section class="seccion" data-hud="mezcla" aria-labelledby="historia-title">
+  <section class="seccion" aria-labelledby="historia-title">
     <div class="wrap">
       <Encabezado num="02" kicker={s.historiaKicker} titulo={s.historiaTitle} id="historia-title" />
       <div class="linea-caja" data-historia>

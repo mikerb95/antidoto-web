@@ -18,16 +18,15 @@ const { locale, num, limite, nivel = 2 } = Astro.props;
 const s = t(locale);
 const lista = limite ? CLIENTES.slice(0, limite) : CLIENTES;
 ---
-<section class="clientes" aria-labelledby="clientes-title" data-hud="muestra">
+<section class="clientes" aria-labelledby="clientes-title">
   <div class="wrap">
     <div class="head">
       <Encabezado num={num} kicker={s.clientsKicker} titulo={s.clientsTitle} lead={s.clientsLead} id="clientes-title" nivel={nivel} claro />
       <p class="total mono"><strong>{CLIENTES.length}</strong> {s.marcas(CLIENTES.length).replace(/^\d+\s/, '')}</p>
     </div>
     <ul class="grid">
-      {lista.map((c, i) => (
+      {lista.map((c) => (
         <li>
-          <span class="n mono" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
           <Image src={c.logo} alt={c.nombre} height={68} loading="lazy" />
         </li>
       ))}
@@ -44,7 +43,6 @@ const lista = limite ? CLIENTES.slice(0, limite) : CLIENTES;
   .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; list-style: none; margin: 0; padding: 0; background: var(--color-bone-line); border: 1px solid var(--color-bone-line); border-radius: 16px; overflow: hidden; }
   li { position: relative; background: var(--color-bone); display: grid; place-items: center; padding: 26px 14px; min-height: 104px; transition: background var(--t-base) var(--ease-out); }
   li:hover { background: #fff; }
-  .n { position: absolute; top: 8px; left: 10px; font-size: 9.5px; color: var(--color-bone-muted); opacity: 0.7; }
   /* Los logos llegan en blanco; brightness(0) los pasa a tinta sobre el fondo claro. */
   img { max-height: 36px; max-width: 100%; width: auto; height: auto; filter: brightness(0); opacity: 0.75; transition: opacity var(--t-base) var(--ease-out); }
   li:hover img { opacity: 1; }

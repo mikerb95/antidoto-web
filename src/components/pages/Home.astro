@@ -16,19 +16,12 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 const [title, description] = s.seo.inicio;
-const hud: Array<[string, string]> = [
-  ['base', s.hud.base],
-  ['mezcla', s.hud.mezcla],
-  ['reaccion', s.hud.reaccion],
-  ['muestra', s.hud.muestra],
-  ['dosis', s.hud.dosis],
-];
 ---
-<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema()} scroll="suave" hud={hud}>
+<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema()} scroll="suave">
   <HeroBento locale={locale} />
   <div class="wrap franja"><Stats locale={locale} /></div>
 
-  <section class="seccion" aria-labelledby="servicios-title" data-hud="mezcla">
+  <section class="seccion" aria-labelledby="servicios-title">
     <div class="wrap">
       <div class="cab">
         <Encabezado num="01" kicker={s.servicesKicker} titulo={s.servicesTitle} lead={s.servicesLead} id="servicios-title" />

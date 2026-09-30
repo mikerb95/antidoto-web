@@ -1,21 +1,28 @@
 ---
-// Encabezado de sección numerado: "/01 ── ETIQUETA", título y bajada. Da el ritmo de
-// ficha de laboratorio a todas las páginas.
+// Encabezado de sección: un marcador con forma de frasco (el círculo del logo con su nivel
+// de líquido) seguido de la etiqueta, el título y la bajada.
 interface Props {
-  num: string;
   kicker: string;
   titulo: string;
   lead?: string;
   id?: string;
+  /** Se mantiene por compatibilidad; ya no se muestra. */
+  num?: string;
   /** h1 en la cabecera de página, h2 en las secciones. */
   nivel?: 1 | 2;
   claro?: boolean;
 }
-const { num, kicker, titulo, lead, id, nivel = 2, claro = false } = Astro.props;
+const { kicker, titulo, lead, id, nivel = 2, claro = false } = Astro.props;
 const H = nivel === 1 ? 'h1' : 'h2';
 ---
 <div class:list={['enc', { claro }]}>
-  <p class="kicker"><span class="num">/{num}</span><span class="raya" aria-hidden="true"></span><span>{kicker}</span></p>
+  <p class="kicker">
+    <svg class="frasquito" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="10" r="8.2" fill="none" stroke="currentColor" stroke-width="1.6" />
+      <path d="M3.4 11h13.2a6.6 6.6 0 0 1-13.2 0z" fill="currentColor" />
+    </svg>
+    <span>{kicker}</span>
+  </p>
   <H id={id} class:list={['titulo', { grande: nivel === 1 }]}>{titulo}</H>
   {lead && <p class="bajada">{lead}</p>}
   <slot />
@@ -23,14 +30,11 @@ const H = nivel === 1 ? 'h1' : 'h2';
 
 <style>
   .enc { display: grid; gap: 14px; max-width: 780px; }
-  .kicker { display: flex; align-items: center; gap: 12px; margin: 0; font: 500 11px var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-fg-muted); }
-  .num { color: var(--color-antidote); }
-  .raya { width: 56px; height: 1px; background: linear-gradient(90deg, rgb(128 220 255 / 0.4), transparent); }
+  .kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0; font: 600 12px/1 var(--font-sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-antidote); }
+  .frasquito { width: 18px; height: 18px; flex: none; }
   .titulo { margin: 0; font-size: clamp(32px, 2.8vw + 12px, 52px); line-height: 1.03; letter-spacing: -0.02em; }
   .titulo.grande { font-size: clamp(40px, 4.4vw + 12px, 76px); line-height: 0.98; }
   .bajada { margin: 0; color: var(--color-fg-muted); font-size: clamp(16px, 0.6vw + 12px, 18px); max-width: 40em; }
-  .claro .kicker { color: var(--color-bone-muted); }
-  .claro .num { color: var(--color-deep); }
-  .claro .raya { background: linear-gradient(90deg, rgb(12 92 125 / 0.5), transparent); }
+  .claro .kicker { color: var(--color-deep); }
   .claro .bajada { color: var(--color-bone-muted); }
 </style>

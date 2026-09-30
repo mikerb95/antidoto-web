@@ -18,12 +18,6 @@ const txt = servicio[locale];
 const msg = s.waService(txt.title);
 const n = SERVICIOS.indexOf(servicio) + 1;
 const otros = SERVICIOS.filter((x) => x.id !== servicio.id);
-const hud: Array<[string, string]> = [
-  ['base', s.hud.base],
-  ['mezcla', s.hud.mezcla],
-  ['muestra', s.hud.muestra],
-  ['dosis', s.hud.dosis],
-];
 ---
 <Base
   locale={locale}
@@ -33,9 +27,9 @@ const hud: Array<[string, string]> = [
   alternates={{ es: servicioPath(servicio, 'es'), en: servicioPath(servicio, 'en') }}
   waMessage={msg}
   scroll="suave"
-  hud={hud}
+ 
 >
-  <section class="seccion intro" data-hud="base" aria-labelledby="servicio-title">
+  <section class="seccion intro" aria-labelledby="servicio-title">
     <div class="wrap grid">
       <div class="copy">
         <p class="migas mono"><a href={rutas.servicios[locale]}>{s.nav.servicios}</a> / <span class="mono-acento">{s.visorFicha} 0{n}</span></p>
@@ -52,7 +46,7 @@ const hud: Array<[string, string]> = [
     </div>
   </section>
 
-  <section class="seccion ficha-sec" data-hud="mezcla" aria-labelledby="ficha-title">
+  <section class="seccion ficha-sec" aria-labelledby="ficha-title">
     <div class="wrap bento">
       <div class="ficha panel">
         <p class="mono" id="ficha-title">{s.fichaServicio} · 0{n}</p>
@@ -73,7 +67,7 @@ const hud: Array<[string, string]> = [
     </div>
   </section>
 
-  <section class="seccion" data-hud="muestra" aria-labelledby="otros-title">
+  <section class="seccion" aria-labelledby="otros-title">
     <div class="wrap">
       <Encabezado num="03" kicker={s.otherServices} titulo={s.servicesTitle} id="otros-title" />
       <ul class="otros">
