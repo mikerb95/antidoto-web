@@ -4,29 +4,37 @@ import type { ImageMetadata } from 'astro';
 
 const logos = import.meta.glob<{ default: ImageMetadata }>('../assets/clientes/*.png', { eager: true });
 
-const CLIENTES_BASE: Array<[archivo: string, nombre: string]> = [
-  ['enel', 'Enel'],
-  ['claro', 'Claro'],
-  ['stanley-black-decker', 'Stanley Black & Decker'],
-  ['seguros-bolivar', 'Seguros Bolívar'],
-  ['gallagher', 'Gallagher'],
-  ['cruz-verde', 'Cruz Verde'],
-  ['howden', 'Howden'],
-  ['wsp', 'WSP'],
-  ['wom', 'WOM'],
-  ['correcol', 'Correcol'],
-  ['mab-ingenieria', 'MAB Ingeniería'],
-  ['sgin', 'SGIN'],
-  ['tabasco-oc', 'Tabasco OC'],
-  ['seq-consultores', 'SEQ Consultores'],
-  ['hseq-consultores', 'HSEQ Consultores'],
-  ['bogota-movil', 'Bogotá Móvil'],
-  ['capital-bus', 'Capital Bus'],
-  ['la-lorenza', 'La Lorenza'],
+/** Sectores de marca/clientes.md, agrupados para el filtro de la home. */
+export const SECTORES = ['ingenieria', 'sst', 'seguros', 'transporte', 'otros'] as const;
+export type Sector = (typeof SECTORES)[number];
+
+const CLIENTES_BASE: Array<[archivo: string, nombre: string, sector: Sector]> = [
+  ['enel', 'Enel', 'ingenieria'],
+  ['claro', 'Claro', 'otros'],
+  ['stanley-black-decker', 'Stanley Black & Decker', 'otros'],
+  ['seguros-bolivar', 'Seguros Bolívar', 'seguros'],
+  ['gallagher', 'Gallagher', 'seguros'],
+  ['cruz-verde', 'Cruz Verde', 'otros'],
+  ['howden', 'Howden', 'otros'],
+  ['wsp', 'WSP', 'ingenieria'],
+  ['wom', 'WOM', 'otros'],
+  ['correcol', 'Correcol', 'seguros'],
+  ['mab-ingenieria', 'MAB Ingeniería', 'ingenieria'],
+  ['sgin', 'SGIN', 'ingenieria'],
+  ['tabasco-oc', 'Tabasco OC', 'ingenieria'],
+  ['seq-consultores', 'SEQ Consultores', 'sst'],
+  ['hseq-consultores', 'HSEQ Consultores', 'sst'],
+  ['bogota-movil', 'Bogotá Móvil', 'transporte'],
+  ['capital-bus', 'Capital Bus', 'transporte'],
+  ['la-lorenza', 'La Lorenza', 'otros'],
 ];
 
-export const CLIENTES = CLIENTES_BASE.map(([archivo, nombre]) => {
+export const CLIENTES = CLIENTES_BASE.map(([archivo, nombre, sector]) => {
   const mod = logos[`../assets/clientes/${archivo}.png`];
   if (!mod) throw new Error(`Falta el logo de ${nombre}: src/assets/clientes/${archivo}.png`);
-  return { nombre, logo: mod.default };
+  return { nombre, sector, logo: mod.default };
 });
+
+export function contarPorSector(sector: Sector): number {
+  return CLIENTES.filter((c) => c.sector === sector).length;
+}
