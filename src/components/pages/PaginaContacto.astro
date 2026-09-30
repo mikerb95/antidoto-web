@@ -1,0 +1,223 @@
+---
+import Base from '../../layouts/Base.astro';
+import Encabezado from '../Encabezado.astro';
+import WhatsappIcon from '../WhatsappIcon.astro';
+import { SERVICIOS } from '../../data/servicios';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { SITE, waLink } from '../../data/site';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const c = s.cot;
+const [title, description] = s.seo.contacto;
+const hud: Array<[string, string]> = [
+  ['base', s.hud.base],
+  ['mezcla', s.hud.mezcla],
+];
+const canales = [
+  { k: s.canales.whatsapp, v: SITE.phoneDisplay, href: waLink(s.waDefault), externo: true },
+  { k: s.canales.telefono, v: SITE.phoneDisplay, href: `tel:+${SITE.whatsapp}`, externo: false },
+  { k: s.canales.correo, v: SITE.email, href: `mailto:${SITE.email}`, externo: false },
+  { k: s.canales.instagram, v: '@antidoto.colombia', href: SITE.instagram, externo: true },
+  { k: s.canales.linkedin, v: 'Antídoto Colombia', href: SITE.linkedin, externo: true },
+];
+---
+<Base locale={locale} pagina="contacto" title={title} description={description} alternates={rutas.contacto} hud={hud}>
+  <section class="seccion" data-hud="base" aria-labelledby="pagina-title">
+    <div class="wrap">
+      <Encabezado num="01" kicker={s.contactoKicker} titulo={s.contactoTitle} lead={s.contactoLead} id="pagina-title" nivel={1} />
+
+      <div class="bento" data-hud="mezcla">
+        <!-- El cotizador necesita JS para armar el mensaje: el script lo muestra. Sin JS
+             quedan visibles los canales directos. -->
+        <form class="cotizador panel" hidden data-cotizador data-wa={SITE.whatsapp} novalidate aria-labelledby="cot-title">
+          <div class="cot-top">
+            <p class="mono mono-acento" id="cot-title">{c.titulo}</p>
+            <p class="mono" aria-live="polite" data-paso-texto>{c.paso(1, 3)}</p>
+          </div>
+          <div class="progreso" aria-hidden="true">
+            {c.pasos.map((p, i) => <span class:list={{ activo: i === 0 }} data-marca>{String(i + 1).padStart(2, '0')} · {p}</span>)}
+            <span class="nivel"><span data-nivel></span></span>
+          </div>
+
+          <fieldset data-paso="1">
+            <legend>{c.servicioPregunta}</legend>
+            <div class="opciones">
+              {SERVICIOS.map((sv, i) => (
+                <label class="opcion">
+                  <input type="radio" name="servicio" value={sv[locale].title} />
+                  <span class="mono mono-acento">0{i + 1}</span>
+                  <span class="op-t">{sv[locale].title}</span>
+                  <span class="op-d">{sv[locale].facts[0]}</span>
+                </label>
+              ))}
+            </div>
+            <p class="error" role="alert" hidden data-error>{c.elegir}</p>
+          </fieldset>
+
+          <fieldset data-paso="2" hidden>
+            <legend>{c.pasos[1]}</legend>
+            <div class="campos">
+              <label>
+                <span class="mono">{c.tipo}</span>
+                <select name="tipo">
+                  <option value="">·</option>
+                  {c.tipos.map((tp) => <option value={tp}>{tp}</option>)}
+                </select>
+              </label>
+              <label><span class="mono">{c.fecha} <em>({c.opcional})</em></span><input type="month" name="fecha" /></label>
+              <label><span class="mono">{c.personas} <em>({c.opcional})</em></span><input type="number" name="personas" min="1" inputmode="numeric" /></label>
+              <label><span class="mono">{c.ciudad} <em>({c.opcional})</em></span><input type="text" name="ciudad" autocomplete="address-level2" /></label>
+            </div>
+          </fieldset>
+
+          <fieldset data-paso="3" hidden>
+            <legend>{c.pasos[2]}</legend>
+            <p class="resumen-lead">{c.resumenLead}</p>
+            <pre class="resumen" data-resumen></pre>
+          </fieldset>
+
+          <div class="botones">
+            <button type="button" class="btn btn-ghost btn-sm" data-atras hidden>← {c.anterior}</button>
+            <button type="button" class="btn btn-primary btn-sm" data-siguiente>{c.siguiente} →</button>
+            <a class="btn btn-primary btn-sm" href="#" target="_blank" rel="noopener" data-enviar hidden><span class="btn-inner"><WhatsappIcon />{c.enviar}</span></a>
+          </div>
+          <p class="privacidad mono">{c.privacidad}</p>
+        </form>
+
+        <aside class="canales panel" aria-labelledby="canales-title">
+          <p class="mono mono-acento" id="canales-title">{s.canalesKicker}</p>
+          <ul>
+            {canales.map((cn) => (
+              <li>
+                <a href={cn.href} target={cn.externo ? '_blank' : undefined} rel={cn.externo ? 'noopener' : undefined}>
+                  <span class="mono">{cn.k}</span>
+                  <span class="v">{cn.v}</span>
+                  <span class="flecha" aria-hidden="true">↗</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p class="estado mono"><span class="punto punto-vivo"></span>{s.estado} · {s.ubicacion} · {s.idiomas}</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { gsap, reducido } from '../../lib/motion/core';
+  import { ui } from '../../i18n/ui';
+
+  // Cotizador en 3 pasos. No envía nada a ningún servidor: arma el texto y abre WhatsApp
+  // con el mensaje listo (enlace real wa.me, sin retardos).
+  const form = document.querySelector<HTMLFormElement>('[data-cotizador]');
+  if (form) {
+    const locale = document.documentElement.lang.startsWith('es') ? 'es' : 'en';
+    const c = ui[locale].cot;
+    const pasos = [...form.querySelectorAll<HTMLFieldSetElement>('[data-paso]')];
+    const marcas = [...form.querySelectorAll<HTMLElement>('[data-marca]')];
+    const nivel = form.querySelector<HTMLElement>('[data-nivel]')!;
+    const texto = form.querySelector<HTMLElement>('[data-paso-texto]')!;
+    const atras = form.querySelector<HTMLButtonElement>('[data-atras]')!;
+    const siguiente = form.querySelector<HTMLButtonElement>('[data-siguiente]')!;
+    const enviar = form.querySelector<HTMLAnchorElement>('[data-enviar]')!;
+    const error = form.querySelector<HTMLElement>('[data-error]')!;
+    const resumen = form.querySelector<HTMLElement>('[data-resumen]')!;
+    let actual = 0;
+
+    const valor = (n: string) => ((form.elements.namedItem(n) as HTMLInputElement | null)?.value ?? '').trim();
+    const servicio = () => (form.querySelector<HTMLInputElement>('input[name="servicio"]:checked')?.value ?? '');
+    const fechaLegible = (v: string) => {
+      if (!v) return '';
+      const [a, m] = v.split('-').map(Number);
+      return new Intl.DateTimeFormat(document.documentElement.lang, { month: 'long', year: 'numeric' }).format(new Date(a, m - 1, 1));
+    };
+    const mensaje = () => c.mensaje({ servicio: servicio(), tipo: valor('tipo'), fecha: fechaLegible(valor('fecha')), personas: valor('personas'), ciudad: valor('ciudad') });
+
+    const ir = (n: number) => {
+      actual = n;
+      pasos.forEach((p, i) => (p.hidden = i !== n));
+      marcas.forEach((m, i) => m.classList.toggle('activo', i <= n));
+      texto.textContent = c.paso(n + 1, pasos.length);
+      atras.hidden = n === 0;
+      siguiente.hidden = n === pasos.length - 1;
+      enviar.hidden = n !== pasos.length - 1;
+      const escala = (n + 1) / pasos.length;
+      if (reducido()) nivel.style.transform = `scaleX(${escala})`;
+      else gsap.to(nivel, { scaleX: escala, duration: 0.6, ease: 'power3.out' });
+      if (n === pasos.length - 1) {
+        const m = mensaje();
+        resumen.textContent = m;
+        enviar.href = `https://wa.me/${form.dataset.wa}?text=${encodeURIComponent(m)}`;
+      }
+      pasos[n].querySelector<HTMLElement>('input, select, a, button')?.focus({ preventScroll: true });
+    };
+
+    siguiente.addEventListener('click', () => {
+      if (actual === 0 && !servicio()) {
+        error.hidden = false;
+        return;
+      }
+      error.hidden = true;
+      ir(actual + 1);
+    });
+    atras.addEventListener('click', () => ir(actual - 1));
+    form.addEventListener('change', () => (error.hidden = true));
+    form.addEventListener('submit', (e) => e.preventDefault());
+    form.hidden = false;
+    nivel.style.transform = 'scaleX(0.3333)';
+  }
+</script>
+
+<style>
+  .bento { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 12px; margin-top: 36px; align-items: start; }
+  .cotizador { padding: 24px; display: grid; gap: 18px; }
+  .cotizador[hidden] { display: none; }
+  .cot-top { display: flex; justify-content: space-between; gap: 12px; }
+  .cot-top .mono { margin: 0; }
+  .progreso { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-bottom: 14px; }
+  .progreso > span[data-marca] { font: 500 10.5px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: rgb(167 182 186 / 0.6); }
+  .progreso > span.activo { color: var(--color-antidote); }
+  .nivel { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 2px; background: rgb(128 220 255 / 0.12); overflow: hidden; }
+  .nivel span { position: absolute; inset: 0; transform-origin: left; background: linear-gradient(90deg, var(--color-mid), var(--color-antidote)); }
+  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  fieldset[hidden] { display: none; }
+  legend { padding: 0; margin-bottom: 14px; font: 400 26px/1.1 var(--font-display); }
+  .opciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .opcion { position: relative; display: grid; gap: 6px; padding: 16px; border-radius: 14px; border: 1px solid var(--color-line); cursor: pointer; transition: border-color var(--t-fast) var(--ease-out), background var(--t-fast) var(--ease-out); }
+  .opcion:hover { border-color: rgb(59 200 243 / 0.4); }
+  .opcion:has(input:checked) { border-color: var(--color-antidote); background: rgb(59 200 243 / 0.1); }
+  .opcion:has(input:focus-visible) { outline: 2px solid var(--color-antidote); outline-offset: 3px; }
+  .opcion input { position: absolute; opacity: 0; pointer-events: none; }
+  .op-t { font: 400 19px/1.15 var(--font-display); }
+  .op-d { font-size: 13px; color: var(--color-fg-muted); }
+  .error { margin: 10px 0 0; color: var(--color-reto); font-size: 14px; }
+  .campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .campos label { display: grid; gap: 6px; }
+  .campos em { font-style: normal; text-transform: none; letter-spacing: 0; opacity: 0.7; }
+  input:not([type='radio']), select { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--color-line); background: rgb(10 17 21 / 0.6); color: var(--color-fg); font: 400 15px var(--font-sans); color-scheme: dark; }
+  input:focus-visible, select:focus-visible { outline: 2px solid var(--color-antidote); outline-offset: 2px; }
+  .resumen-lead { margin: 0 0 12px; color: var(--color-fg-muted); font-size: 14px; }
+  .resumen { margin: 0; padding: 16px; border-radius: 12px; background: rgb(10 17 21 / 0.7); border: 1px solid var(--color-line); font: 400 14px/1.6 var(--font-sans); white-space: pre-wrap; color: var(--color-fg); }
+  .botones { display: flex; gap: 10px; flex-wrap: wrap; }
+  .botones [hidden] { display: none; }
+  .privacidad { margin: 0; text-transform: none; letter-spacing: 0.02em; font-size: 11.5px; }
+
+  .canales { padding: 24px; display: grid; gap: 12px; }
+  .canales > .mono { margin: 0; }
+  .canales ul { list-style: none; margin: 0; padding: 0; display: grid; }
+  .canales a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 0; border-top: 1px solid var(--color-line); text-decoration: none; color: var(--color-fg); }
+  .canales li:first-child a { border-top: 0; }
+  .canales a .mono { grid-column: 1; }
+  .canales .v { grid-column: 1; font-size: 15px; overflow-wrap: anywhere; }
+  .canales .flecha { grid-column: 2; grid-row: 1 / 3; align-self: center; color: var(--color-antidote); }
+  .canales a:hover .v { color: var(--color-antidote); }
+  .estado { display: flex; align-items: center; gap: 10px; margin: 6px 0 0; }
+
+  @media (max-width: 900px) { .bento { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .opciones, .campos { grid-template-columns: 1fr; } .progreso > span[data-marca] { font-size: 9px; } }
+</style>

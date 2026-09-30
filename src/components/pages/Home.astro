@@ -1,12 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
-import HeroFormula from '../HeroFormula.astro';
+import HeroBento from '../HeroBento.astro';
 import Stats from '../Stats.astro';
-import Clientes from '../Clientes.astro';
+import Encabezado from '../Encabezado.astro';
+import ServiciosIndice from '../ServiciosIndice.astro';
 import Retos from '../Retos.astro';
-import ServiciosEscenas from '../ServiciosEscenas.astro';
+import Clientes from '../Clientes.astro';
 import ContactoCta from '../ContactoCta.astro';
-import { t, homePath, type Locale } from '../../i18n/ui';
+import { t, rutas, type Locale } from '../../i18n/ui';
 import { organizationSchema } from '../../data/schema';
 
 interface Props {
@@ -14,16 +15,38 @@ interface Props {
 }
 const { locale } = Astro.props;
 const s = t(locale);
+const [title, description] = s.seo.inicio;
+const hud: Array<[string, string]> = [
+  ['base', s.hud.base],
+  ['mezcla', s.hud.mezcla],
+  ['reaccion', s.hud.reaccion],
+  ['muestra', s.hud.muestra],
+  ['dosis', s.hud.dosis],
+];
 ---
-<Base locale={locale} title={s.seoTitle} description={s.seoDescription} alternates={homePath} jsonLd={organizationSchema()} scroll="suave">
-  <HeroFormula locale={locale} />
-  <div class="stats-band"><Stats locale={locale} /></div>
-  <Clientes locale={locale} />
-  <Retos locale={locale} />
-  <ServiciosEscenas locale={locale} />
-  <ContactoCta locale={locale} />
+<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema()} scroll="suave" hud={hud}>
+  <HeroBento locale={locale} />
+  <div class="wrap franja"><Stats locale={locale} /></div>
+
+  <section class="seccion" aria-labelledby="servicios-title" data-hud="mezcla">
+    <div class="wrap">
+      <div class="cab">
+        <Encabezado num="01" kicker={s.servicesKicker} titulo={s.servicesTitle} lead={s.servicesLead} id="servicios-title" />
+        <a class="todos" href={rutas.servicios[locale]}>{s.servicesAll} →</a>
+      </div>
+      <ServiciosIndice locale={locale} />
+    </div>
+  </section>
+
+  <Retos locale={locale} num="02" />
+  <Clientes locale={locale} num="03" limite={12} />
+  <ContactoCta locale={locale} num="04" />
 </Base>
 
 <style>
-  .stats-band { padding-block: 0 56px; background: var(--color-ink); position: relative; }
+  .franja { margin-top: 8px; }
+  .franja :global(.wrap) { padding-inline: 0; }
+  .cab { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: 32px; }
+  .todos { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-antidote); font-weight: 600; text-decoration: none; font-size: 14px; }
+  .todos:hover { text-decoration: underline; }
 </style>

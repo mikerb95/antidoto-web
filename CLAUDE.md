@@ -13,14 +13,15 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 
 - Astro 7, salida estática (`output: 'static'`, `trailingSlash: 'always'`, formato `directory`).
 - Tailwind 4 vía `@tailwindcss/vite`; los tokens de marca están en `@theme` en `src/styles/global.css`. Los componentes usan CSS con alcance local (`<style>` en cada `.astro`) que lee esos tokens.
-- View transitions con `<ClientRouter />`. Los scripts de componentes se inicializan en `astro:page-load` y limpian observers en `astro:before-swap`.
+- Multipágina real: cada página es un documento. El paso entre páginas usa view transitions nativas entre documentos (`@view-transition { navigation: auto }` en `global.css`), sin `ClientRouter` ni router SPA. La nueva página sube como líquido (`clip-path`); la nav, el HUD y el botón de WhatsApp tienen `view-transition-name` propio y quedan quietos; los títulos de servicio comparten nombre para transformarse de una página a otra. Los scripts inicializan una vez al cargar (no hay `astro:page-load`).
 - Imágenes con `astro:assets` (WebP y `srcset` en el build). Fotos en `src/assets/fotos/`, logos de clientes en `src/assets/clientes/` (en blanco; el CSS los pasa a tinta con `filter: brightness(0)` sobre fondos claros).
-- Sin React todavía. Se agrega como isla cuando haga falta interactividad real (cotizador).
+- Sin React. El cotizador de `/contacto/` es JS propio: arma el mensaje y abre `wa.me`, sin enviar datos a ningún servidor.
 
 ## Estructura
 
-- `src/pages/`: rutas. Español sin prefijo (`/`, `/servicios/<slug>/`), inglés en `/en/` (`/en/services/<slug>/`).
-- `src/components/pages/`: plantillas de página compartidas por idioma (`Home.astro`, `Servicio.astro`).
+- `src/pages/`: rutas. Español: `/`, `/servicios/`, `/servicios/<slug>/`, `/clientes/`, `/nosotros/`, `/contacto/`. Inglés: `/en/`, `/en/services/`, `/en/services/<slug>/`, `/en/clients/`, `/en/about/`, `/en/contact/`. El mapa de rutas vive en `rutas` de `src/i18n/ui.ts`.
+- `src/components/pages/`: plantillas de página compartidas por idioma (`Home`, `PaginaServicios`, `Servicio`, `PaginaClientes`, `PaginaNosotros`, `PaginaContacto`).
+- Sistema visual (referencia: codebymike.net): `Ambiente` (brillos de color por página y grano), `Encabezado` ("/01 ── ETIQUETA"), clase `.panel` (tarjeta glass), `.mono` (etiquetas de ficha), `Hud` (indicador de fórmula fijo, desde 1400 px), `WhatsappFab`, `Nav` en píldora con menú móvil accesible.
 - `src/i18n/ui.ts`: textos de interfaz por idioma.
 - `src/data/`: contenido (servicios, clientes, datos de contacto, JSON-LD, formas del logo).
 - `public/`: fuentes WOFF2, íconos, imagen OG, `.htaccess` para Hostinger, `robots.txt`, manifest.
@@ -61,5 +62,6 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 ## Pendiente
 
 - Contenido del cliente: textos finales, traducción revisada al inglés, fotos de diseño de productos y audiovisual, foto de la fundadora, logos de clientes en SVG y autorización para mostrarlos.
-- Páginas: nosotros (fundadora y línea de tiempo), portafolio, FAQ, política de tratamiento de datos (Ley 1581 de 2012).
-- Cotizador de 3 pasos (isla React), service worker para la PWA, paneles de admin y clientes (fase 2).
+- Páginas: portafolio, FAQ, política de tratamiento de datos (Ley 1581 de 2012). La foto de la fundadora falta (hoy va un monograma marcado "Foto pendiente").
+- Confirmar la sede: el sitio dice "Colombia" y no una ciudad porque el cliente no la ha confirmado.
+- Service worker para la PWA, paneles de admin y clientes (fase 2).

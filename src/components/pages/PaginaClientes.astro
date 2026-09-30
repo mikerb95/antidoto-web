@@ -1,0 +1,59 @@
+---
+import Base from '../../layouts/Base.astro';
+import Encabezado from '../Encabezado.astro';
+import Clientes from '../Clientes.astro';
+import ContactoCta from '../ContactoCta.astro';
+import { CLIENTES, SECTORES } from '../../data/clientes';
+import { t, rutas, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const [title, description] = s.seo.clientes;
+const sectores = SECTORES.map((sec) => ({ sec, nombre: s.sectors[sec], marcas: CLIENTES.filter((c) => c.sector === sec).map((c) => c.nombre) }));
+const hud: Array<[string, string]> = [
+  ['muestra', s.hud.muestra],
+  ['reaccion', s.hud.reaccion],
+  ['dosis', s.hud.dosis],
+];
+---
+<Base locale={locale} pagina="clientes" title={title} description={description} alternates={rutas.clientes} scroll="suave" hud={hud}>
+  <div class="arriba"><Clientes locale={locale} num="01" nivel={1} /></div>
+
+  <section class="seccion" data-hud="reaccion" aria-labelledby="sectores-title">
+    <div class="wrap">
+      <Encabezado num="02" kicker={s.sectorsKicker} titulo={s.sectorsTitle} lead={s.sectorsLead} id="sectores-title" />
+      <ul class="sectores">
+        {sectores.map(({ sec, nombre, marcas }, i) => (
+          <li class:list={['panel', { destacado: sec === 'sst' || sec === 'ingenieria' }]}>
+            <div class="top"><span class="mono mono-acento">0{i + 1}</span><span class="mono">{s.marcas(marcas.length)}</span></div>
+            <p class="cifra">{marcas.length}</p>
+            <h3>{nombre}</h3>
+            <p class="lista">{marcas.join(' · ')}</p>
+            <span class="barra" style={`--p:${(marcas.length / CLIENTES.length) * 100}%`} aria-hidden="true"></span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <ContactoCta locale={locale} num="03" />
+</Base>
+
+<style>
+  .arriba { margin-top: -96px; padding-top: 96px; background: var(--color-bone); }
+  .arriba :global(.clientes) { padding-top: 48px; }
+  .sectores { list-style: none; margin: 32px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .sectores li { padding: 18px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+  .destacado { border-color: rgb(59 200 243 / 0.35) !important; background: linear-gradient(180deg, rgb(59 200 243 / 0.12), rgb(59 200 243 / 0.02)) !important; }
+  .top { display: flex; justify-content: space-between; }
+  .top .mono { margin: 0; }
+  .cifra { margin: 8px 0 0; font: 400 56px/1 var(--font-accent); color: var(--color-fg); }
+  h3 { margin: 0; font-size: 20px; line-height: 1.15; }
+  .lista { margin: 0; font-size: 13px; color: var(--color-fg-muted); }
+  .barra { margin-top: auto; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--color-antidote) var(--p), rgb(128 220 255 / 0.12) var(--p)); }
+  @media (max-width: 1020px) { .sectores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 480px) { .sectores { grid-template-columns: 1fr; } }
+</style>
