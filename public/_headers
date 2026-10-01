@@ -5,3 +5,9 @@ https://:project.pages.dev/*
 
 https://:version.:project.pages.dev/*
   X-Robots-Tag: noindex
+
+# Service worker y manifest: siempre revalidados.
+/sw.js
+  Cache-Control: no-cache
+/site.webmanifest
+  Cache-Control: no-cache

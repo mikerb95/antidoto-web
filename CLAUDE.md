@@ -18,7 +18,9 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - Multipágina real: cada página es un documento. El paso entre páginas usa view transitions nativas entre documentos (`@view-transition { navigation: auto }` en `global.css`), sin `ClientRouter` ni router SPA. La nueva página sube como líquido (`clip-path`); la nav y la barra de WhatsApp tienen `view-transition-name` propio y quedan quietas; los títulos de servicio comparten nombre para transformarse de una página a otra. Los scripts inicializan una vez al cargar (no hay `astro:page-load`).
 - Imágenes con `astro:assets` (WebP y `srcset` en el build). Fotos en `src/assets/fotos/`, logos de clientes en `src/assets/clientes/` (en blanco; el CSS los pasa a tinta con `filter: brightness(0)` sobre fondos claros).
 - Sin React. El cotizador de `/contacto/` es JS propio: arma el mensaje y abre `wa.me`. Si el build trae `PUBLIC_API_URL`, suma un paso de contacto y, solo con la autorización marcada, envía el lead a la API (`fetch` con `keepalive` y `text/plain`, fail-open: WhatsApp se abre igual). Sin la variable no envía nada a ningún servidor.
-- Lógica de negocio en `api/`: Worker de Cloudflare + D1 + Drizzle, paquete aparte con su propio `package.json`. Leads, bandeja en `/admin/` con enlace mágico, métricas, cron de seguimiento y correos con Resend. Detalle en `api/README.md`.
+- Lógica de negocio en `api/`: Worker de Cloudflare + D1 + Drizzle, paquete aparte con su propio `package.json`. Leads, bandeja en `/admin/` con enlace mágico, métricas, cron de seguimiento, correos con Resend y email marketing (suscripción con doble confirmación, campañas por lotes, webhook de Resend y baja de un clic). Detalle en `api/README.md`.
+- PWA: `integraciones/service-worker.mjs` genera `dist/sw.js` desde `src/pwa/sw.js` en cada build (versión por hash del contenido y precache de las páginas offline, sus assets, fuentes e íconos). Páginas con red primero y respaldo en caché o en `/offline/` (`/en/offline/`); `/_astro/` y fuentes con caché primero; imágenes con revalidación. Solo GET del mismo origen: la API y WhatsApp no pasan por el service worker. Se registra en `Base.astro` después de `load` y solo en producción. Íconos `maskable` aparte (`icon-maskable-*.png`) con margen para la zona segura.
+- Suscripción a novedades: el formulario del pie (`Footer.astro`) y la segunda casilla del cotizador solo aparecen con `PUBLIC_API_URL`. El texto de autorización de novedades es distinto del de la cotización (`src/data/consentimiento.json`).
 
 ## Estructura
 
@@ -26,11 +28,11 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - `src/components/pages/`: plantillas de página compartidas por idioma (`Home`, `PaginaServicios`, `Servicio`, `PaginaClientes`, `PaginaNosotros`, `PaginaContacto`).
 - Sistema visual propio, sacado del logo (frasco, líquido, infinito): `Ambiente` (tinta con brillos de marca y el wordmark como marca de agua), `Encabezado` (marcador de frasco con nivel de líquido), clase `.panel` (tarjeta de vidrio), `.mono` (etiqueta en Poppins), `.oficio` (Plex Mono, solo para timecode y fichas del visor), `Nav` (tubo de ensayo bajo el enlace activo, borde que se llena con la lectura, se compacta al bajar), `BarraWhatsapp` (barra inferior en móvil).
 - `src/pages/politica-de-datos.astro` y `src/pages/en/data-policy.astro`: política de tratamiento de datos (borrador con `noindex` hasta la revisión legal). Ruta en `rutaPolitica` de `ui.ts`.
-- `src/data/consentimiento.ts`: texto y versión de la autorización de datos. Lo comparten el cotizador y la API; si cambia el texto, sube la versión.
+- `src/data/consentimiento.json` (y su envoltorio tipado `consentimiento.ts`): textos y versiones de las autorizaciones de datos (cotización y novedades). Los comparten el sitio y la API; si cambia un texto, sube su versión.
 - `src/lib/origen.ts`: guarda en `sessionStorage` los UTM y el referente de la primera página de la visita, para el lead.
 - `src/i18n/ui.ts`: textos de interfaz por idioma.
 - `src/data/`: contenido (servicios, clientes, datos de contacto, JSON-LD, formas del logo).
-- `public/`: fuentes WOFF2, íconos, imagen OG, `.htaccess` para Hostinger, `robots.txt`, manifest.
+- `public/`: fuentes WOFF2, íconos (incluidos los `maskable`), imagen OG, `.htaccess` para Hostinger, `_headers` para Cloudflare Pages, `robots.txt`, manifest.
 - `marca/`: guía de marca, logos y fotos originales, inventario de clientes. Fuente de verdad del diseño.
 - `auditoria/`: auditoría técnica del sitio actual y brief de diseño con reglas de motion y accesibilidad.
 - `prototipo/`: prototipo HTML de las dos direcciones visuales. Se eligió "base A (editorial) con el hero de B y la sección clara de logos".
@@ -43,7 +45,7 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - **Textos de interfaz:** sin guiones largos ni semilargos, sin emojis. Cada texto nuevo va en los dos idiomas.
 - **Accesibilidad (WCAG 2.2 AA):** un solo `h1` por página, enlaces y botones reales, áreas táctiles de 44 px, `alt` descriptivo, foco visible.
 - **Motion:** el HTML y el CSS pintan el estado final; nada se esconde desde el CSS esperando un observer. Si un script fija un estado inicial oculto, debe tener fail-open (un `catch` que devuelve la visibilidad) y no correr con movimiento reducido. Anima solo `transform`, `opacity` y `clip-path`. Todo bucle de más de 5 s tiene pausa y se detiene fuera de pantalla. Respeta `prefers-reduced-motion`. Tokens de duración y curvas en `global.css`.
-- **Rendimiento:** presupuesto de LCP ≤ 2,5 s en móvil 4G, JS inicial ≤ 170 KB gzip, carga inicial móvil ≤ 1,5 MB. Línea base medida (30/09/2026): el JS de la home suma 70 KB gzip en 7 archivos, 48 KB de ellos el núcleo de motion (GSAP, ScrollTrigger, SplitText y Lenis en `core`). Mide de nuevo al agregar piezas.
+- **Rendimiento:** presupuesto de LCP ≤ 2,5 s en móvil 4G, JS inicial ≤ 170 KB gzip, carga inicial móvil ≤ 1,5 MB. Línea base medida (30/09/2026): el JS de la home suma 70 KB gzip en 7 archivos, 48 KB de ellos el núcleo de motion (GSAP, ScrollTrigger, SplitText y Lenis en `core`). Medición del 01/10/2026, con la PWA y la suscripción: 60 KB gzip en 8 archivos más 1,4 KB en línea (el service worker no cuenta: se registra después de `load`). Mide de nuevo al agregar piezas.
 
 ## Motion y verificación visual
 
@@ -61,9 +63,9 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 ## Despliegue
 
 - `.github/workflows/deploy.yml` sube `dist/` por FTP a `public_html` de Hostinger. Es manual (Actions > Run workflow) hasta el lanzamiento; sin los secrets `FTP_SERVER`, `FTP_USERNAME` y `FTP_PASSWORD` se omite con un aviso.
-- `.github/workflows/ci.yml` corre `check` y `build` en PRs y ramas.
+- `.github/workflows/ci.yml` corre `check`, pruebas y `build` del sitio, y `check` y pruebas de la API, en PRs y ramas.
 - Vista previa: `.github/workflows/preview.yml` sube `dist/` a Cloudflare Pages (proyecto `antidoto-web`) en cada push con `wrangler`. Cada rama tiene su URL `<rama>.antidoto-web.pages.dev` y `main` publica en `antidoto-web.pages.dev`; la URL queda en el resumen del job. Necesita los secrets `CLOUDFLARE_API_TOKEN` (permiso Cloudflare Pages: Edit) y `CLOUDFLARE_ACCOUNT_ID`; sin ellos se omite con un aviso. `public/_headers` pone `noindex` a las URLs `*.pages.dev`.
-- API: `.github/workflows/api.yml` despliega `api/` en cada push a `main` que la toque, o a mano. Crea la base D1 si no existe, aplica migraciones y copia los secrets `RESEND_API_KEY` y `SAL_IP` al Worker. El token de Cloudflare necesita además *Workers Scripts: Edit* y *D1: Edit*. La variable de GitHub `PUBLIC_API_URL` conecta el sitio con la API (preview y deploy la pasan al build).
+- API: `.github/workflows/api.yml` despliega `api/` en cada push a `main` que la toque, o a mano. Crea la base D1 si no existe, aplica migraciones y copia los secrets `RESEND_API_KEY`, `SAL_IP` y `RESEND_WEBHOOK_SECRET` al Worker. El token de Cloudflare necesita además *Workers Scripts: Edit* y *D1: Edit*. La variable de GitHub `PUBLIC_API_URL` conecta el sitio con la API (preview y deploy la pasan al build).
 - `public/.htaccess` trae redirecciones HTTPS y sin www, 404 real, cabeceras de seguridad (CSP en Report-Only) y caché.
 
 ## Pendiente
@@ -71,5 +73,4 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - Contenido del cliente: textos finales, traducción revisada al inglés, fotos de diseño de productos y audiovisual, foto de la fundadora, logos de clientes en SVG y autorización para mostrarlos.
 - Páginas: portafolio, FAQ. La política de tratamiento de datos existe como borrador: faltan razón social, NIT, domicilio y la revisión de un abogado. La foto de la fundadora falta (hoy va un monograma marcado "Foto pendiente").
 - Confirmar la sede: el sitio dice "Colombia" y no una ciudad porque el cliente no la ha confirmado.
-- Lógica de negocio: fase 1 (leads y bandeja) hecha en `api/`. Para activarla faltan los permisos del token, el dominio verificado en Resend y el primer admin (`api/README.md`). Siguen: cotización formal con aprobación, portal de clientes (proyectos, entregables, facturas de consulta desde Siigo o Alegra), email marketing con autorización aparte y contenido editable.
-- Service worker para la PWA.
+- Lógica de negocio: leads, bandeja y email marketing hechos en `api/`. Para activarlos faltan los permisos del token (Workers Scripts, D1 y Account Settings: Read), el dominio verificado en Resend, el webhook de Resend y el primer admin (`api/README.md`). Siguen: cotización formal con aprobación, portal de clientes (proyectos, entregables, facturas de consulta desde Siigo o Alegra) y contenido editable.

@@ -1,0 +1,110 @@
+---
+// Página sin conexión. La sirve el service worker (src/pwa/sw.js) cuando una página no está
+// en caché y no hay red. Lista lo que sí se puede ver offline, deja los canales directos y se
+// recarga sola al volver la conexión. Funciona sin JS: el script solo agrega la lista y la recarga.
+import Base from '../../layouts/Base.astro';
+import Encabezado from '../Encabezado.astro';
+import { t, rutas, rutaOffline, PAGINAS, LOCALES, type Locale } from '../../i18n/ui';
+import { SITE, waLink } from '../../data/site';
+import { SERVICIOS, servicioPath } from '../../data/servicios';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+
+// Nombre legible de cada ruta del sitio, para la lista de páginas guardadas.
+const nombres: Record<string, string> = {};
+for (const l of LOCALES) {
+  const tl = t(l);
+  for (const p of PAGINAS) nombres[rutas[p][l]] = p === 'inicio' ? (l === 'es' ? 'Inicio' : 'Home') : tl.nav[p];
+  for (const sv of SERVICIOS) nombres[servicioPath(sv, l)] = sv[l].title;
+}
+const canales = [
+  { k: 'WhatsApp', v: SITE.phoneDisplay, href: waLink(s.waDefault) },
+  { k: s.canales.telefono, v: SITE.phoneDisplay, href: `tel:+${SITE.whatsapp}` },
+  { k: s.canales.correo, v: SITE.email, href: `mailto:${SITE.email}` },
+];
+---
+<Base locale={locale} pagina={null} title={`${s.offlineKicker} | Antídoto`} description={s.offlineLead} alternates={rutaOffline} noindex>
+  <section class="seccion" aria-labelledby="pagina-title">
+    <div class="wrap estrecho">
+      <Encabezado kicker={s.offlineKicker} titulo={s.offlineTitulo} lead={s.offlineLead} id="pagina-title" nivel={1}>
+        <button class="btn btn-primary" type="button" data-reintentar hidden>{s.offlineReintentar}</button>
+      </Encabezado>
+
+      <div class="rejilla">
+        <nav class="panel guardadas" aria-labelledby="guardadas-t" data-guardadas hidden data-nombres={JSON.stringify(nombres)} data-locale={locale}>
+          <p class="mono mono-acento" id="guardadas-t">{s.offlineGuardadas}</p>
+          <ul data-lista></ul>
+          <p class="vacio" data-vacio hidden>{s.offlineSinGuardadas}</p>
+        </nav>
+        <aside class="panel canales" aria-labelledby="canales-t">
+          <p class="mono mono-acento" id="canales-t">{s.offlineContacto}</p>
+          <ul>
+            {canales.map((c) => (
+              <li><a href={c.href}><span class="mono">{c.k}</span><span class="v">{c.v}</span></a></li>
+            ))}
+          </ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Recarga al volver la red y lista las páginas que el service worker guardó.
+  const boton = document.querySelector<HTMLButtonElement>('[data-reintentar]');
+  if (boton) {
+    boton.hidden = false;
+    boton.addEventListener('click', () => location.reload());
+  }
+  window.addEventListener('online', () => location.reload());
+
+  const nav = document.querySelector<HTMLElement>('[data-guardadas]');
+  if (nav && 'caches' in window) {
+    (async () => {
+      try {
+        const nombres = JSON.parse(nav.dataset.nombres ?? '{}') as Record<string, string>;
+        const en = nav.dataset.locale === 'en';
+        const cache = await caches.open('paginas-v1');
+        const rutas = [...new Set((await cache.keys()).map((r) => new URL(r.url).pathname))]
+          .filter((r) => nombres[r] && r.startsWith('/en/') === en)
+          .sort();
+        const lista = nav.querySelector('[data-lista]')!;
+        for (const r of rutas) {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = r;
+          a.textContent = nombres[r];
+          li.append(a);
+          lista.append(li);
+        }
+        nav.querySelector<HTMLElement>('[data-vacio]')!.hidden = rutas.length > 0;
+        nav.hidden = false;
+      } catch {
+        // Sin acceso a la caché la página sigue útil con los canales directos.
+      }
+    })();
+  }
+</script>
+
+<style>
+  .estrecho { max-width: 860px; }
+  [data-reintentar] { margin-top: 20px; justify-self: start; align-self: flex-start; width: auto; }
+  [data-reintentar][hidden] { display: none; }
+  .rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 36px; align-items: start; }
+  .rejilla > .panel { padding: 22px; }
+  .guardadas[hidden] { display: none; }
+  .mono { margin: 0 0 10px; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; }
+  .guardadas a { display: flex; align-items: center; min-height: 44px; border-top: 1px solid var(--color-line); color: var(--color-fg); text-decoration: none; font-size: 15px; }
+  .guardadas li:first-child a, .canales li:first-child a { border-top: 0; }
+  .guardadas a:hover, .canales a:hover .v { color: var(--color-antidote); }
+  .vacio { margin: 0; color: var(--color-fg-muted); font-size: 14px; }
+  .canales a { display: grid; gap: 2px; padding: 10px 0; border-top: 1px solid var(--color-line); color: var(--color-fg); text-decoration: none; }
+  .canales a .mono { margin: 0; }
+  .v { font-size: 15px; overflow-wrap: anywhere; }
+  @media (max-width: 700px) { .rejilla { grid-template-columns: 1fr; } }
+</style>

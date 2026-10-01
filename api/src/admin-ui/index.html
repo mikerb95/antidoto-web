@@ -32,6 +32,8 @@
       <nav aria-label="Secciones">
         <a href="#leads" data-vista="leads">Solicitudes</a>
         <a href="#metricas" data-vista="metricas">Métricas</a>
+        <a href="#campanas" data-vista="campanas">Campañas</a>
+        <a href="#contactos" data-vista="contactos">Contactos</a>
         <a href="#equipo" data-vista="equipo" data-solo-admin hidden>Equipo</a>
       </nav>
       <div class="yo"><span id="yo-nombre"></span><button class="btn-texto" type="button" id="salir">Salir</button></div>
@@ -80,6 +82,60 @@
           </select>
         </div>
         <div id="metricas"></div>
+      </section>
+
+      <section id="vista-campanas" class="vista" aria-labelledby="t-campanas" hidden>
+        <div class="cabeza">
+          <h1 id="t-campanas">Campañas</h1>
+          <a class="btn" href="#campana-nueva">Nueva campaña</a>
+        </div>
+        <div class="lista">
+          <table>
+            <thead><tr><th scope="col">Asunto</th><th scope="col">Estado</th><th scope="col">Enviados</th><th scope="col">Abiertos</th><th scope="col">Clics</th><th scope="col">Fecha</th></tr></thead>
+            <tbody id="campanas-filas"></tbody>
+          </table>
+          <p class="vacio" id="campanas-vacio" hidden>Todavía no hay campañas. Escribe la primera con "Nueva campaña".</p>
+        </div>
+      </section>
+
+      <section id="vista-campana" class="vista" aria-labelledby="t-campana" hidden>
+        <div class="cabeza">
+          <h1 id="t-campana" tabindex="-1">Campaña</h1>
+          <a class="btn-texto" href="#campanas">Volver a campañas</a>
+        </div>
+        <div id="campana"></div>
+      </section>
+
+      <section id="vista-contactos" class="vista" aria-labelledby="t-contactos" hidden>
+        <div class="cabeza">
+          <h1 id="t-contactos">Contactos</h1>
+          <button class="btn-texto" type="button" id="abrir-invitar">Invitar a alguien</button>
+        </div>
+        <form class="nuevo invitar" id="form-invitar" hidden>
+          <h2>Invitar a recibir novedades</h2>
+          <p class="suave">Le llega un correo para confirmar. Solo queda suscrito si confirma.</p>
+          <label>Correo<input name="email" type="email" required></label>
+          <label>Nombre<input name="nombre" maxlength="120"></label>
+          <label>Idioma<select name="locale"><option value="es">Español</option><option value="en">Inglés</option></select></label>
+          <button class="btn" type="submit">Enviar invitación</button>
+          <p class="aviso" id="invitar-aviso" role="status" hidden></p>
+        </form>
+        <div class="filtros" role="group" aria-label="Filtros de contactos">
+          <div class="chips" id="chips-contactos"></div>
+          <label class="sr" for="c-q">Buscar contactos</label>
+          <input id="c-q" type="search" placeholder="Buscar correo, nombre u organización">
+        </div>
+        <div class="dividido">
+          <div class="lista">
+            <table>
+              <thead><tr><th scope="col">Contacto</th><th scope="col">Estado</th><th scope="col">Intereses</th><th scope="col">Desde</th></tr></thead>
+              <tbody id="contactos-filas"></tbody>
+            </table>
+            <p class="vacio" id="contactos-vacio" hidden>No hay contactos con estos filtros.</p>
+            <div class="paginas"><button class="btn-texto" type="button" id="c-anterior">Anteriores</button><span id="c-pag"></span><button class="btn-texto" type="button" id="c-siguiente">Siguientes</button></div>
+          </div>
+          <aside class="detalle" id="contacto" aria-labelledby="ct-titulo" hidden></aside>
+        </div>
       </section>
 
       <section id="vista-equipo" class="vista" aria-labelledby="t-equipo" hidden>

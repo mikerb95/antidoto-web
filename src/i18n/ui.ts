@@ -19,6 +19,9 @@ export const rutas: Record<Pagina, Record<Locale, string>> = {
 /** Política de tratamiento de datos (fuera del menú, enlazada en el pie y el cotizador). */
 export const rutaPolitica: Record<Locale, string> = { es: '/politica-de-datos/', en: '/en/data-policy/' };
 
+/** Página que muestra el service worker cuando no hay red (fuera del menú y del sitemap). */
+export const rutaOffline: Record<Locale, string> = { es: '/offline/', en: '/en/offline/' };
+
 /** Ruta de la home de cada idioma. */
 export const homePath: Record<Locale, string> = { es: rutas.inicio.es, en: rutas.inicio.en };
 
@@ -188,6 +191,19 @@ export const ui = {
     footerRedes: 'Redes',
     footerEstado: 'Atendiendo en Colombia',
     footerPolitica: 'Tratamiento de datos',
+    novedadesTitulo: 'Novedades por correo',
+    novedadesTexto: 'Novedades, contenidos y propuestas de Antídoto. Te das de baja cuando quieras.',
+    novedadesCorreo: 'Tu correo',
+    novedadesBoton: 'Suscribirme',
+    novedadesEnviado: 'Listo. Revisa tu correo y confirma la suscripción.',
+    novedadesError: 'Revisa el correo e inténtalo de nuevo.',
+    offlineKicker: 'Sin conexión',
+    offlineTitulo: 'Estás sin conexión',
+    offlineLead: 'No pudimos cargar esta página. Cuando vuelva la conexión la recargamos sola.',
+    offlineReintentar: 'Reintentar',
+    offlineGuardadas: 'Puedes ver sin conexión',
+    offlineSinGuardadas: 'Todavía no hay páginas guardadas en este dispositivo.',
+    offlineContacto: 'Escríbenos o llámanos',
 
     notFoundTitle: 'Esta página no existe',
     notFoundLead: 'Puede que el enlace esté mal escrito o que la página se haya movido.',
@@ -366,6 +382,19 @@ export const ui = {
     footerRedes: 'Social',
     footerEstado: 'Available in Colombia',
     footerPolitica: 'Data policy',
+    novedadesTitulo: 'News by email',
+    novedadesTexto: 'News, content and offers from Antídoto. Unsubscribe whenever you want.',
+    novedadesCorreo: 'Your email',
+    novedadesBoton: 'Subscribe',
+    novedadesEnviado: 'Done. Check your inbox and confirm the subscription.',
+    novedadesError: 'Check the email and try again.',
+    offlineKicker: 'Offline',
+    offlineTitulo: 'You are offline',
+    offlineLead: 'We could not load this page. It will reload on its own when the connection is back.',
+    offlineReintentar: 'Try again',
+    offlineGuardadas: 'Available offline',
+    offlineSinGuardadas: 'No pages are saved on this device yet.',
+    offlineContacto: 'Write or call us',
 
     notFoundTitle: 'This page does not exist',
     notFoundLead: 'The link may be mistyped or the page may have moved.',
