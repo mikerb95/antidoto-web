@@ -7,7 +7,6 @@ import { leads, consentimientos, eventos, type Lead } from './db/schema';
 import { validarLead } from './validar';
 import { enviar, correoLeadEquipo, correoLeadCliente } from './correo';
 import { suscribir } from './marketing/suscripciones';
-import consentimiento from '../../src/data/consentimiento.json';
 import type { Env } from './env';
 import { ahora, hashIp, uuid, json, HORA } from './util';
 
@@ -67,8 +66,8 @@ export async function crearLead(
     db.insert(consentimientos).values({
       id: uuid(),
       leadId: lead.id,
-      version: consentimiento.version,
-      texto: consentimiento[lead.locale],
+      version: r.autorizacion.version,
+      texto: r.autorizacion[lead.locale],
       aceptado: t,
       ipHash,
       userAgent: req.headers.get('user-agent')?.slice(0, 300) ?? null,
@@ -93,6 +92,7 @@ export async function crearLead(
               empresa: lead.empresa,
               locale: lead.locale,
               origen: 'cotizador',
+              autorizacion: r.novedades,
               intereses: [lead.servicio],
               leadId: lead.id,
               ipHash,
