@@ -1,7 +1,7 @@
 // Modelo de datos de la fase 1: leads del cotizador, su consentimiento (Ley 1581 de 2012),
 // el historial de cada lead y el acceso del equipo al admin con enlace mágico.
 // Fechas en milisegundos desde epoch (UTC). Los ids son UUID generados en el Worker.
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex, primaryKey } from 'drizzle-orm/sqlite-core';
 
 export const ESTADOS = ['nuevo', 'contactado', 'cotizado', 'ganado', 'perdido'] as const;
 export type Estado = (typeof ESTADOS)[number];
@@ -121,6 +121,20 @@ export const sesiones = sqliteTable(
     revocada: integer('revocada'),
   },
   (t) => [index('sesiones_usuario').on(t.usuarioId)],
+);
+
+// Límites de frecuencia (leads y suscripciones por IP, enlaces de acceso por persona). Un
+// contador por clave y ventana de una hora que se suma con un solo UPDATE atómico: contar y
+// después insertar dejaba pasar ráfagas de peticiones en paralelo.
+export const limites = sqliteTable(
+  'limites',
+  {
+    clave: text('clave').notNull(),
+    /** Inicio de la ventana (ms, múltiplo de una hora). */
+    ventana: integer('ventana').notNull(),
+    n: integer('n').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.clave, t.ventana] })],
 );
 
 export type Lead = typeof leads.$inferSelect;
