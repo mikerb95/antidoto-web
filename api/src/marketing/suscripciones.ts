@@ -2,13 +2,13 @@
 // cotizador o porque el equipo lo invitó) recibe un correo con un botón para confirmar; solo
 // entonces queda "activo" y la autorización queda confirmada. La baja es de un clic, incluida la
 // de RFC 8058 (List-Unsubscribe-Post) que usan Gmail y Yahoo.
-import { and, eq, gt, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { contactos, consentimientosMarketing, envios, SERVICIOS, type Contacto, type ServicioId } from '../db/schema';
 import { enviar } from '../correo';
 import { aceptada, vigente, type Version } from '../consentimiento';
 import type { Env } from '../env';
-import { ahora, hashIp, uuid, json, token, escapar, HORA } from '../util';
+import { ahora, hashIp, uuid, json, token, escapar } from '../util';
 import { TIEMPO_MINIMO_MS } from '../validar';
 import { dentroDelLimite } from '../limite';
 
