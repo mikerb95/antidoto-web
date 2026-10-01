@@ -1,7 +1,7 @@
 // Acceso del equipo al admin con enlace mágico por correo: sin contraseñas que filtrar ni
 // recuperar. Los tokens nunca se guardan en claro (solo su SHA-256), el enlace sirve una vez
 // y vence rápido, y las sesiones se pueden revocar una a una o todas.
-import { and, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, eq, gt, isNull } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { enlaces, sesiones, usuarios, type Usuario } from './db/schema';
 import { enviar, correoEnlaceAcceso } from './correo';
