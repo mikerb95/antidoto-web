@@ -3,7 +3,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { drizzle } from 'drizzle-orm/d1';
 import { crearEntorno } from './entorno';
-import { manejar } from '../src/index';
+import trabajador, { manejar } from '../src/index';
 import { procesarEnvios, POR_LOTE } from '../src/marketing/envios';
 import { convertir, renderizar, personalizar } from '../src/marketing/render';
 import { firmaValida } from '../src/marketing/webhook';
@@ -131,6 +131,40 @@ describe('suscripción', () => {
   test('a un contacto activo no le reenvía nada (no revela que existe)', async () => {
     expect((await suscribirse('ana@demo.co')).status).toBe(202);
     expect(correos).toHaveLength(0);
+  });
+
+  test('quien se dio de baja no se reactiva con el enlace viejo; al volver recibe uno nuevo', async () => {
+    const viejo = (await contacto('ana@demo.co'))!.token as string;
+    await llamar(`/v1/suscripcion/baja?t=${viejo}`, { method: 'POST' });
+    expect((await contacto('ana@demo.co'))?.estado).toBe('baja');
+
+    const r = await llamar(`/v1/suscripcion/confirmar?t=${viejo}`, { method: 'POST' });
+    expect(r.status).toBe(404);
+    expect((await contacto('ana@demo.co'))?.estado).toBe('baja');
+
+    await suscribirse('ana@demo.co', {}, '203.0.113.23');
+    const nuevo = tokenDe(correos[0]!.text, 'confirmar');
+    expect(nuevo).not.toBe(viejo);
+    expect((await llamar(`/v1/suscripcion/confirmar?t=${viejo}`, { method: 'POST' })).status).toBe(404);
+    await llamar(`/v1/suscripcion/confirmar?t=${nuevo}`, { method: 'POST' });
+    expect((await contacto('ana@demo.co'))?.estado).toBe('activo');
+  });
+
+  test('a quien se quejó por spam no se le vuelve a escribir', async () => {
+    const t = Date.now();
+    await env.DB.prepare(
+      "insert into contactos (id, email, locale, estado, origen, intereses, token, creado, actualizado, baja, motivo_baja) values ('77777777-7777-4777-8777-777777777777', 'queja@demo.co', 'es', 'baja', 'pie', '[]', 'tok-queja', ?, ?, ?, 'queja')",
+    ).bind(t, t, t).run();
+    expect((await suscribirse('queja@demo.co', {}, '203.0.113.24')).status).toBe(202);
+    expect(correos).toHaveLength(0);
+    expect(await contacto('queja@demo.co')).toMatchObject({ estado: 'baja', token: 'tok-queja' });
+  });
+
+  test('la confirmación no repite el nombre que llegó del formulario público', async () => {
+    await suscribirse('nombre@demo.co', { nombre: 'Gana dinero en spam.example' }, '203.0.113.25');
+    expect(correos).toHaveLength(1);
+    expect(correos[0]!.html).not.toContain('spam.example');
+    expect(correos[0]!.text).not.toContain('spam.example');
   });
 
   test('bots y autorizaciones viejas no suscriben', async () => {
@@ -264,6 +298,13 @@ describe('campañas', () => {
     expect(((await r.json()) as { campana: { estado: string } }).campana.estado).toBe('enviando');
     expect(lotes).toHaveLength(0);
 
+    // El cron de la hora en punto no manda lotes: eso lo hace solo el de cada 5 minutos.
+    const tareas: Promise<unknown>[] = [];
+    const ctx = { waitUntil: (p: Promise<unknown>) => tareas.push(p), passThroughOnException() {} } as unknown as ExecutionContext;
+    await trabajador.scheduled!({ cron: '0 * * * *', scheduledTime: Date.now(), type: 'scheduled', noRetry() {} } as ScheduledController, env, ctx);
+    await Promise.all(tareas);
+    expect(lotes).toHaveLength(0);
+
     const res = await procesarEnvios(env, drizzle(env.DB));
     expect(res).toEqual({ enviados: 231, fallidos: 0 });
     expect(lotes.map((l) => l.length)).toEqual([POR_LOTE, POR_LOTE, 31]);
@@ -328,6 +369,13 @@ describe('campañas', () => {
     await llamar(`/v1/suscripcion/confirmar?t=${tokenDe(correos.at(-1)!.text, 'confirmar')}`, { method: 'POST' });
     const cons = await env.DB.prepare('select version, confirmado from contacto_consentimientos where contacto_id = ?').bind(c!.id).first<Record<string, unknown>>();
     expect(cons).toMatchObject({ version: NOVEDADES, confirmado: expect.any(Number) });
+  });
+
+  test('el equipo no puede reinvitar a quien se dio de baja', async () => {
+    const r = await admin('/admin/api/contactos', { method: 'POST', body: JSON.stringify({ email: 'c6@demo.co', locale: 'es' }) });
+    expect(r.status).toBe(409);
+    expect(await r.json()).toEqual({ error: 'baja' });
+    expect(correos).toHaveLength(0);
   });
 
   test('suprimir borra los datos personales del contacto', async () => {

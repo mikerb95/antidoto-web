@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vitest';
 import { validarCambios, mediana, celdaCsv } from '../src/admin';
 import { origenPermitido } from '../src/cors';
 import { correoLeadEquipo, correoLeadCliente } from '../src/correo';
+import { buscarVersion } from '../src/consentimiento';
 import type { Lead } from '../src/db/schema';
 
 describe('validarCambios', () => {
@@ -74,4 +75,19 @@ describe('correos', () => {
     expect(c.texto).toContain('Video production');
     expect(c.texto).toContain('equipo@antidoto.co');
   });
+
+  test('la confirmación no repite texto libre del formulario', () => {
+    const c = correoLeadCliente({ ...lead, nombre: 'Gana dinero en spam.example', empresa: 'Visita spam.example', ciudad: 'spam.example' }, 'equipo@antidoto.co');
+    expect(c.html).not.toContain('spam.example');
+    expect(c.texto).not.toContain('spam.example');
+  });
+});
+
+test('acepta la versión vigente y las anteriores, nada más', () => {
+  const v1 = { version: 'v1', es: 'Texto 1', en: 'Text 1' };
+  const bloque = { version: 'v2', es: 'Texto 2', en: 'Text 2', anteriores: [v1] };
+  expect(buscarVersion(bloque, 'v2')?.es).toBe('Texto 2');
+  expect(buscarVersion(bloque, 'v1')).toBe(v1);
+  expect(buscarVersion(bloque, 'v0')).toBe(null);
+  expect(buscarVersion(bloque, undefined)).toBe(null);
 });
