@@ -84,6 +84,12 @@ const otro = otroIdioma(locale);
   titulares();
   magneticos();
   registrarOrigen();
+
+  // PWA: el service worker (generado en el build desde src/pwa/sw.js) se registra después de
+  // la carga para no competir con el LCP. En dev no se registra.
+  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}), { once: true });
+  }
 </script>
 
 <style>
