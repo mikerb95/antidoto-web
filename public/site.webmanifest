@@ -1,16 +1,66 @@
 {
+  "id": "/",
   "name": "Antídoto",
   "short_name": "Antídoto",
-  "description": "Estudio creativo empresarial: formaciones vivenciales, producción audiovisual y catering corporativo.",
+  "description": "Estudio creativo empresarial: formaciones vivenciales, producción audiovisual, catering corporativo y diseño de productos y experiencias.",
   "lang": "es-CO",
-  "start_url": "/",
+  "dir": "ltr",
+  "start_url": "/?utm_source=pwa",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0F181D",
   "theme_color": "#0F181D",
+  "categories": [
+    "business",
+    "education"
+  ],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cotizar",
+      "short_name": "Cotizar",
+      "url": "/contacto/?utm_source=pwa",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Servicios",
+      "url": "/servicios/?utm_source=pwa",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

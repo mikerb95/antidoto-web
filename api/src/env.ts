@@ -9,6 +9,10 @@ export interface Env {
   APP_URL?: string;
   /** Sin esta clave los correos no salen (se registran en el log) y todo lo demás sigue. */
   RESEND_API_KEY?: string;
+  /** Remitente de las campañas; si falta se usa MAIL_FROM. */
+  MAIL_FROM_NOVEDADES?: string;
+  /** Secreto de firma del webhook de Resend (whsec_...). Sin él, el webhook rechaza todo. */
+  RESEND_WEBHOOK_SECRET?: string;
   /** Sal para el hash de IP. Sin ella se usa una fija y el hash es menos privado. */
   SAL_IP?: string;
 }

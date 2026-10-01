@@ -13,6 +13,27 @@ Worker de Cloudflare con base D1 (SQLite) y Drizzle. Fase 1 de la lógica de neg
 
 Si la API falla o no está configurada, el cotizador sigue abriendo WhatsApp igual (fail-open).
 
+### Email marketing
+
+- **Suscripción:** desde el formulario del pie del sitio o con la segunda casilla del cotizador ("Quiero recibir novedades"). Es una autorización aparte de la del lead, con su propio texto y versión en `src/data/consentimiento.json`.
+- **Doble confirmación:** la persona recibe un correo y queda `activo` solo cuando confirma. El GET de la página no confirma, así que los filtros de correo no la activan solos. El equipo puede invitar a alguien desde la bandeja; su autorización se registra cuando confirma.
+- **Campañas** (bandeja > Campañas):
+  - Asunto, texto de vista previa y mensaje en un formato simple (títulos, negrita, listas, botones, imágenes y `{{nombre}}`), con vista previa del correo real.
+  - Audiencia por idioma y, si quieres, por servicios de interés.
+  - Prueba a tu correo.
+  - Al enviar se pide confirmar el número de destinatarios, y se rechaza si cambió mientras tanto.
+- **Envío:**
+  - Lotes de 100 con la API de lotes de Resend: el primero sale al instante y el resto con un cron cada 5 minutos.
+  - Reclamar cada lote es atómico, así que nadie recibe dos veces.
+  - Si Resend está limitado o caído, se reintenta hasta 3 veces.
+  - Quien se da de baja antes de que salga su lote no recibe nada.
+- **Baja de un clic:** cada correo trae un enlace de baja y las cabeceras `List-Unsubscribe` y `List-Unsubscribe-Post` (RFC 8058), que Gmail y Yahoo exigen a quien envía en volumen.
+- **Webhook de Resend** (`/v1/resend/webhook`, firmado con Svix):
+  - Registra entregas, aperturas, clics, rebotes y quejas.
+  - Un rebote permanente marca al contacto como `rebotado` y una queja lo da de baja.
+  - Las métricas de cada campaña salen de aquí.
+- **Supresión:** un admin borra el correo, el nombre y la organización del contacto, y se revoca su autorización.
+
 ## Local
 
 ```sh
@@ -33,12 +54,13 @@ Sin `RESEND_API_KEY`, el enlace de acceso sale en la consola de `wrangler dev`. 
 
 ## Producción
 
-1. **Token de Cloudflare:** al token de `CLOUDFLARE_API_TOKEN` agrégale los permisos *Workers Scripts: Edit* y *D1: Edit* (hoy solo tiene Pages).
+1. **Token de Cloudflare:** al token de `CLOUDFLARE_API_TOKEN` agrégale los permisos *Workers Scripts: Edit*, *D1: Edit* y *Account Settings: Read* (hoy solo tiene Pages; el primer despliegue falló por eso).
 2. **Correo:** crea una cuenta en Resend, verifica el dominio `antidotocolombia.com` (registros DNS en Hostinger) y guarda la clave como secret `RESEND_API_KEY` en GitHub. Si el remitente va a ser otro, cambia `MAIL_FROM` en `wrangler.toml`.
 3. **Sal de IP:** guarda un texto aleatorio largo como secret `SAL_IP` (por ejemplo `openssl rand -base64 32`).
-4. **Desplegar:** en Actions, corre *API (Cloudflare Worker)*. También corre solo en cada push a `main` que toque `api/`. La primera vez crea la base D1 y, siempre, aplica las migraciones. La URL queda en el resumen del job.
-5. **Conectar el sitio:** guarda esa URL como variable `PUBLIC_API_URL` en GitHub (Variables, no Secrets). El build del sitio la usa para activar el paso de contacto del cotizador, y la API la usa para los enlaces de los correos. Lo ideal es un dominio propio (`api.antidotocolombia.com`) apuntado al Worker.
-6. **Primer admin:**
+4. **Webhook de Resend (métricas de campañas):** en Resend > Webhooks crea uno hacia `<URL de la API>/v1/resend/webhook` con los eventos `email.delivered`, `email.opened`, `email.clicked`, `email.bounced` y `email.complained`, y guarda su *signing secret* (`whsec_…`) como secret `RESEND_WEBHOOK_SECRET`. Para contar aperturas y clics, activa el seguimiento de aperturas y clics del dominio en Resend. Las campañas salen de `MAIL_FROM_NOVEDADES` (en `wrangler.toml`).
+5. **Desplegar:** en Actions, corre *API (Cloudflare Worker)*. También corre solo en cada push a `main` que toque `api/`. La primera vez crea la base D1 y, siempre, aplica las migraciones. La URL queda en el resumen del job.
+6. **Conectar el sitio:** guarda esa URL como variable `PUBLIC_API_URL` en GitHub (Variables, no Secrets). El build del sitio la usa para activar el paso de contacto del cotizador, y la API la usa para los enlaces de los correos. Lo ideal es un dominio propio (`api.antidotocolombia.com`) apuntado al Worker.
+7. **Primer admin:**
 
    ```sh
    npx wrangler d1 execute antidoto --remote --command \
@@ -56,6 +78,7 @@ Sin `RESEND_API_KEY`, el enlace de acceso sale en la consola de `wrangler dev`. 
 - `src/admin.ts`: bandeja, métricas, CSV y equipo.
 - `src/seguimiento.ts`: cron.
 - `src/correo.ts`: Resend y plantillas.
+- `src/marketing/`: suscripciones y baja (`suscripciones.ts`), formato de campañas (`render.ts`), motor de envío (`envios.ts`), webhook de Resend (`webhook.ts`) y API de la bandeja (`admin.ts`).
 - `src/db/schema.ts`: modelo de datos. Migraciones en `migraciones/`.
 - `src/admin-ui/`: interfaz de la bandeja (HTML, CSS y JS propios, sin dependencias). `scripts/empaquetar-ui.mjs` la mete en el Worker antes de `dev`, `deploy`, `check` y `test`.
 - El texto de la autorización vive en `../src/data/consentimiento.ts` y lo comparten el sitio y la API.
