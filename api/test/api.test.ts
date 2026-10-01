@@ -120,6 +120,12 @@ describe('POST /v1/leads', () => {
     expect((await enviarLead(lead(), '198.51.100.7')).status).toBe(429);
     expect((await enviarLead(lead(), '198.51.100.8')).status).toBe(201);
   });
+
+  test('una ráfaga en paralelo no pasa el límite', async () => {
+    const r = await Promise.all(Array.from({ length: 12 }, () => enviarLead(lead(), '198.51.100.9')));
+    expect(r.filter((x) => x.status === 201)).toHaveLength(LIMITE_POR_HORA);
+    expect(r.filter((x) => x.status === 429)).toHaveLength(12 - LIMITE_POR_HORA);
+  });
 });
 
 describe('bandeja', () => {
@@ -217,12 +223,19 @@ describe('bandeja', () => {
   });
 
   test('solo un admin suprime datos, y la supresión borra lo personal', async () => {
+    // La misma persona está suscrita a novedades con el correo del lead.
+    const t = Date.now();
+    await env.DB.prepare(
+      "insert into contactos (id, email, nombre, locale, estado, origen, intereses, token, creado, actualizado) values ('88888888-8888-4888-8888-888888888888', 'x@y.co', 'Malicioso', 'es', 'activo', 'cotizador', '[]', 'tok-lead', ?, ?)",
+    ).bind(t, t).run();
     expect((await post(`/admin/api/leads/${leadId}/anonimizar`, {}, cookieEquipo)).status).toBe(403);
     const d = (await (await post(`/admin/api/leads/${leadId}/anonimizar`)).json()) as { lead: Record<string, unknown>; consentimientos: { revocado: number | null }[] };
     expect(d.lead).toMatchObject({ nombre: null, email: null, telefono: null, notas: null, servicio: 'catering', estado: 'cotizado' });
     expect(d.consentimientos[0]!.revocado).toEqual(expect.any(Number));
     const nota = await env.DB.prepare("select detalle from lead_eventos where lead_id = ? and tipo = 'nota'").bind(leadId).first<string>('detalle');
     expect(nota).toBe(null);
+    const contacto = await env.DB.prepare("select email, nombre, estado, motivo_baja from contactos where id = '88888888-8888-4888-8888-888888888888'").first();
+    expect(contacto).toEqual({ email: 'suprimido+88888888-8888-4888-8888-888888888888@invalid', nombre: null, estado: 'baja', motivo_baja: 'supresion' });
     expect((await post(`/admin/api/leads/${leadId}`, { method: 'PATCH', body: '{"estado":"ganado"}' })).status).toBe(409);
   });
 

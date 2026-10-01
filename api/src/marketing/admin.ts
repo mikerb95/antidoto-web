@@ -10,6 +10,7 @@ import {
   ESTADOS_CONTACTO,
   SERVICIOS,
   type Campana,
+  type Contacto,
   type EstadoContacto,
   type ServicioId,
 } from '../db/schema';
@@ -122,19 +123,23 @@ export async function bajaContacto(id: string, db: DrizzleD1Database): Promise<R
   return verContacto(id, db);
 }
 
-/** Supresión (Ley 1581): borra los datos personales y deja el registro sin identificar. */
-export async function suprimirContacto(id: string, db: DrizzleD1Database, sesion: Sesion): Promise<Response> {
-  if (sesion.usuario.rol !== 'admin') return json({ error: 'rol' }, 403);
-  const [c] = await db.select().from(contactos).where(eq(contactos.id, id));
-  if (!c) return json({ error: 'no existe' }, 404);
+/** Supresión (Ley 1581): borra los datos personales del contacto y deja el registro sin identificar. */
+export async function suprimir(db: DrizzleD1Database, c: Contacto): Promise<void> {
   await darDeBaja(db, c, 'supresion');
   await db.batch([
     db
       .update(contactos)
       .set({ email: `suprimido+${c.id}@invalid`, nombre: null, empresa: null, token: token(), leadId: null, motivoBaja: 'supresion', actualizado: ahora() })
-      .where(eq(contactos.id, id)),
-    db.update(consentimientosMarketing).set({ ipHash: null, userAgent: null }).where(eq(consentimientosMarketing.contactoId, id)),
+      .where(eq(contactos.id, c.id)),
+    db.update(consentimientosMarketing).set({ ipHash: null, userAgent: null }).where(eq(consentimientosMarketing.contactoId, c.id)),
   ]);
+}
+
+export async function suprimirContacto(id: string, db: DrizzleD1Database, sesion: Sesion): Promise<Response> {
+  if (sesion.usuario.rol !== 'admin') return json({ error: 'rol' }, 403);
+  const [c] = await db.select().from(contactos).where(eq(contactos.id, id));
+  if (!c) return json({ error: 'no existe' }, 404);
+  await suprimir(db, c);
   return verContacto(id, db);
 }
 
