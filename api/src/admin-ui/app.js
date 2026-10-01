@@ -851,8 +851,13 @@ $('#form-invitar').addEventListener('submit', async (e) => {
     e.target.reset();
     aviso.textContent = 'Invitación enviada. Aparecerá como activa cuando confirme.';
     cargarContactos();
-  } catch {
-    aviso.textContent = 'Revisa el correo.';
+  } catch (err) {
+    aviso.textContent =
+      err.datos?.error === 'baja'
+        ? 'Esta persona se dio de baja. Solo puede volver a suscribirse por su cuenta desde el sitio.'
+        : err.datos?.error === 'rebotado'
+          ? 'Ese correo rebotó: la dirección no existe.'
+          : 'Revisa el correo.';
   }
   aviso.hidden = false;
 });

@@ -14,6 +14,8 @@ export const POR_LOTE = 100;
 /** Lotes por ejecución: con el límite de Resend (2 por segundo) y el tiempo de un cron, sobra. */
 export const LOTES_POR_CORRIDA = 5;
 const MAX_INTENTOS = 3;
+/** Pausa entre lotes de una corrida: Resend acepta 2 llamadas por segundo. */
+const PAUSA_MS = 600;
 /** Un lote reclamado que no terminó en este tiempo se da por perdido (se marca fallido, no se reintenta: pudo haber salido). */
 const LOTE_PERDIDO_MS = 15 * 60_000;
 
@@ -66,6 +68,7 @@ export async function procesarEnvios(env: Env, db: DrizzleD1Database): Promise<{
     .where(and(eq(envios.estado, 'enviando'), lt(envios.reclamado, t - LOTE_PERDIDO_MS)));
 
   for (let i = 0; i < LOTES_POR_CORRIDA; i++) {
+    if (i) await new Promise((r) => setTimeout(r, PAUSA_MS));
     const lote = uuid();
     const reclamados = await db
       .update(envios)

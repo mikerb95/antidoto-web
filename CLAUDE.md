@@ -28,7 +28,7 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - `src/components/pages/`: plantillas de página compartidas por idioma (`Home`, `PaginaServicios`, `Servicio`, `PaginaClientes`, `PaginaNosotros`, `PaginaContacto`).
 - Sistema visual propio, sacado del logo (frasco, líquido, infinito): `Ambiente` (tinta con brillos de marca y el wordmark como marca de agua), `Encabezado` (marcador de frasco con nivel de líquido), clase `.panel` (tarjeta de vidrio), `.mono` (etiqueta en Poppins), `.oficio` (Plex Mono, solo para timecode y fichas del visor), `Nav` (tubo de ensayo bajo el enlace activo, borde que se llena con la lectura, se compacta al bajar), `BarraWhatsapp` (barra inferior en móvil).
 - `src/pages/politica-de-datos.astro` y `src/pages/en/data-policy.astro`: política de tratamiento de datos (borrador con `noindex` hasta la revisión legal). Ruta en `rutaPolitica` de `ui.ts`.
-- `src/data/consentimiento.json` (y su envoltorio tipado `consentimiento.ts`): textos y versiones de las autorizaciones de datos (cotización y novedades). Los comparten el sitio y la API; si cambia un texto, sube su versión.
+- `src/data/consentimiento.json` (y su envoltorio tipado `consentimiento.ts`): textos y versiones de las autorizaciones de datos (cotización y novedades). Los comparten el sitio y la API; si cambia un texto, sube su versión y pasa la anterior a `anteriores` (la API acepta ambas mientras el sitio y la API se despliegan por separado).
 - `src/lib/origen.ts`: guarda en `sessionStorage` los UTM y el referente de la primera página de la visita, para el lead.
 - `src/i18n/ui.ts`: textos de interfaz por idioma.
 - `src/data/`: contenido (servicios, clientes, datos de contacto, JSON-LD, formas del logo).
