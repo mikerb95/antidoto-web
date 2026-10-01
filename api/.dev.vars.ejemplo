@@ -1,1 +1,30 @@
+# API en local (wrangler dev). Copia este archivo a .dev.vars y diligencia los valores.
+# Estos valores pisan los [vars] de wrangler.toml solo en local.
+
+# "local" acepta orígenes localhost, cookies sin Secure e imprime los correos en la consola.
 ENTORNO=local
+
+# Orígenes que pueden enviar leads. Con ENTORNO=local cualquier localhost ya se acepta.
+ORIGENES=http://localhost:4321
+
+# URL pública del Worker, para los enlaces de los correos (acceso, baja, seguimiento del cron).
+APP_URL=http://localhost:8787
+
+# Remitentes y destino de los avisos. Con una clave real de Resend, el remitente
+# tiene que ser de un dominio verificado (o onboarding@resend.dev para pruebas).
+MAIL_FROM=Antídoto <hola@antidotocolombia.com>
+MAIL_FROM_NOVEDADES=Antídoto <novedades@antidotocolombia.com>
+MAIL_EQUIPO=antidoto.colombia@outlook.com
+
+# Horas sin respuesta antes de avisar al equipo.
+HORAS_SEGUIMIENTO=24
+
+# Sal para el hash de IP: openssl rand -base64 32
+SAL_IP=
+
+# Clave de Resend (re_...). Vacía: los correos no salen y el enlace de acceso
+# a /admin/ aparece en la consola de wrangler dev.
+RESEND_API_KEY=
+
+# Secreto de firma del webhook de Resend (whsec_...). Vacío: el webhook rechaza todo.
+RESEND_WEBHOOK_SECRET=

@@ -1,7 +1,7 @@
 // Validación del lead que envía el cotizador. Función pura: devuelve los datos limpios o la
 // lista de errores, sin tocar la base.
 import { SERVICIOS, type ServicioId } from './db/schema';
-import consentimiento from '../../src/data/consentimiento.json';
+import { aceptada, type Version } from './consentimiento';
 
 export interface LeadEntrada {
   servicio: ServicioId;
@@ -23,8 +23,11 @@ export interface LeadEntrada {
 }
 
 export type Resultado =
-  /** novedades: también aceptó la autorización aparte para recibir correos (y dejó correo). */
-  | { ok: true; lead: LeadEntrada; novedades: boolean }
+  /**
+   * autorizacion: la versión que aceptó. novedades: la autorización aparte para recibir correos,
+   * si la marcó y dejó correo.
+   */
+  | { ok: true; lead: LeadEntrada; autorizacion: Version; novedades: Version | null }
   /** Parece un bot (trampa llena o envío demasiado rápido): se responde bien y no se guarda. */
   | { ok: false; bot: true }
   | { ok: false; bot: false; errores: string[] };
@@ -91,7 +94,8 @@ export function validarLead(entrada: unknown): Resultado {
 
   if (!emailBruto && !telefonoBruto) errores.push('contacto');
 
-  if (d.consentimiento !== consentimiento.version) errores.push('consentimiento');
+  const autorizacion = aceptada('cotizacion', d.consentimiento);
+  if (!autorizacion) errores.push('consentimiento');
 
   const fechaBruta = texto(d.fecha, 7);
   const fecha = fechaBruta && /^\d{4}-(0[1-9]|1[0-2])$/.test(fechaBruta) ? fechaBruta : null;
@@ -105,12 +109,13 @@ export function validarLead(entrada: unknown): Resultado {
   }
 
   const locale = d.locale === 'en' ? 'en' : 'es';
-  if (errores.length || !servicio || !nombre) return { ok: false, bot: false, errores };
+  if (errores.length || !servicio || !nombre || !autorizacion) return { ok: false, bot: false, errores };
 
   const utm = (d.utm && typeof d.utm === 'object' ? d.utm : {}) as Record<string, unknown>;
   return {
     ok: true,
-    novedades: d.novedades === consentimiento.marketing.version && !!email,
+    autorizacion,
+    novedades: email ? aceptada('novedades', d.novedades) : null,
     lead: {
       servicio,
       tipoOrganizacion: texto(d.tipo, 60),
