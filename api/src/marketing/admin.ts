@@ -94,6 +94,10 @@ export async function invitarContacto(req: Request, env: Env, db: DrizzleD1Datab
   const d = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const email = typeof d.email === 'string' ? d.email.trim().toLowerCase() : '';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ errores: ['email'] }, 422);
+  // Quien se dio de baja (o se quejó) decidió no recibir más correos: el equipo no lo reinvita.
+  // Si cambia de idea, se suscribe por su cuenta desde el sitio.
+  const [previo] = await db.select({ estado: contactos.estado }).from(contactos).where(eq(contactos.email, email));
+  if (previo?.estado === 'baja' || previo?.estado === 'rebotado') return json({ error: previo.estado }, 409);
   await suscribir(
     env,
     db,
@@ -271,23 +275,26 @@ export async function enviarCampana(id: string, req: Request, env: Env, db: Driz
   if (d.destinatarios !== n) return json({ error: 'audiencia_cambio', audiencia: n }, 409);
 
   const t = ahora();
-  // Pasa a "enviando" solo si seguía en borrador: dos clics no crean dos envíos.
-  const marcada = await db
-    .update(campanas)
-    .set({ estado: 'enviando', iniciada: t, actualizada: t, baseUrl: appUrl })
-    .where(and(eq(campanas.id, id), eq(campanas.estado, 'borrador')))
-    .returning({ id: campanas.id });
-  if (!marcada.length) return json({ error: 'estado' }, 409);
-
-  await env.DB.prepare(
-    `insert or ignore into envios (id, campana_id, contacto_id, estado, intentos)
-     select lower(hex(randomblob(16))), ?, c.id, 'pendiente', 0
-     from contactos c
-     where c.estado = 'activo' and c.locale = ?
-       and (? = '[]' or exists (select 1 from json_each(c.intereses) i where i.value in (select value from json_each(?))))`,
-  )
-    .bind(id, c.locale, JSON.stringify(c.intereses), JSON.stringify(c.intereses))
-    .run();
+  // En una sola transacción: la campaña pasa a "enviando" solo si seguía en borrador (dos clics
+  // no crean dos envíos) y los envíos se crean solo si este clic fue el que la marcó. Si algo
+  // falla, no queda una campaña "enviando" sin destinatarios que el cron daría por enviada.
+  const [marcada] = await env.DB.batch([
+    env.DB.prepare(`update campanas set estado = 'enviando', iniciada = ?, actualizada = ?, base_url = ? where id = ? and estado = 'borrador' returning id`).bind(
+      t,
+      t,
+      appUrl,
+      id,
+    ),
+    env.DB.prepare(
+      `insert or ignore into envios (id, campana_id, contacto_id, estado, intentos)
+       select lower(hex(randomblob(16))), ?, c.id, 'pendiente', 0
+       from contactos c
+       where c.estado = 'activo' and c.locale = ?
+         and (? = '[]' or exists (select 1 from json_each(c.intereses) i where i.value in (select value from json_each(?))))
+         and exists (select 1 from campanas where id = ? and estado = 'enviando' and iniciada = ? and base_url = ?)`,
+    ).bind(id, c.locale, JSON.stringify(c.intereses), JSON.stringify(c.intereses), id, t, appUrl),
+  ]);
+  if (!marcada?.results.length) return json({ error: 'estado' }, 409);
 
   // El primer lote sale ya; el resto lo toma el cron cada 5 minutos.
   diferir(procesarEnvios(env, db).catch((e) => console.error('[envios]', e)));

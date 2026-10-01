@@ -135,8 +135,11 @@ export default {
   },
   async scheduled(evento, env, ctx) {
     const db = drizzle(env.DB);
-    // Cada 5 minutos salen los lotes de campañas; a la hora en punto, además, el seguimiento.
-    ctx.waitUntil(procesarEnvios(env, db).then((r) => r.enviados + r.fallidos && console.log(`[envios] ${r.enviados} enviados, ${r.fallidos} fallidos`)));
+    // A la hora en punto se disparan los dos crons. Los lotes salen solo con el de cada 5 minutos:
+    // dos corridas a la vez se pisan con el límite de Resend (2 por segundo) y gastan intentos.
+    if (evento.cron === '*/5 * * * *') {
+      ctx.waitUntil(procesarEnvios(env, db).then((r) => r.enviados + r.fallidos && console.log(`[envios] ${r.enviados} enviados, ${r.fallidos} fallidos`)));
+    }
     if (evento.cron === '0 * * * *') {
       ctx.waitUntil(seguimiento(env, db).then((r) => console.log(`[seguimiento] ${r.avisados} leads avisados`)));
     }

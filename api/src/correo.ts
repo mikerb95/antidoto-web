@@ -107,14 +107,19 @@ export function correoLeadEquipo(lead: Lead, appUrl: string): Omit<Correo, 'para
   };
 }
 
-/** Confirmación a quien pidió la cotización, en su idioma. */
+/**
+ * Confirmación a quien pidió la cotización, en su idioma. El correo no está verificado y
+ * cualquiera puede escribir el de otra persona: por eso no repite nada de texto libre (nombre,
+ * organización, ciudad), solo datos con forma fija. Así nadie puede usar el cotizador para mandar
+ * su propio mensaje con el dominio de Antídoto.
+ */
 export function correoLeadCliente(lead: Lead, equipo: string): Omit<Correo, 'para'> {
   const en = lead.locale === 'en';
   const servicio = NOMBRE_SERVICIO[lead.servicio][lead.locale];
   const pares: [string, string | number | null][] = en
-    ? [['Service', servicio], ['Organization', lead.empresa], ['Date', lead.fecha], ['People', lead.personas], ['City', lead.ciudad]]
-    : [['Servicio', servicio], ['Organización', lead.empresa], ['Fecha', lead.fecha], ['Personas', lead.personas], ['Ciudad', lead.ciudad]];
-  const hola = en ? `Hi ${lead.nombre},` : `Hola ${lead.nombre},`;
+    ? [['Service', servicio], ['Date', lead.fecha], ['People', lead.personas]]
+    : [['Servicio', servicio], ['Fecha', lead.fecha], ['Personas', lead.personas]];
+  const hola = en ? 'Hi,' : 'Hola,';
   const recibido = en
     ? 'We received your quote request. Our team will contact you soon.'
     : 'Recibimos tu solicitud de cotización. Nuestro equipo te va a contactar pronto.';

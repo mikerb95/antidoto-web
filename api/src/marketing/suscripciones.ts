@@ -6,12 +6,11 @@ import { and, eq, gt, sql } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { contactos, consentimientosMarketing, envios, SERVICIOS, type Contacto, type ServicioId } from '../db/schema';
 import { enviar } from '../correo';
-import consentimiento from '../../../src/data/consentimiento.json';
+import { aceptada, vigente, type Version } from '../consentimiento';
 import type { Env } from '../env';
 import { ahora, hashIp, uuid, json, token, escapar, HORA } from '../util';
 import { TIEMPO_MINIMO_MS } from '../validar';
 
-const NOVEDADES = consentimiento.marketing;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /** No se reenvía la confirmación a la misma persona antes de esto. */
 const ESPERA_CONFIRMACION = 10 * 60_000;
@@ -27,6 +26,8 @@ export interface Solicitud {
   leadId?: string | null;
   ipHash?: string | null;
   userAgent?: string | null;
+  /** Versión de la autorización que aceptó; sin ella, la vigente. */
+  autorizacion?: Version | null;
 }
 
 const limpiarIntereses = (v: unknown): ServicioId[] =>
@@ -39,7 +40,8 @@ export const enlaceBaja = (appUrl: string, t: string, campana?: string) => enlac
 
 /**
  * Registra (o reactiva) una suscripción y manda la confirmación. Nunca revela si el correo ya
- * estaba: a un contacto activo no se le manda nada, y a uno con rebote tampoco.
+ * estaba: a un contacto activo no se le manda nada, ni a uno con rebote, ni a quien marcó un
+ * correo nuestro como spam.
  */
 export async function suscribir(env: Env, db: DrizzleD1Database, s: Solicitud, appUrl: string): Promise<void> {
   const email = s.email.trim().toLowerCase();
@@ -48,8 +50,9 @@ export async function suscribir(env: Env, db: DrizzleD1Database, s: Solicitud, a
   const intereses = limpiarIntereses(s.intereses);
   const [existe] = await db.select().from(contactos).where(eq(contactos.email, email));
 
-  if (existe && (existe.estado === 'rebotado' || existe.estado === 'activo')) {
-    // Activo: solo suma intereses y datos que falten. Rebotado: el correo no existe; no se insiste.
+  if (existe && (existe.estado === 'rebotado' || existe.estado === 'activo' || existe.motivoBaja === 'queja')) {
+    // Activo: solo suma intereses y datos que falten. Rebotado: el correo no existe. Queja: pidió
+    // no recibir más; volver a escribirle daña la reputación del dominio. En ambos, no se insiste.
     if (existe.estado === 'activo') {
       const union = [...new Set([...existe.intereses, ...intereses])];
       await db
@@ -65,14 +68,18 @@ export async function suscribir(env: Env, db: DrizzleD1Database, s: Solicitud, a
     if (existe.estado === 'pendiente' && existe.confirmacionEnviada && t - existe.confirmacionEnviada < ESPERA_CONFIRMACION) return;
     const cambios = {
       estado: 'pendiente' as const,
-      nombre: s.nombre ?? existe.nombre,
-      empresa: s.empresa ?? existe.empresa,
+      // Lo que ya estaba no lo cambia un formulario público.
+      nombre: existe.nombre ?? (s.nombre?.trim().slice(0, 120) || null),
+      empresa: existe.empresa ?? (s.empresa?.trim().slice(0, 120) || null),
       locale: s.locale,
       intereses: [...new Set([...existe.intereses, ...intereses])],
       baja: null,
       motivoBaja: null,
       actualizado: t,
       confirmacionEnviada: t,
+      // Quien se había dado de baja recibe un token nuevo: los enlaces de correos viejos (o
+      // reenviados) no sirven para suscribirlo otra vez.
+      token: existe.estado === 'baja' ? token() : existe.token,
     };
     await db.update(contactos).set(cambios).where(eq(contactos.id, existe.id));
     contacto = { ...existe, ...cambios };
@@ -101,11 +108,12 @@ export async function suscribir(env: Env, db: DrizzleD1Database, s: Solicitud, a
   // Quien se suscribe por su cuenta acepta el texto ahora (y lo confirma por correo). A un
   // invitado por el equipo se le registra la autorización cuando confirma.
   if (s.origen !== 'admin') {
+    const autorizacion = s.autorizacion ?? vigente('novedades');
     await db.insert(consentimientosMarketing).values({
       id: uuid(),
       contactoId: contacto.id,
-      version: NOVEDADES.version,
-      texto: NOVEDADES[s.locale],
+      version: autorizacion.version,
+      texto: autorizacion[s.locale],
       aceptado: t,
       confirmado: null,
       ipHash: s.ipHash ?? null,
@@ -114,7 +122,10 @@ export async function suscribir(env: Env, db: DrizzleD1Database, s: Solicitud, a
     });
   }
 
-  await enviar(env, { para: email, ...correoConfirmacion(contacto, enlace(appUrl, 'confirmar', contacto.token)) });
+  // El nombre solo va en el saludo si lo escribió el equipo: un formulario público no debe poder
+  // meter texto propio en un correo que sale con nuestro dominio hacia cualquier dirección.
+  const destinatario = { locale: contacto.locale, origen: s.origen, nombre: s.origen === 'admin' ? contacto.nombre : null };
+  await enviar(env, { para: email, ...correoConfirmacion(destinatario, enlace(appUrl, 'confirmar', contacto.token)) });
 }
 
 export function correoConfirmacion(c: Pick<Contacto, 'nombre' | 'locale' | 'origen'>, href: string) {
@@ -151,7 +162,8 @@ export async function crearSuscripcion(req: Request, env: Env, db: DrizzleD1Data
   if (typeof d.t !== 'number' || d.t < TIEMPO_MINIMO_MS) return ok;
   const email = typeof d.email === 'string' ? d.email.trim().toLowerCase() : '';
   if (!EMAIL.test(email)) return json({ ok: false, errores: ['email'] }, 422, cors);
-  if (d.consentimiento !== NOVEDADES.version) return json({ ok: false, errores: ['consentimiento'] }, 422, cors);
+  const autorizacion = aceptada('novedades', d.consentimiento);
+  if (!autorizacion) return json({ ok: false, errores: ['consentimiento'] }, 422, cors);
 
   const ipHash = await hashIp(req.headers.get('cf-connecting-ip'), env.SAL_IP);
   if (ipHash) {
@@ -174,6 +186,7 @@ export async function crearSuscripcion(req: Request, env: Env, db: DrizzleD1Data
         intereses: limpiarIntereses(d.intereses),
         ipHash,
         userAgent: req.headers.get('user-agent'),
+        autorizacion,
       },
       appUrl,
     ).catch((e) => console.error('[suscripcion]', e)),
@@ -251,12 +264,14 @@ const localeDe = (req: Request): 'es' | 'en' => (/^en\b/i.test(req.headers.get('
 export async function confirmar(req: Request, db: DrizzleD1Database, env: Env): Promise<Response> {
   const url = new URL(req.url);
   const c = await porToken(db, url.searchParams.get('t'));
-  if (!c || c.estado === 'rebotado') {
+  if (c?.estado === 'activo') return pagina(c.locale, TEXTOS[c.locale].confirmadoT, TEXTOS[c.locale].confirmadoP);
+  // Solo se confirma lo pendiente. Quien se dio de baja vuelve a suscribirse desde el sitio, con
+  // una confirmación nueva: el enlace de baja de un correo reenviado no sirve para reactivarlo.
+  if (!c || c.estado !== 'pendiente') {
     const l = localeDe(req);
     return pagina(l, TEXTOS[l].invalidoT, TEXTOS[l].invalidoP, undefined, 404);
   }
   const x = TEXTOS[c.locale];
-  if (c.estado === 'activo') return pagina(c.locale, x.confirmadoT, x.confirmadoP);
   if (req.method !== 'POST') return pagina(c.locale, x.confirmarT, x.confirmarP, { action: `${url.pathname}${url.search}`, boton: x.confirmarB });
 
   const t = ahora();
@@ -272,11 +287,12 @@ export async function confirmar(req: Request, db: DrizzleD1Database, env: Env): 
     await db.update(consentimientosMarketing).set({ confirmado: t }).where(eq(consentimientosMarketing.id, pendiente.id));
   } else {
     // Invitado por el equipo: la autorización nace aquí, con el texto vigente.
+    const autorizacion = vigente('novedades');
     await db.insert(consentimientosMarketing).values({
       id: uuid(),
       contactoId: c.id,
-      version: NOVEDADES.version,
-      texto: NOVEDADES[c.locale],
+      version: autorizacion.version,
+      texto: autorizacion[c.locale],
       aceptado: t,
       confirmado: t,
       ipHash,

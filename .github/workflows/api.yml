@@ -16,7 +16,7 @@ name: API (Cloudflare Worker)
 on:
   push:
     branches: [main]
-    paths: ['api/**', 'src/data/consentimiento.ts', '.github/workflows/api.yml']
+    paths: ['api/**', 'src/data/consentimiento.json', '.github/workflows/api.yml']
   workflow_dispatch:
 
 concurrency:
