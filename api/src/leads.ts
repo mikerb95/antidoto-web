@@ -6,6 +6,7 @@ import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { leads, consentimientos, eventos, type Lead } from './db/schema';
 import { validarLead } from './validar';
 import { enviar, correoLeadEquipo, correoLeadCliente } from './correo';
+import { suscribir } from './marketing/suscripciones';
 import consentimiento from '../../src/data/consentimiento.json';
 import type { Env } from './env';
 import { ahora, hashIp, uuid, json, HORA } from './util';
@@ -81,7 +82,26 @@ export async function crearLead(
     Promise.all([
       enviar(env, { para: env.MAIL_EQUIPO, ...correoLeadEquipo(lead, appUrl) }),
       lead.email ? enviar(env, { para: lead.email, ...correoLeadCliente(lead, env.MAIL_EQUIPO) }) : null,
-    ]),
+      // Si además pidió novedades, se suscribe aparte: su propia autorización y su doble confirmación.
+      r.novedades && lead.email
+        ? suscribir(
+            env,
+            db,
+            {
+              email: lead.email,
+              nombre: lead.nombre,
+              empresa: lead.empresa,
+              locale: lead.locale,
+              origen: 'cotizador',
+              intereses: [lead.servicio],
+              leadId: lead.id,
+              ipHash,
+              userAgent: req.headers.get('user-agent'),
+            },
+            appUrl,
+          )
+        : null,
+    ]).catch((e) => console.error('[leads] trabajo diferido', e)),
   );
 
   return json({ ok: true, id: lead.id }, 201, cors);

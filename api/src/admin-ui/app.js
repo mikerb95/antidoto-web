@@ -107,11 +107,19 @@ const ID = /^[0-9a-f-]{36}$/;
 
 function vista() {
   const hash = location.hash.slice(1);
-  const nombre = ID.test(hash) ? 'leads' : ['leads', 'metricas', 'equipo'].includes(hash) ? hash : 'leads';
+  const nombre = ID.test(hash)
+    ? 'leads'
+    : hash.startsWith('campana-')
+      ? 'campana'
+      : hash.startsWith('contacto-')
+        ? 'contactos'
+        : ['leads', 'metricas', 'equipo', 'campanas', 'contactos'].includes(hash)
+          ? hash
+          : 'leads';
   if (nombre === 'equipo' && yo.rol !== 'admin') return (location.hash = '#leads');
   for (const v of document.querySelectorAll('.vista')) v.hidden = v.id !== `vista-${nombre}`;
   for (const a of document.querySelectorAll('[data-vista]')) {
-    if (a.dataset.vista === nombre) a.setAttribute('aria-current', 'page');
+    if (a.dataset.vista === nombre || (nombre === 'campana' && a.dataset.vista === 'campanas')) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   }
   if (nombre === 'leads') {
@@ -121,6 +129,14 @@ function vista() {
   }
   if (nombre === 'metricas') cargarMetricas();
   if (nombre === 'equipo') cargarEquipo();
+  if (nombre === 'campanas') cargarCampanas();
+  if (nombre === 'campana') abrirCampana(hash.slice('campana-'.length));
+  if (nombre === 'contactos') {
+    cargarContactos();
+    if (hash.startsWith('contacto-')) abrirContacto(hash.slice('contacto-'.length));
+    else $('#contacto').hidden = true;
+  }
+  if (nombre !== 'campana') clearInterval(refresco);
 }
 window.addEventListener('hashchange', vista);
 
@@ -451,6 +467,392 @@ $('#form-usuario').addEventListener('submit', async (e) => {
     aviso.textContent = 'Listo. Ya puede pedir su enlace de acceso.';
   } catch (err) {
     aviso.textContent = err.message === 'existe' ? 'Ese correo ya está en el equipo.' : 'Revisa el nombre y el correo.';
+  }
+  aviso.hidden = false;
+});
+
+// Campañas -----------------------------------------------------------------
+
+const ESTADOS_CAMPANA = { borrador: 'Borrador', enviando: 'Enviando', enviada: 'Enviada', cancelada: 'Cancelada' };
+const IDIOMAS = { es: 'Español', en: 'Inglés' };
+const pct = (n, total) => (total ? `${Math.round((n / total) * 100)} %` : '0 %');
+const cuenta = (n, uno, varios) => `${n || 0} ${n === 1 ? uno : varios}`;
+let refresco;
+
+async function cargarCampanas() {
+  const { campanas } = await api('/admin/api/campanas');
+  $('#campanas-filas').replaceChildren(
+    ...campanas.map((c) => {
+      const st = c.stats || {};
+      return h(
+        'tr',
+        {},
+        h('td', {}, h('a', { href: `#campana-${c.id}` }, c.asunto), h('span', { class: 'suave' }, `${IDIOMAS[c.locale]}${c.intereses.length ? ` · ${c.intereses.map((i) => SERVICIOS[i]).join(', ')}` : ''}`)),
+        h('td', {}, h('span', { class: `estado c-${c.estado}` }, ESTADOS_CAMPANA[c.estado])),
+        h('td', { class: 'num' }, st.destinatarios ? `${st.enviados} de ${st.destinatarios}` : ''),
+        h('td', { class: 'num' }, st.enviados ? pct(st.abiertos, st.enviados) : ''),
+        h('td', { class: 'num' }, st.enviados ? pct(st.clics, st.enviados) : ''),
+        h('td', { class: 'fecha' }, fecha(c.iniciada || c.creada)),
+      );
+    }),
+  );
+  $('#campanas-vacio').hidden = campanas.length > 0;
+}
+
+const AYUDA_FORMATO = [
+  '# Título  y  ## Subtítulo',
+  '**negrita**, *cursiva*, [texto](https://enlace)',
+  '- elementos de lista',
+  '[[Texto del botón|https://enlace]]',
+  '![Descripción](https://imagen.jpg)',
+  '{{nombre}} pone el nombre de cada persona',
+  'Deja una línea en blanco entre bloques.',
+];
+
+async function abrirCampana(id) {
+  clearInterval(refresco);
+  const caja = $('#campana');
+  if (id === 'nueva') {
+    $('#t-campana').textContent = 'Nueva campaña';
+    pintarEditor(caja, null, null);
+    return;
+  }
+  let datos;
+  try {
+    datos = await api(`/admin/api/campanas/${id}`);
+  } catch {
+    location.hash = '#campanas';
+    return;
+  }
+  $('#t-campana').textContent = datos.campana.asunto;
+  if (datos.campana.estado === 'borrador') pintarEditor(caja, datos.campana, datos.audiencia);
+  else {
+    pintarResultados(caja, datos);
+    if (datos.campana.estado === 'enviando') refresco = setInterval(() => abrirCampana(id), 10000);
+  }
+}
+
+function pintarEditor(caja, c, audiencia) {
+  const intereses = new Set(c?.intereses || []);
+  const form = h(
+    'form',
+    { class: 'editor' },
+    h('label', { class: 'campo' }, 'Asunto', h('input', { name: 'asunto', required: true, maxlength: 150, value: c?.asunto || '' })),
+    h('label', { class: 'campo' }, 'Texto de vista previa (opcional)', h('input', { name: 'preheader', maxlength: 200, value: c?.preheader || '' })),
+    h(
+      'div',
+      { class: 'fila-campos' },
+      h('label', { class: 'campo' }, 'Idioma', h('select', { name: 'locale' }, ...Object.entries(IDIOMAS).map(([v, t]) => h('option', { value: v, selected: (c?.locale || 'es') === v }, t)))),
+      h(
+        'fieldset',
+        { class: 'intereses' },
+        h('legend', {}, 'Solo a interesados en (vacío es para todos)'),
+        ...Object.entries(SERVICIOS).map(([v, t]) => h('label', {}, h('input', { type: 'checkbox', name: 'intereses', value: v, checked: intereses.has(v) }), t)),
+      ),
+    ),
+    h('label', { class: 'campo' }, 'Mensaje', h('textarea', { name: 'cuerpo', rows: 16, required: true }, c?.cuerpo || '')),
+    h('details', { class: 'ayuda' }, h('summary', {}, 'Cómo dar formato'), h('ul', {}, ...AYUDA_FORMATO.map((a) => h('li', {}, a)))),
+    h('div', { class: 'acciones' }, h('button', { class: 'btn', type: 'submit' }, c ? 'Guardar cambios' : 'Crear borrador')),
+  );
+  const leer = () => {
+    const f = new FormData(form);
+    return { asunto: f.get('asunto'), preheader: f.get('preheader'), locale: f.get('locale'), intereses: f.getAll('intereses'), cuerpo: f.get('cuerpo') };
+  };
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      const r = c
+        ? await api(`/admin/api/campanas/${c.id}`, { method: 'PATCH', body: JSON.stringify(leer()) })
+        : await api('/admin/api/campanas', { method: 'POST', body: JSON.stringify(leer()) });
+      avisar('Borrador guardado');
+      if (!c) location.hash = `#campana-${r.campana.id}`;
+      else pintarEditor(caja, r.campana, r.audiencia);
+    } catch {
+      avisar('Revisa el asunto y el mensaje.');
+    }
+  });
+
+  const lateral = c
+    ? h(
+        'div',
+        { class: 'lateral' },
+        h('p', { class: 'etq' }, 'Vista previa'),
+        h('iframe', { class: 'vista-previa', title: 'Vista previa del correo', src: `/admin/api/campanas/${c.id}/vista?v=${c.actualizada}` }),
+        h('p', { class: 'audiencia' }, audiencia ? `Le llegará a ${audiencia} ${audiencia === 1 ? 'contacto activo' : 'contactos activos'}.` : 'Nadie cumple estos filtros todavía.'),
+        h(
+          'div',
+          { class: 'acciones' },
+          h(
+            'button',
+            {
+              class: 'btn btn-borde',
+              type: 'button',
+              onclick: async () => {
+                try {
+                  const r = await api(`/admin/api/campanas/${c.id}/prueba`, { method: 'POST' });
+                  avisar(`Prueba enviada a ${r.para}`);
+                } catch {
+                  avisar('No se pudo enviar la prueba. ¿Está configurado Resend?');
+                }
+              },
+            },
+            'Enviarme una prueba',
+          ),
+          h(
+            'button',
+            {
+              class: 'btn',
+              type: 'button',
+              disabled: !audiencia,
+              onclick: async () => {
+                if (!confirm(`Se enviará "${c.asunto}" a ${audiencia} contactos. No se puede deshacer. ¿Enviar?`)) return;
+                try {
+                  await api(`/admin/api/campanas/${c.id}/enviar`, { method: 'POST', body: JSON.stringify({ destinatarios: audiencia }) });
+                  avisar('Enviando');
+                  abrirCampana(c.id);
+                } catch (err) {
+                  if (err.datos?.error === 'audiencia_cambio') {
+                    avisar(`La audiencia cambió: ahora son ${err.datos.audiencia}. Revisa y vuelve a enviar.`);
+                    abrirCampana(c.id);
+                  } else avisar(err.status === 503 ? 'Falta configurar Resend para enviar.' : 'No se pudo enviar.');
+                }
+              },
+            },
+            'Enviar',
+          ),
+        ),
+        h(
+          'button',
+          {
+            class: 'btn-texto peligro',
+            type: 'button',
+            onclick: async () => {
+              if (!confirm('¿Borrar este borrador?')) return;
+              await api(`/admin/api/campanas/${c.id}`, { method: 'DELETE' });
+              location.hash = '#campanas';
+            },
+          },
+          'Borrar borrador',
+        ),
+      )
+    : h('div', { class: 'lateral' }, h('p', { class: 'suave' }, 'Guarda el borrador para ver la vista previa, enviarte una prueba y ver a cuántos contactos les llega.'));
+
+  caja.replaceChildren(h('div', { class: 'campana-editor' }, form, lateral));
+}
+
+function pintarResultados(caja, { campana: c, stats }) {
+  const st = stats || {};
+  const cifra = (etq, valor, nota) => h('div', { class: 'cifra' }, h('p', { class: 'etq' }, etq), h('p', { class: 'valor' }, valor), nota ? h('p', { class: 'suave' }, nota) : null);
+  caja.replaceChildren(
+    h(
+      'p',
+      { class: 'suave' },
+      `${ESTADOS_CAMPANA[c.estado]} · ${IDIOMAS[c.locale]} · iniciada el ${fecha(c.iniciada, true)}${c.terminada ? `, terminó el ${fecha(c.terminada, true)}` : ''} · por ${c.autor}`,
+    ),
+    h(
+      'div',
+      { class: 'cifras' },
+      cifra('Enviados', `${st.enviados || 0} de ${st.destinatarios || 0}`, st.pendientes ? `${st.pendientes} en cola` : st.fallidos ? `${st.fallidos} fallidos` : null),
+      cifra('Entregados', pct(st.entregados, st.enviados), cuenta(st.entregados, 'correo', 'correos')),
+      cifra('Abiertos', pct(st.abiertos, st.entregados || st.enviados), cuenta(st.abiertos, 'persona', 'personas')),
+      cifra('Clics', pct(st.clics, st.entregados || st.enviados), cuenta(st.clics, 'persona', 'personas')),
+    ),
+    h(
+      'div',
+      { class: 'cifras' },
+      cifra('Bajas', st.bajas || 0, 'desde esta campaña'),
+      cifra('Rebotes', st.rebotes || 0, 'direcciones que no existen'),
+      cifra('Quejas', st.quejas || 0, 'marcado como spam'),
+      c.estado === 'enviando'
+        ? h(
+            'div',
+            { class: 'cifra' },
+            h('p', { class: 'etq' }, 'En curso'),
+            h('p', { class: 'suave' }, 'Salen lotes de 100 cada 5 minutos.'),
+            h(
+              'button',
+              {
+                class: 'btn-texto peligro',
+                type: 'button',
+                onclick: async () => {
+                  if (!confirm('¿Detener el envío? Lo que ya salió no se puede recuperar.')) return;
+                  await api(`/admin/api/campanas/${c.id}/cancelar`, { method: 'POST' });
+                  abrirCampana(c.id);
+                },
+              },
+              'Detener envío',
+            ),
+          )
+        : h('div', { class: 'cifra' }, h('p', { class: 'etq' }, 'Abiertos y clics'), h('p', { class: 'suave' }, 'Muchos programas de correo bloquean el conteo de aperturas: tómalo como referencia.')),
+    ),
+    h('p', { class: 'etq' }, 'Correo enviado'),
+    h('iframe', { class: 'vista-previa', title: 'Correo enviado', src: `/admin/api/campanas/${c.id}/vista` }),
+  );
+}
+
+// Contactos ----------------------------------------------------------------
+
+const ESTADOS_CONTACTO = { activo: 'Activo', pendiente: 'Sin confirmar', baja: 'De baja', rebotado: 'Rebotado' };
+const ORIGENES = { pie: 'Pie del sitio', cotizador: 'Cotizador', admin: 'Invitación del equipo' };
+const MOTIVOS = { enlace: 'enlace de baja', queja: 'lo marcó como spam', rebote: 'rebote', admin: 'el equipo', supresion: 'supresión de datos' };
+const filtroC = { estado: '', q: '', pagina: 0 };
+
+async function cargarContactos() {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(filtroC)) if (v !== '' && v !== 0) p.set(k, v);
+  const d = await api(`/admin/api/contactos?${p}`);
+  const total = Object.values(d.conteos).reduce((a, b) => a + b, 0);
+  $('#chips-contactos').replaceChildren(
+    ...[['', 'Todos', total], ...Object.entries(ESTADOS_CONTACTO).map(([k, t]) => [k, t, d.conteos[k]])].map(([valor, texto, n]) =>
+      h(
+        'button',
+        {
+          type: 'button',
+          class: `chip ${valor ? `k-${valor}` : ''}`,
+          'aria-pressed': String(filtroC.estado === valor),
+          onclick: () => {
+            filtroC.estado = valor;
+            filtroC.pagina = 0;
+            cargarContactos();
+          },
+        },
+        texto,
+        h('span', { class: 'n' }, n),
+      ),
+    ),
+  );
+  const actual = location.hash.replace(/^#contacto-/, '');
+  $('#contactos-filas').replaceChildren(
+    ...d.contactos.map((c) =>
+      h(
+        'tr',
+        { class: c.id === actual ? 'activa' : '', 'data-id': c.id },
+        h('td', {}, h('a', { href: `#contacto-${c.id}` }, c.email), c.nombre || c.empresa ? h('span', { class: 'suave' }, [c.nombre, c.empresa].filter(Boolean).join(' · ')) : null),
+        h('td', {}, h('span', { class: `estado k-${c.estado}` }, ESTADOS_CONTACTO[c.estado])),
+        h('td', { class: 'suave' }, c.intereses.map((i) => SERVICIOS[i]).join(', ')),
+        h('td', { class: 'fecha' }, fecha(c.creado)),
+      ),
+    ),
+  );
+  $('#contactos-vacio').hidden = d.contactos.length > 0;
+  const paginas = Math.max(1, Math.ceil(d.total / d.porPagina));
+  $('#c-pag').textContent = `${d.total} en total · página ${d.pagina + 1} de ${paginas}`;
+  $('#c-anterior').disabled = d.pagina === 0;
+  $('#c-siguiente').disabled = d.pagina + 1 >= paginas;
+}
+
+$('#c-anterior').addEventListener('click', () => {
+  filtroC.pagina--;
+  cargarContactos();
+});
+$('#c-siguiente').addEventListener('click', () => {
+  filtroC.pagina++;
+  cargarContactos();
+});
+let busquedaC;
+$('#c-q').addEventListener('input', (e) => {
+  clearTimeout(busquedaC);
+  busquedaC = setTimeout(() => {
+    filtroC.q = e.target.value.trim();
+    filtroC.pagina = 0;
+    cargarContactos();
+  }, 250);
+});
+
+async function abrirContacto(id) {
+  const panel = $('#contacto');
+  let d;
+  try {
+    d = await api(`/admin/api/contactos/${id}`);
+  } catch {
+    panel.hidden = true;
+    return;
+  }
+  pintarContacto(d);
+  panel.hidden = false;
+  panel.querySelector('h2').focus();
+}
+
+function pintarContacto({ contacto: c, consentimientos, envios }) {
+  const accion = (texto, ruta, pregunta, clase = 'btn-texto') =>
+    h(
+      'button',
+      {
+        class: clase,
+        type: 'button',
+        onclick: async () => {
+          if (!confirm(pregunta)) return;
+          pintarContacto(await api(ruta, { method: 'POST' }));
+          avisar('Listo');
+          cargarContactos();
+        },
+      },
+      texto,
+    );
+  $('#contacto').replaceChildren(
+    h(
+      'div',
+      { class: 'd-cabeza' },
+      h('div', {}, h('p', { class: 'etq' }, ESTADOS_CONTACTO[c.estado]), h('h2', { id: 'ct-titulo', tabindex: -1 }, c.nombre || c.email)),
+      h('a', { class: 'cerrar', href: '#contactos', 'aria-label': 'Cerrar detalle' }, '×'),
+    ),
+    h(
+      'dl',
+      {},
+      dato('Correo', c.email),
+      dato('Organización', c.empresa),
+      dato('Idioma', IDIOMAS[c.locale]),
+      dato('Llegó por', ORIGENES[c.origen]),
+      dato('Intereses', c.intereses.map((i) => SERVICIOS[i]).join(', ')),
+      dato('Desde', fecha(c.creado, true)),
+      dato('Confirmó', c.confirmado ? fecha(c.confirmado, true) : null),
+      dato('Baja', c.baja ? `${fecha(c.baja, true)} (${MOTIVOS[c.motivoBaja] || c.motivoBaja})` : null),
+    ),
+    h(
+      'div',
+      { class: 'historial' },
+      h('p', { class: 'etq' }, 'Últimas campañas'),
+      envios.length
+        ? h('ol', {}, ...envios.map((e) => h('li', {}, e.campana, h('span', { class: 'suave' }, ` · ${e.enviado ? fecha(e.enviado) : e.estado}${e.abierto ? ' · abrió' : ''}${e.clic ? ' · hizo clic' : ''}`))))
+        : h('p', { class: 'suave' }, 'Todavía no ha recibido campañas.'),
+    ),
+    h(
+      'div',
+      { class: 'consentimiento' },
+      h('p', { class: 'etq' }, 'Autorización para novedades'),
+      ...(consentimientos.length
+        ? consentimientos.map((x) =>
+            h(
+              'p',
+              { class: 'suave' },
+              `Versión ${x.version}, aceptada el ${fecha(x.aceptado, true)}${x.confirmado ? `, confirmada el ${fecha(x.confirmado, true)}` : ', sin confirmar'}${x.revocado ? `, revocada el ${fecha(x.revocado, true)}` : ''}. `,
+              h('q', {}, x.texto),
+            ),
+          )
+        : [h('p', { class: 'suave' }, 'Sin autorización todavía: se registra cuando confirme desde su correo.')]),
+      c.estado === 'activo' || c.estado === 'pendiente' ? accion('Dar de baja', `/admin/api/contactos/${c.id}/baja`, 'Dejará de recibir campañas. ¿Continuar?') : null,
+      yo.rol === 'admin' && c.motivoBaja !== 'supresion'
+        ? accion('Suprimir datos personales', `/admin/api/contactos/${c.id}/suprimir`, 'Borra el correo, el nombre y la organización, y revoca la autorización. No se puede deshacer. ¿Continuar?', 'btn-texto peligro')
+        : null,
+    ),
+  );
+}
+
+$('#abrir-invitar').addEventListener('click', () => {
+  const f = $('#form-invitar');
+  f.hidden = !f.hidden;
+  if (!f.hidden) f.querySelector('input').focus();
+});
+$('#form-invitar').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const aviso = $('#invitar-aviso');
+  try {
+    await api('/admin/api/contactos', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
+    e.target.reset();
+    aviso.textContent = 'Invitación enviada. Aparecerá como activa cuando confirme.';
+    cargarContactos();
+  } catch {
+    aviso.textContent = 'Revisa el correo.';
   }
   aviso.hidden = false;
 });

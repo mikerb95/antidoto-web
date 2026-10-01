@@ -1,5 +1,8 @@
 // Worker de la API de Antídoto. Rutas:
 //   POST /v1/leads                  público (solo orígenes del sitio): guarda un lead
+//   POST /v1/suscripciones          público (solo orígenes del sitio): suscripción a novedades
+//   GET|POST /v1/suscripcion/confirmar|baja?t=   doble confirmación y baja (por token)
+//   POST /v1/resend/webhook         eventos de Resend, firmados con Svix
 //   POST /auth/enlace               pide el enlace de acceso por correo
 //   GET|POST /auth/entrar           abre la sesión con el enlace
 //   POST /auth/salir[?todas=1]      cierra la sesión (o todas las del usuario)
@@ -12,12 +15,16 @@ import { origenPermitido, cabecerasCors } from './cors';
 import { pedirEnlace, paginaEntrar, entrar, sesionActual, salir, mismoOrigen } from './auth';
 import { listarLeads, verLead, editarLead, anonimizarLead, metricas, exportarCsv, listarUsuarios, crearUsuario, editarUsuario } from './admin';
 import { seguimiento } from './seguimiento';
+import { crearSuscripcion, confirmar, baja } from './marketing/suscripciones';
+import { webhookResend } from './marketing/webhook';
+import { procesarEnvios } from './marketing/envios';
+import * as mk from './marketing/admin';
 import { ADMIN_HTML, ADMIN_JS, ADMIN_CSS } from './admin-ui';
 import { json } from './util';
 
 // El admin no se incrusta en otros sitios ni carga nada de fuera.
 const SEGURIDAD = {
-  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'x-frame-options': 'DENY',
@@ -33,14 +40,20 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
   const db = drizzle(env.DB);
   const appUrl = (env.APP_URL || url.origin).replace(/\/$/, '');
 
-  if (ruta === '/v1/leads') {
+  if (ruta === '/v1/leads' || ruta === '/v1/suscripciones') {
     const origen = req.headers.get('origin');
     if (!origenPermitido(origen, env, env.ENTORNO === 'local')) return json({ ok: false, error: 'origen' }, 403);
     const cors = cabecerasCors(origen!);
     if (metodo === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (metodo !== 'POST') return json({ ok: false }, 405, cors);
-    return crearLead(req, env, db, appUrl, diferir, cors);
+    return ruta === '/v1/leads' ? crearLead(req, env, db, appUrl, diferir, cors) : crearSuscripcion(req, env, db, appUrl, cors, diferir);
   }
+
+  // Autorizadas por token o por firma, no por sesión: los proveedores de correo hacen el POST de
+  // baja de un clic sin Origin, y Resend llama al webhook desde sus servidores.
+  if (ruta === '/v1/suscripcion/confirmar' && (metodo === 'GET' || metodo === 'POST')) return confirmar(req, db, env);
+  if (ruta === '/v1/suscripcion/baja' && (metodo === 'GET' || metodo === 'POST')) return baja(req, db);
+  if (ruta === '/v1/resend/webhook' && metodo === 'POST') return webhookResend(req, env, db);
 
   if (ruta === '/salud') return json({ ok: true });
 
@@ -82,6 +95,30 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
     }
     const usuario = ruta.match(/^\/admin\/api\/usuarios\/([0-9a-f-]{36})$/);
     if (usuario && metodo === 'PATCH') return editarUsuario(usuario[1]!, req, db, sesion);
+
+    // Email marketing
+    if (ruta === '/admin/api/contactos' && metodo === 'GET') return mk.listarContactos(url, db);
+    if (ruta === '/admin/api/contactos' && metodo === 'POST') return mk.invitarContacto(req, env, db, appUrl);
+    const contacto = ruta.match(/^\/admin\/api\/contactos\/([0-9a-f-]{36})(\/baja|\/suprimir)?$/);
+    if (contacto) {
+      const [, id, accion] = contacto as unknown as [string, string, string | undefined];
+      if (!accion && metodo === 'GET') return mk.verContacto(id, db);
+      if (accion === '/baja' && metodo === 'POST') return mk.bajaContacto(id, db);
+      if (accion === '/suprimir' && metodo === 'POST') return mk.suprimirContacto(id, db, sesion);
+    }
+    if (ruta === '/admin/api/campanas' && metodo === 'GET') return mk.listarCampanas(db);
+    if (ruta === '/admin/api/campanas' && metodo === 'POST') return mk.crearCampana(req, db, sesion);
+    const campana = ruta.match(/^\/admin\/api\/campanas\/([0-9a-f-]{36})(\/vista|\/prueba|\/enviar|\/cancelar)?$/);
+    if (campana) {
+      const [, id, accion] = campana as unknown as [string, string, string | undefined];
+      if (!accion && metodo === 'GET') return mk.verCampana(id, db);
+      if (!accion && metodo === 'PATCH') return mk.editarCampana(id, req, db);
+      if (!accion && metodo === 'DELETE') return mk.borrarCampana(id, db);
+      if (accion === '/vista' && metodo === 'GET') return mk.vistaCampana(id, db, appUrl);
+      if (accion === '/prueba' && metodo === 'POST') return mk.probarCampana(id, env, db, sesion, appUrl);
+      if (accion === '/enviar' && metodo === 'POST') return mk.enviarCampana(id, req, env, db, appUrl, diferir);
+      if (accion === '/cancelar' && metodo === 'POST') return mk.cancelarCampana(id, db);
+    }
   }
 
   return json({ error: 'no existe' }, 404);
@@ -96,7 +133,12 @@ export default {
       return json({ ok: false, error: 'interno' }, 500);
     }
   },
-  async scheduled(_evento, env, ctx) {
-    ctx.waitUntil(seguimiento(env, drizzle(env.DB)).then((r) => console.log(`[seguimiento] ${r.avisados} leads avisados`)));
+  async scheduled(evento, env, ctx) {
+    const db = drizzle(env.DB);
+    // Cada 5 minutos salen los lotes de campañas; a la hora en punto, además, el seguimiento.
+    ctx.waitUntil(procesarEnvios(env, db).then((r) => r.enviados + r.fallidos && console.log(`[envios] ${r.enviados} enviados, ${r.fallidos} fallidos`)));
+    if (evento.cron === '0 * * * *') {
+      ctx.waitUntil(seguimiento(env, db).then((r) => console.log(`[seguimiento] ${r.avisados} leads avisados`)));
+    }
   },
 } satisfies ExportedHandler<Env>;

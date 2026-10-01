@@ -8,6 +8,7 @@ name: API (Cloudflare Worker)
 #   CLOUDFLARE_ACCOUNT_ID
 #   RESEND_API_KEY         opcional; sin ella la API funciona pero no salen correos
 #   SAL_IP                 opcional; texto aleatorio largo para el hash de IP
+#   RESEND_WEBHOOK_SECRET  opcional; secreto whsec_ del webhook de Resend (aperturas, rebotes)
 # Variable (Settings > Secrets and variables > Actions > Variables):
 #   PUBLIC_API_URL         URL pública del Worker; la usan los enlaces de los correos
 # Sin CLOUDFLARE_API_TOKEN o CLOUDFLARE_ACCOUNT_ID se omite con un aviso.
@@ -78,8 +79,9 @@ jobs:
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SAL_IP: ${{ secrets.SAL_IP }}
+          RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
         run: |
-          for nombre in RESEND_API_KEY SAL_IP; do
+          for nombre in RESEND_API_KEY SAL_IP RESEND_WEBHOOK_SECRET; do
             valor="${!nombre}"
             if [ -n "$valor" ]; then printf '%s' "$valor" | npx wrangler secret put "$nombre"; else echo "::notice::$nombre no está configurado."; fi
           done

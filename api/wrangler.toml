@@ -1,5 +1,5 @@
 # API de Antídoto: leads del cotizador, bandeja en el admin y avisos de seguimiento.
-# Secrets (wrangler secret put): RESEND_API_KEY, SAL_IP. Ver api/README.md.
+# Secrets (wrangler secret put): RESEND_API_KEY, SAL_IP, RESEND_WEBHOOK_SECRET. Ver api/README.md.
 name = "antidoto-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
@@ -12,9 +12,9 @@ database_name = "antidoto"
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migraciones"
 
-# Cada hora revisa los leads nuevos sin respuesta.
+# Cada 5 minutos salen los lotes de campañas; cada hora, además, el aviso de leads sin respuesta.
 [triggers]
-crons = ["0 * * * *"]
+crons = ["*/5 * * * *", "0 * * * *"]
 
 [vars]
 # "local" acepta orígenes localhost y cookies sin Secure; se cambia en .dev.vars.
@@ -24,5 +24,7 @@ ORIGENES = "https://antidotocolombia.com,https://antidoto-web.pages.dev"
 # Las vistas previas de rama (*.antidoto-web.pages.dev) también se aceptan: ver src/cors.ts.
 MAIL_FROM = "Antídoto <hola@antidotocolombia.com>"
 MAIL_EQUIPO = "antidoto.colombia@outlook.com"
+# Remitente de las campañas de novedades.
+MAIL_FROM_NOVEDADES = "Antídoto <novedades@antidotocolombia.com>"
 # Horas sin respuesta antes de avisar al equipo.
 HORAS_SEGUIMIENTO = "24"
