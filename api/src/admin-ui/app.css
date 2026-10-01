@@ -144,11 +144,43 @@ dd { margin: 0; overflow-wrap: anywhere; }
 
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); margin: 0; padding: 12px 18px; border-radius: 999px; background: var(--texto); color: var(--tinta); font-weight: 600; font-size: 14px; box-shadow: 0 10px 30px rgb(0 0 0 / 0.4); }
 
+
+/* Campañas y contactos: mismos colores de estado que los leads */
+.c-borrador, .k-pendiente { --c: var(--suave); }
+.c-enviando, .k-activo { --c: var(--cian); }
+.c-enviada { --c: var(--verde); }
+.c-cancelada, .k-baja, .k-rebotado { --c: var(--coral); }
+.chip.k-activo::before, .chip.k-pendiente::before, .chip.k-baja::before, .chip.k-rebotado::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cabeza .btn { min-height: 40px; }
+
+.campana-editor { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr); gap: 20px; align-items: start; }
+.editor, .lateral { display: grid; gap: 14px; padding: 20px; border-radius: var(--radio); background: var(--tinta-2); border: 1px solid var(--linea); }
+.lateral { position: sticky; top: 76px; }
+.editor textarea { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 14px; line-height: 1.6; }
+.fila-campos { display: grid; grid-template-columns: minmax(140px, 0.4fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.intereses { margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.intereses legend { padding: 0; margin-bottom: 6px; font-size: 13px; color: var(--suave); }
+.intereses label { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; font-size: 14px; }
+.intereses input, .invitar input[type='checkbox'] { width: 18px; height: 18px; min-height: 0; accent-color: var(--cian); }
+.ayuda { font-size: 13.5px; color: var(--suave); }
+.ayuda summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; color: var(--cian); font-weight: 600; }
+.ayuda ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; font-family: ui-monospace, Menlo, monospace; }
+.vista-previa { width: 100%; height: 560px; border: 0; border-radius: 10px; background: #F1EFE9; }
+.audiencia { margin: 0; font-weight: 600; }
+.lateral .etq { margin: 0; }
+#vista-campana .cifras { margin-bottom: 12px; }
+#vista-campana > div > .suave { margin: 0 0 16px; }
+#vista-campana > div > .etq { margin: 20px 0 8px; }
+.invitar { margin-bottom: 18px; padding: 18px; border-radius: var(--radio); background: var(--tinta-2); border: 1px solid var(--linea); }
+.invitar .suave { grid-column: 1 / -1; margin: -4px 0 0; font-size: 13.5px; }
+
 @media (max-width: 1000px) {
   .dividido:has(.detalle:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
   .detalle { position: static; max-height: none; order: -1; }
   .cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .rejilla, .nuevo { grid-template-columns: 1fr; }
+  .rejilla, .nuevo, .campana-editor, .fila-campos { grid-template-columns: 1fr; }
+  .lateral { position: static; }
 }
 @media (max-width: 640px) {
   .barra { flex-wrap: wrap; gap: 8px; padding: 8px 16px; }

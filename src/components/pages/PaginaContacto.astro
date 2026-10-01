@@ -5,7 +5,7 @@ import WhatsappIcon from '../WhatsappIcon.astro';
 import { SERVICIOS } from '../../data/servicios';
 import { t, rutas, rutaPolitica, type Locale } from '../../i18n/ui';
 import { SITE, waLink } from '../../data/site';
-import { CONSENTIMIENTO, CONSENTIMIENTO_VERSION } from '../../data/consentimiento';
+import { CONSENTIMIENTO, CONSENTIMIENTO_VERSION, NOVEDADES, NOVEDADES_VERSION } from '../../data/consentimiento';
 
 interface Props {
   locale: Locale;
@@ -90,6 +90,11 @@ const canales = [
               <div class="autorizo">
                 <input type="checkbox" name="consentimiento" id="cot-autorizo" value={CONSENTIMIENTO_VERSION} />
                 <label for="cot-autorizo">{CONSENTIMIENTO[locale]}</label>
+              </div>
+              <!-- Autorización aparte y opcional para recibir novedades (doble confirmación por correo). -->
+              <div class="autorizo">
+                <input type="checkbox" name="novedades" id="cot-novedades" value={NOVEDADES_VERSION} />
+                <label for="cot-novedades">{NOVEDADES[locale]}</label>
               </div>
               <a class="politica" href={rutaPolitica[locale]} target="_blank">{c.verPolitica} ↗</a>
               <p class="error" role="alert" hidden data-error-contacto>{c.faltaContacto}</p>
@@ -217,6 +222,8 @@ const canales = [
         telefono: valor('telefono'),
         mensaje: mensaje(),
         consentimiento: campo('consentimiento')!.value,
+        // Novedades solo cuenta con correo: la API manda ahí la confirmación.
+        novedades: campo('novedades')?.checked && valor('email') ? campo('novedades')!.value : undefined,
         web: valor('web'),
         locale,
         pagina: location.pathname,
@@ -293,7 +300,7 @@ const canales = [
   .botones { display: flex; gap: 10px; flex-wrap: wrap; }
   .botones [hidden] { display: none; }
   .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-  .autorizo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; margin-top: 18px; font-size: 14px; color: var(--color-fg); }
+  .autorizo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; margin-top: 14px; font-size: 14px; color: var(--color-fg); }
   .autorizo input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--color-antidote); }
   .autorizo label { cursor: pointer; }
   .politica { display: inline-flex; align-items: center; min-height: 44px; margin-left: 34px; font-size: 13.5px; color: var(--color-antidote); }

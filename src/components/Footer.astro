@@ -1,6 +1,7 @@
 ---
 import Logo from './Logo.astro';
 import { t, rutas, rutaPolitica, type Locale } from '../i18n/ui';
+import { NOVEDADES, NOVEDADES_VERSION } from '../data/consentimiento';
 import { SITE, waLink } from '../data/site';
 import { SERVICIOS, servicioPath } from '../data/servicios';
 
@@ -10,6 +11,8 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 const year = new Date().getFullYear();
+// La suscripción solo aparece si el build trae la API (ver api/README.md).
+const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 const sitio = [
   [rutas.inicio[locale], locale === 'es' ? 'Inicio' : 'Home'],
   [rutas.servicios[locale], s.nav.servicios],
@@ -23,6 +26,20 @@ const sitio = [
     <div class="marca">
       <Logo class="logo" />
       <p>{s.footerTagline}</p>
+      {api && (
+        <form class="novedades" hidden data-novedades data-api={api} data-version={NOVEDADES_VERSION} novalidate aria-labelledby="novedades-t">
+          <p class="mono mono-acento" id="novedades-t">{s.novedadesTitulo}</p>
+          <p class="nov-texto">{s.novedadesTexto}</p>
+          <div class="nov-fila">
+            <label class="sr" for="novedades-email">{s.novedadesCorreo}</label>
+            <input id="novedades-email" type="email" name="email" autocomplete="email" required placeholder={s.novedadesCorreo} />
+            <button class="btn btn-primary btn-sm" type="submit">{s.novedadesBoton}</button>
+          </div>
+          <label class="trampa" aria-hidden="true">Web<input type="text" name="web" tabindex="-1" autocomplete="off" /></label>
+          <p class="nov-legal">{NOVEDADES[locale]} <a href={rutaPolitica[locale]}>{s.footerPolitica}</a></p>
+          <p class="nov-estado" role="status" data-estado></p>
+        </form>
+      )}
     </div>
     <nav aria-label={s.footerSitio}>
       <p class="mono">{s.footerSitio}</p>
@@ -48,6 +65,53 @@ const sitio = [
   </div>
 </footer>
 
+<script>
+  import { ui } from '../i18n/ui';
+
+  // Suscripción a novedades: envía a la API y la persona confirma desde su correo (doble
+  // confirmación). Al enviar el formulario acepta el texto de autorización que tiene debajo.
+  const form = document.querySelector<HTMLFormElement>('[data-novedades]');
+  if (form) {
+    const locale = document.documentElement.lang.startsWith('es') ? 'es' : 'en';
+    const s = ui[locale];
+    const estado = form.querySelector<HTMLElement>('[data-estado]')!;
+    const email = form.querySelector<HTMLInputElement>('input[name="email"]')!;
+    const inicio = Date.now();
+    form.hidden = false;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
+        estado.textContent = s.novedadesError;
+        email.focus();
+        return;
+      }
+      const boton = form.querySelector('button')!;
+      boton.disabled = true;
+      try {
+        const r = await fetch(`${form.dataset.api}/v1/suscripciones`, {
+          method: 'POST',
+          headers: { 'content-type': 'text/plain;charset=UTF-8' },
+          body: JSON.stringify({
+            email: email.value.trim(),
+            consentimiento: form.dataset.version,
+            web: (form.elements.namedItem('web') as HTMLInputElement).value,
+            locale,
+            pagina: location.pathname,
+            t: Date.now() - inicio,
+          }),
+        });
+        if (!r.ok) throw new Error(String(r.status));
+        estado.textContent = s.novedadesEnviado;
+        form.reset();
+      } catch {
+        estado.textContent = s.novedadesError;
+      } finally {
+        boton.disabled = false;
+      }
+    });
+  }
+</script>
+
 <style>
   .foot { position: relative; padding-block: 56px calc(40px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--color-line); background: rgb(10 17 21 / 0.72); font-size: 14px; }
   .grid { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); gap: 32px; }
@@ -60,6 +124,20 @@ const sitio = [
   a:hover { color: var(--color-antidote); }
   .redes-t { margin-top: 18px; }
   .redes { display: flex; gap: 16px; }
+  .novedades { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 22px; max-width: 30em; }
+  .novedades[hidden] { display: none; }
+  .novedades .mono { margin: 0; }
+  .nov-texto { margin: 0 !important; }
+  .nov-fila { display: flex; gap: 8px; min-width: 0; }
+  .nov-fila input { flex: 1; min-width: 0; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--color-line); background: rgb(10 17 21 / 0.6); color: var(--color-fg); font: 400 14px var(--font-sans); color-scheme: dark; }
+  .nov-fila input:focus-visible { outline: 2px solid var(--color-antidote); outline-offset: 2px; }
+  .nov-fila .btn { min-height: 44px; }
+  .nov-legal { margin: 0 !important; font-size: 12px; line-height: 1.5; }
+  .nov-legal a { display: inline; min-height: 0; color: var(--color-antidote); }
+  .nov-estado { margin: 0 !important; font-size: 13.5px; color: var(--color-glow) !important; }
+  .nov-estado:empty { display: none; }
+  .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .copy { grid-column: 1 / -1; padding-top: 20px; border-top: 1px solid var(--color-line); margin: 8px 0 0; }
   @media (max-width: 860px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .marca { grid-column: 1 / -1; } }
   @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }

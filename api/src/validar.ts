@@ -23,7 +23,8 @@ export interface LeadEntrada {
 }
 
 export type Resultado =
-  | { ok: true; lead: LeadEntrada }
+  /** novedades: también aceptó la autorización aparte para recibir correos (y dejó correo). */
+  | { ok: true; lead: LeadEntrada; novedades: boolean }
   /** Parece un bot (trampa llena o envío demasiado rápido): se responde bien y no se guarda. */
   | { ok: false; bot: true }
   | { ok: false; bot: false; errores: string[] };
@@ -109,6 +110,7 @@ export function validarLead(entrada: unknown): Resultado {
   const utm = (d.utm && typeof d.utm === 'object' ? d.utm : {}) as Record<string, unknown>;
   return {
     ok: true,
+    novedades: d.novedades === consentimiento.marketing.version && !!email,
     lead: {
       servicio,
       tipoOrganizacion: texto(d.tipo, 60),
