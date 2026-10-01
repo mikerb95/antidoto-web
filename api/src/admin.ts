@@ -2,7 +2,8 @@
 // además el mismo origen (ver index.ts). Cada cambio queda en lead_eventos con su autor.
 import { and, desc, eq, gte, isNull, like, or, sql, type SQL } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { leads, eventos, consentimientos, usuarios, ESTADOS, SERVICIOS, ROLES, type Estado, type Lead } from './db/schema';
+import { leads, eventos, consentimientos, usuarios, contactos, ESTADOS, SERVICIOS, ROLES, type Estado, type Lead } from './db/schema';
+import { suprimir } from './marketing/admin';
 import type { Sesion } from './auth';
 import { ahora, uuid, json, DIA } from './util';
 
@@ -112,6 +113,8 @@ export async function editarLead(id: string, req: Request, db: DrizzleD1Database
 /**
  * Supresión (Ley 1581): borra los datos personales del lead y revoca su consentimiento.
  * Se conservan servicio, fechas y estado para las métricas, sin nada que identifique a nadie.
+ * Si la misma persona está suscrita a novedades (por este lead o con el mismo correo), ese
+ * contacto también se suprime: la supresión es de la persona, no de un formulario.
  */
 export async function anonimizarLead(id: string, db: DrizzleD1Database, sesion: Sesion): Promise<Response> {
   if (sesion.usuario.rol !== 'admin') return json({ error: 'rol' }, 403);
@@ -119,6 +122,11 @@ export async function anonimizarLead(id: string, db: DrizzleD1Database, sesion: 
   if (!lead) return json({ error: 'no existe' }, 404);
   if (lead.anonimizado) return verLead(id, db);
   const t = ahora();
+  const vinculados = await db
+    .select()
+    .from(contactos)
+    .where(lead.email ? or(eq(contactos.leadId, id), eq(contactos.email, lead.email)) : eq(contactos.leadId, id));
+  for (const c of vinculados) await suprimir(db, c);
   await db.batch([
     db
       .update(leads)
@@ -127,7 +135,14 @@ export async function anonimizarLead(id: string, db: DrizzleD1Database, sesion: 
     db.update(consentimientos).set({ revocado: t, ipHash: null, userAgent: null }).where(and(eq(consentimientos.leadId, id), isNull(consentimientos.revocado))),
     // Las notas del historial pueden tener datos personales: se vacían.
     db.update(eventos).set({ detalle: null }).where(and(eq(eventos.leadId, id), eq(eventos.tipo, 'nota'))),
-    db.insert(eventos).values({ id: uuid(), leadId: id, creado: t, tipo: 'anonimizado', detalle: null, autor: sesion.usuario.email }),
+    db.insert(eventos).values({
+      id: uuid(),
+      leadId: id,
+      creado: t,
+      tipo: 'anonimizado',
+      detalle: vinculados.length ? 'También se suprimió su suscripción a novedades' : null,
+      autor: sesion.usuario.email,
+    }),
   ]);
   return verLead(id, db);
 }

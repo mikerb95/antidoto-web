@@ -71,8 +71,9 @@ export async function webhookResend(req: Request, env: Env, db: DrizzleD1Databas
       break;
     case 'email.bounced': {
       await primera('rebote');
-      // Rebote permanente: la dirección no existe. Los temporales (buzón lleno) no dan de baja.
-      if ((ev.data?.bounce?.type ?? 'Permanent') !== 'Transient') {
+      // Solo el rebote permanente (la dirección no existe) da de baja. Los temporales (buzón
+      // lleno) y los indeterminados no: un error pasajero no debe sacar a nadie de la lista.
+      if (ev.data?.bounce?.type === 'Permanent') {
         const [c] = await db.select().from(contactos).where(eq(contactos.id, envio.contactoId));
         if (c && c.estado !== 'rebotado') await darDeBaja(db, c, 'rebote');
       }

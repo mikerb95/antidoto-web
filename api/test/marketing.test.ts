@@ -332,6 +332,8 @@ describe('campañas', () => {
 
     await evento('email.bounced', { bounce: { type: 'Transient' } });
     expect((await contacto('c1@demo.co'))?.estado).toBe('activo');
+    await evento('email.bounced', { bounce: { type: 'Undetermined' } });
+    expect((await contacto('c1@demo.co'))?.estado).toBe('activo');
     await evento('email.bounced', { bounce: { type: 'Permanent' } });
     expect(await contacto('c1@demo.co')).toMatchObject({ estado: 'rebotado', motivo_baja: 'rebote' });
   });
