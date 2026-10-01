@@ -37,6 +37,10 @@ AddType font/woff2 .woff2
   <FilesMatch "\.(html)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
+  # El service worker y el manifest se revalidan siempre: así cada despliegue llega a quien ya instaló el sitio.
+  <FilesMatch "^(sw\.js|site\.webmanifest)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
   <FilesMatch "\.(avif|webp|jpg|jpeg|png|svg|ico|mp4|webm|woff2)$">
     Header set Cache-Control "public, max-age=2592000"
   </FilesMatch>
