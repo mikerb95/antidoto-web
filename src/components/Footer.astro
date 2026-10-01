@@ -1,6 +1,6 @@
 ---
 import Logo from './Logo.astro';
-import { t, rutas, type Locale } from '../i18n/ui';
+import { t, rutas, rutaPolitica, type Locale } from '../i18n/ui';
 import { SITE, waLink } from '../data/site';
 import { SERVICIOS, servicioPath } from '../data/servicios';
 
@@ -44,7 +44,7 @@ const sitio = [
         <li><a href={SITE.linkedin} target="_blank" rel="noopener">LinkedIn</a></li>
       </ul>
     </div>
-    <p class="copy mono">© {year} Antídoto · {SITE.phoneDisplay}</p>
+    <p class="copy mono">© {year} Antídoto · {SITE.phoneDisplay} · <a href={rutaPolitica[locale]}>{s.footerPolitica}</a></p>
   </div>
 </footer>
 

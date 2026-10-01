@@ -1,0 +1,31 @@
+{
+  "name": "antidoto-api",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migraciones:generar": "drizzle-kit generate",
+    "migraciones:local": "wrangler d1 migrations apply antidoto --local",
+    "migraciones:remoto": "wrangler d1 migrations apply antidoto --remote",
+    "check": "tsc --noEmit && tsc --noEmit -p test",
+    "test": "vitest run",
+    "ui": "node scripts/empaquetar-ui.mjs",
+    "predev": "npm run ui",
+    "predeploy": "npm run ui",
+    "precheck": "npm run ui",
+    "pretest": "npm run ui"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260930.2",
+    "@types/node": "^22.20.4",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.145.0"
+  }
+}

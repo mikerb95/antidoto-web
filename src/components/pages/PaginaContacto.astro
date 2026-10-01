@@ -3,8 +3,9 @@ import Base from '../../layouts/Base.astro';
 import Encabezado from '../Encabezado.astro';
 import WhatsappIcon from '../WhatsappIcon.astro';
 import { SERVICIOS } from '../../data/servicios';
-import { t, rutas, type Locale } from '../../i18n/ui';
+import { t, rutas, rutaPolitica, type Locale } from '../../i18n/ui';
 import { SITE, waLink } from '../../data/site';
+import { CONSENTIMIENTO, CONSENTIMIENTO_VERSION } from '../../data/consentimiento';
 
 interface Props {
   locale: Locale;
@@ -13,6 +14,10 @@ const { locale } = Astro.props;
 const s = t(locale);
 const c = s.cot;
 const [title, description] = s.seo.contacto;
+// Con la API configurada en el build, el cotizador suma un paso de contacto y guarda el lead
+// (con autorización) antes de abrir WhatsApp. Sin ella funciona como antes: solo WhatsApp.
+const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+const pasos = api ? [c.pasos[0], c.pasos[1], c.pasoContacto, c.pasos[2]] : c.pasos;
 const canales = [
   { k: s.canales.whatsapp, v: SITE.phoneDisplay, href: waLink(s.waDefault), externo: true },
   { k: s.canales.telefono, v: SITE.phoneDisplay, href: `tel:+${SITE.whatsapp}`, externo: false },
@@ -29,13 +34,13 @@ const canales = [
       <div class="bento">
         <!-- El cotizador necesita JS para armar el mensaje: el script lo muestra. Sin JS
              quedan visibles los canales directos. -->
-        <form class="cotizador panel" hidden data-cotizador data-wa={SITE.whatsapp} novalidate aria-labelledby="cot-title">
+        <form class="cotizador panel" hidden data-cotizador data-wa={SITE.whatsapp} data-api={api || undefined} novalidate aria-labelledby="cot-title">
           <div class="cot-top">
             <p class="mono mono-acento" id="cot-title">{c.titulo}</p>
-            <p class="mono" aria-live="polite" data-paso-texto>{c.paso(1, 3)}</p>
+            <p class="mono" aria-live="polite" data-paso-texto>{c.paso(1, pasos.length)}</p>
           </div>
-          <div class="progreso" aria-hidden="true">
-            {c.pasos.map((p, i) => <span class:list={{ activo: i === 0 }} data-marca>{String(i + 1).padStart(2, '0')} · {p}</span>)}
+          <div class="progreso" aria-hidden="true" style={`--pasos: ${pasos.length}`}>
+            {pasos.map((p, i) => <span class:list={{ activo: i === 0 }} data-marca>{String(i + 1).padStart(2, '0')} · {p}</span>)}
             <span class="nivel"><span data-nivel></span></span>
           </div>
 
@@ -44,7 +49,7 @@ const canales = [
             <div class="opciones">
               {SERVICIOS.map((sv, i) => (
                 <label class="opcion">
-                  <input type="radio" name="servicio" value={sv[locale].title} />
+                  <input type="radio" name="servicio" value={sv.id} data-titulo={sv[locale].title} />
                   <span class="mono mono-acento">0{i + 1}</span>
                   <span class="op-t">{sv[locale].title}</span>
                   <span class="op-d">{sv[locale].facts[0]}</span>
@@ -70,8 +75,29 @@ const canales = [
             </div>
           </fieldset>
 
-          <fieldset data-paso="3" hidden>
-            <legend>{c.pasos[2]}</legend>
+          {api && (
+            <fieldset data-paso="contacto" hidden>
+              <legend>{c.contactoLegend}</legend>
+              <p class="resumen-lead">{c.contactoLead}</p>
+              <div class="campos">
+                <label><span class="mono">{c.nombre}</span><input type="text" name="nombre" autocomplete="name" maxlength="120" /></label>
+                <label><span class="mono">{c.empresa} <em>({c.opcional})</em></span><input type="text" name="empresa" autocomplete="organization" maxlength="120" /></label>
+                <label><span class="mono">{c.correo}</span><input type="email" name="email" autocomplete="email" maxlength="200" /></label>
+                <label><span class="mono">{c.telefono}</span><input type="tel" name="telefono" autocomplete="tel" maxlength="40" /></label>
+              </div>
+              <!-- Trampa para bots: invisible y fuera del orden de tabulación. -->
+              <label class="trampa" aria-hidden="true">Web<input type="text" name="web" tabindex="-1" autocomplete="off" /></label>
+              <div class="autorizo">
+                <input type="checkbox" name="consentimiento" id="cot-autorizo" value={CONSENTIMIENTO_VERSION} />
+                <label for="cot-autorizo">{CONSENTIMIENTO[locale]}</label>
+              </div>
+              <a class="politica" href={rutaPolitica[locale]} target="_blank">{c.verPolitica} ↗</a>
+              <p class="error" role="alert" hidden data-error-contacto>{c.faltaContacto}</p>
+            </fieldset>
+          )}
+
+          <fieldset data-paso="resumen" hidden>
+            <legend>{pasos[pasos.length - 1]}</legend>
             <p class="resumen-lead">{c.resumenLead}</p>
             <pre class="resumen" data-resumen></pre>
           </fieldset>
@@ -81,7 +107,8 @@ const canales = [
             <button type="button" class="btn btn-primary btn-sm" data-siguiente>{c.siguiente} →</button>
             <a class="btn btn-primary btn-sm" href="#" target="_blank" rel="noopener" data-enviar hidden><span class="btn-inner"><WhatsappIcon />{c.enviar}</span></a>
           </div>
-          <p class="privacidad mono">{c.privacidad}</p>
+          <p class="guardado" role="status" hidden data-guardado>{c.guardado}</p>
+          <p class="privacidad mono">{api ? c.privacidadApi : c.privacidad}</p>
         </form>
 
         <aside class="canales panel" aria-labelledby="canales-title">
@@ -106,13 +133,17 @@ const canales = [
 <script>
   import { gsap, reducido } from '../../lib/motion/core';
   import { ui } from '../../i18n/ui';
+  import { leerOrigen } from '../../lib/origen';
 
-  // Cotizador en 3 pasos. No envía nada a ningún servidor: arma el texto y abre WhatsApp
-  // con el mensaje listo (enlace real wa.me, sin retardos).
+  // Cotizador por pasos. Arma el texto y abre WhatsApp con el mensaje listo (enlace real
+  // wa.me, sin retardos). Si el build trae la API y la persona marca la autorización, además
+  // guarda la solicitud: se envía con keepalive al hacer clic, sin frenar la apertura de
+  // WhatsApp, y si la API falla no pasa nada visible (fail-open).
   const form = document.querySelector<HTMLFormElement>('[data-cotizador]');
   if (form) {
     const locale = document.documentElement.lang.startsWith('es') ? 'es' : 'en';
     const c = ui[locale].cot;
+    const api = form.dataset.api;
     const pasos = [...form.querySelectorAll<HTMLFieldSetElement>('[data-paso]')];
     const marcas = [...form.querySelectorAll<HTMLElement>('[data-marca]')];
     const nivel = form.querySelector<HTMLElement>('[data-nivel]')!;
@@ -121,17 +152,37 @@ const canales = [
     const siguiente = form.querySelector<HTMLButtonElement>('[data-siguiente]')!;
     const enviar = form.querySelector<HTMLAnchorElement>('[data-enviar]')!;
     const error = form.querySelector<HTMLElement>('[data-error]')!;
+    const errorContacto = form.querySelector<HTMLElement>('[data-error-contacto]');
+    const guardado = form.querySelector<HTMLElement>('[data-guardado]')!;
     const resumen = form.querySelector<HTMLElement>('[data-resumen]')!;
+    const inicio = Date.now();
     let actual = 0;
+    let enviado = '';
 
-    const valor = (n: string) => ((form.elements.namedItem(n) as HTMLInputElement | null)?.value ?? '').trim();
-    const servicio = () => (form.querySelector<HTMLInputElement>('input[name="servicio"]:checked')?.value ?? '');
+    const campo = (n: string) => form.elements.namedItem(n) as HTMLInputElement | null;
+    const valor = (n: string) => (campo(n)?.value ?? '').trim();
+    const elegido = () => form.querySelector<HTMLInputElement>('input[name="servicio"]:checked');
+    const autoriza = () => !!campo('consentimiento')?.checked;
     const fechaLegible = (v: string) => {
       if (!v) return '';
       const [a, m] = v.split('-').map(Number);
       return new Intl.DateTimeFormat(document.documentElement.lang, { month: 'long', year: 'numeric' }).format(new Date(a, m - 1, 1));
     };
-    const mensaje = () => c.mensaje({ servicio: servicio(), tipo: valor('tipo'), fecha: fechaLegible(valor('fecha')), personas: valor('personas'), ciudad: valor('ciudad') });
+    const mensaje = () => {
+      const base = c.mensaje({ servicio: elegido()?.dataset.titulo ?? '', tipo: valor('tipo'), fecha: fechaLegible(valor('fecha')), personas: valor('personas'), ciudad: valor('ciudad') });
+      if (!valor('nombre')) return base;
+      const [primera, ...resto] = base.split('\n');
+      return [primera, c.presentacion(valor('nombre'), valor('empresa')), ...resto].join('\n');
+    };
+
+    // Lo mismo que exige la API: nombre y un correo o teléfono con forma válida.
+    const contactoValido = () => {
+      const email = valor('email');
+      const tel = valor('telefono').replace(/\D/g, '');
+      const emailOk = !email || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+      const telOk = !valor('telefono') || (tel.length >= 7 && tel.length <= 15);
+      return valor('nombre').length >= 2 && (email || tel) && emailOk && telOk;
+    };
 
     const ir = (n: number) => {
       actual = n;
@@ -149,22 +200,63 @@ const canales = [
         resumen.textContent = m;
         enviar.href = `https://wa.me/${form.dataset.wa}?text=${encodeURIComponent(m)}`;
       }
-      pasos[n].querySelector<HTMLElement>('input, select, a, button')?.focus({ preventScroll: true });
+      pasos[n].querySelector<HTMLElement>('input:not([tabindex="-1"]), select, a, button')?.focus({ preventScroll: true });
     };
 
+    function guardarLead() {
+      if (!api || !autoriza() || !contactoValido()) return;
+      const cuerpo = JSON.stringify({
+        servicio: elegido()?.value,
+        tipo: valor('tipo'),
+        fecha: valor('fecha'),
+        personas: valor('personas'),
+        ciudad: valor('ciudad'),
+        nombre: valor('nombre'),
+        empresa: valor('empresa'),
+        email: valor('email'),
+        telefono: valor('telefono'),
+        mensaje: mensaje(),
+        consentimiento: campo('consentimiento')!.value,
+        web: valor('web'),
+        locale,
+        pagina: location.pathname,
+        ...leerOrigen(),
+        t: Date.now() - inicio,
+      });
+      // Un segundo clic con los mismos datos no duplica el lead.
+      if (cuerpo.replace(/"t":\d+/, '') === enviado) return;
+      enviado = cuerpo.replace(/"t":\d+/, '');
+      // text/plain evita el preflight de CORS; keepalive deja terminar el envío aunque la
+      // pestaña pierda el foco al abrir WhatsApp.
+      fetch(`${api}/v1/leads`, { method: 'POST', body: cuerpo, keepalive: true, headers: { 'content-type': 'text/plain;charset=UTF-8' } })
+        .then((r) => {
+          if (r.ok) guardado.hidden = false;
+        })
+        .catch(() => {});
+    }
+
     siguiente.addEventListener('click', () => {
-      if (actual === 0 && !servicio()) {
+      if (actual === 0 && !elegido()) {
         error.hidden = false;
         return;
       }
+      if (pasos[actual].dataset.paso === 'contacto' && autoriza() && !contactoValido()) {
+        errorContacto!.hidden = false;
+        return;
+      }
       error.hidden = true;
+      if (errorContacto) errorContacto.hidden = true;
       ir(actual + 1);
     });
     atras.addEventListener('click', () => ir(actual - 1));
-    form.addEventListener('change', () => (error.hidden = true));
+    enviar.addEventListener('click', guardarLead);
+    form.addEventListener('change', () => {
+      error.hidden = true;
+      if (errorContacto) errorContacto.hidden = true;
+    });
     form.addEventListener('submit', (e) => e.preventDefault());
     form.hidden = false;
-    nivel.style.transform = 'scaleX(0.3333)';
+    nivel.style.transform = `scaleX(${1 / pasos.length})`;
   }
 </script>
 
@@ -174,7 +266,7 @@ const canales = [
   .cotizador[hidden] { display: none; }
   .cot-top { display: flex; justify-content: space-between; gap: 12px; }
   .cot-top .mono { margin: 0; }
-  .progreso { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-bottom: 14px; }
+  .progreso { position: relative; display: grid; grid-template-columns: repeat(var(--pasos, 3), minmax(0, 1fr)); gap: 8px; padding-bottom: 14px; }
   .progreso > span[data-marca] { font: 500 10.5px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: rgb(167 182 186 / 0.6); }
   .progreso > span.activo { color: var(--color-antidote); }
   .nivel { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 2px; background: rgb(128 220 255 / 0.12); overflow: hidden; }
@@ -194,12 +286,19 @@ const canales = [
   .campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .campos label { display: grid; gap: 6px; }
   .campos em { font-style: normal; text-transform: none; letter-spacing: 0; opacity: 0.7; }
-  input:not([type='radio']), select { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--color-line); background: rgb(10 17 21 / 0.6); color: var(--color-fg); font: 400 15px var(--font-sans); color-scheme: dark; }
+  input:not([type='radio']):not([type='checkbox']), select { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--color-line); background: rgb(10 17 21 / 0.6); color: var(--color-fg); font: 400 15px var(--font-sans); color-scheme: dark; }
   input:focus-visible, select:focus-visible { outline: 2px solid var(--color-antidote); outline-offset: 2px; }
   .resumen-lead { margin: 0 0 12px; color: var(--color-fg-muted); font-size: 14px; }
   .resumen { margin: 0; padding: 16px; border-radius: 12px; background: rgb(10 17 21 / 0.7); border: 1px solid var(--color-line); font: 400 14px/1.6 var(--font-sans); white-space: pre-wrap; color: var(--color-fg); }
   .botones { display: flex; gap: 10px; flex-wrap: wrap; }
   .botones [hidden] { display: none; }
+  .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .autorizo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; margin-top: 18px; font-size: 14px; color: var(--color-fg); }
+  .autorizo input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--color-antidote); }
+  .autorizo label { cursor: pointer; }
+  .politica { display: inline-flex; align-items: center; min-height: 44px; margin-left: 34px; font-size: 13.5px; color: var(--color-antidote); }
+  .guardado { margin: 0; color: var(--color-glow); font-size: 14px; }
+  .guardado[hidden] { display: none; }
   .privacidad { margin: 0; text-transform: none; letter-spacing: 0.02em; font-size: 11.5px; }
 
   .canales { padding: 24px; display: grid; gap: 12px; }
