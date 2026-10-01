@@ -10,16 +10,17 @@ export interface Version {
   en: string;
 }
 
-type Bloque = Version & { anteriores?: Version[] };
+export type Bloque = Version & { anteriores?: Version[] };
 
 const BLOQUES: Record<'cotizacion' | 'novedades', Bloque> = { cotizacion: datos, novedades: datos.marketing };
 
 /** Versión vigente de una autorización. */
 export const vigente = (tipo: keyof typeof BLOQUES): Version => BLOQUES[tipo];
 
-/** La versión aceptada si es la vigente o una anterior conocida; si no, null. */
-export function aceptada(tipo: keyof typeof BLOQUES, version: unknown): Version | null {
+/** La versión de un bloque si es la vigente o una anterior conocida; si no, null. Función pura. */
+export function buscarVersion(b: Bloque, version: unknown): Version | null {
   if (typeof version !== 'string') return null;
-  const b = BLOQUES[tipo];
   return [b, ...(b.anteriores ?? [])].find((v) => v.version === version) ?? null;
 }
+
+export const aceptada = (tipo: keyof typeof BLOQUES, version: unknown) => buscarVersion(BLOQUES[tipo], version);

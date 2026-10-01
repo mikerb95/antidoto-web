@@ -7,7 +7,17 @@ import type { Env } from '../src/env';
 
 export async function crearEntorno() {
   const proxy = await getPlatformProxy<Env>({ configPath: 'wrangler.toml', persist: false });
-  const env = { ...proxy.env, ENTORNO: 'produccion' } as Env;
+  // getPlatformProxy lee el .dev.vars de quien corre las pruebas (orígenes localhost, APP_URL,
+  // claves): las pruebas fijan sus propias variables para dar lo mismo en cualquier PC y en CI.
+  const env: Env = {
+    DB: proxy.env.DB,
+    ENTORNO: 'produccion',
+    ORIGENES: 'https://antidotocolombia.com,https://antidoto-web.pages.dev',
+    MAIL_FROM: 'Antídoto <hola@antidotocolombia.com>',
+    MAIL_FROM_NOVEDADES: 'Antídoto <novedades@antidotocolombia.com>',
+    MAIL_EQUIPO: 'equipo@antidoto.test',
+    HORAS_SEGUIMIENTO: '24',
+  };
   const dir = fileURLToPath(import.meta.resolve('../migraciones/'));
   for (const archivo of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
     const sentencias = readFileSync(`${dir}${archivo}`, 'utf8').split('--> statement-breakpoint').map((s) => s.trim()).filter(Boolean);
