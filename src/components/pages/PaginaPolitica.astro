@@ -1,0 +1,170 @@
+---
+// Política de tratamiento de datos (Ley 1581 de 2012 y Decreto 1377 de 2013, art. 13).
+// BORRADOR: estructura y contenido según lo que hace el sitio hoy. Faltan datos del cliente
+// (razón social, NIT, domicilio) y la revisión de un abogado; por eso va con noindex y aviso.
+import Base from '../../layouts/Base.astro';
+import Encabezado from '../Encabezado.astro';
+import { rutaPolitica, type Locale } from '../../i18n/ui';
+import { SITE } from '../../data/site';
+import { CONSENTIMIENTO_VERSION } from '../../data/consentimiento';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const es = locale === 'es';
+
+const txt = es
+  ? {
+      title: 'Política de tratamiento de datos | Antídoto',
+      description: 'Cómo trata Antídoto los datos personales de quienes piden una cotización o se comunican con el estudio.',
+      kicker: 'Datos personales',
+      titulo: 'Política de tratamiento de datos',
+      lead: 'Cómo tratamos los datos de quienes nos piden una cotización o nos escriben, y cómo ejercer tus derechos.',
+      borrador: 'Borrador pendiente de revisión legal y de los datos de la empresa (razón social, NIT y domicilio). No es la versión vigente.',
+      pendiente: 'Pendiente de confirmar',
+      version: 'Versión de la autorización',
+      secciones: [
+        {
+          t: '1. Responsable del tratamiento',
+          p: [
+            `Antídoto (razón social y NIT pendientes de confirmar), con domicilio en Colombia. Correo: ${SITE.email}. Teléfono y WhatsApp: ${SITE.phoneDisplay}.`,
+          ],
+        },
+        {
+          t: '2. Qué datos tratamos',
+          p: [
+            'Cuando pides una cotización en el sitio y nos autorizas: nombre, organización, correo, teléfono, el servicio que te interesa, fecha aproximada, número de personas, ciudad y el mensaje que armas.',
+            'También guardamos la página desde la que escribiste, el sitio o campaña que te trajo, la fecha de la autorización y un resumen cifrado de tu dirección IP que cambia cada día. No guardamos tu IP.',
+            'Si no marcas la autorización, no guardamos nada: el mensaje sale de tu navegador directo a WhatsApp.',
+          ],
+        },
+        {
+          t: '3. Para qué los usamos',
+          p: [
+            'Para responder tu solicitud, preparar la cotización, hacerle seguimiento y, si trabajamos juntos, gestionar el proyecto. No enviamos publicidad con esta autorización; para eso te pediremos una autorización aparte.',
+          ],
+        },
+        {
+          t: '4. Quién más los procesa',
+          p: [
+            'Usamos proveedores que tratan los datos por encargo nuestro y solo para estos fines: Cloudflare (alojamiento del sitio y de la base de datos) y Resend (envío de correos). Sus servidores pueden estar fuera de Colombia, incluido Estados Unidos.',
+            'Si escribes por WhatsApp, esa conversación la trata Meta según sus propias condiciones.',
+          ],
+        },
+        {
+          t: '5. Tus derechos',
+          p: [
+            'Como titular puedes conocer, actualizar y rectificar tus datos; pedir prueba de la autorización; saber cómo los usamos; revocar la autorización o pedir que los eliminemos cuando no haya un deber legal o contractual de conservarlos, y presentar quejas ante la Superintendencia de Industria y Comercio después de agotar el trámite con nosotros.',
+          ],
+        },
+        {
+          t: '6. Cómo ejercerlos',
+          p: [
+            `Escríbenos a ${SITE.email} con tu nombre, cómo contactarte y qué pides. Atendemos las consultas en máximo diez días hábiles y los reclamos en máximo quince días hábiles, como indica la Ley 1581 de 2012. Si necesitamos más tiempo te avisamos antes del vencimiento, con el motivo y la nueva fecha.`,
+            'Cuando pides eliminar tus datos borramos nombre, contacto, mensaje y notas, y revocamos la autorización. Conservamos solo datos sin identificación (servicio y fechas) para estadísticas.',
+          ],
+        },
+        {
+          t: '7. Seguridad',
+          p: [
+            'Los datos viajan cifrados (HTTPS). Solo el equipo de Antídoto entra a la bandeja de solicitudes, con enlaces de acceso de un solo uso y sesiones que se pueden cerrar. Cada cambio queda registrado con su autor.',
+          ],
+        },
+        {
+          t: '8. Vigencia',
+          p: [
+            'Esta política rige desde su publicación. Conservamos los datos mientras sean necesarios para las finalidades descritas o mientras lo exija la ley. Si la cambiamos de forma sustancial, lo publicaremos aquí y, cuando haga falta, te pediremos una nueva autorización.',
+          ],
+        },
+      ],
+    }
+  : {
+      title: 'Data processing policy | Antídoto',
+      description: 'How Antídoto processes the personal data of people who request a quote or contact the studio.',
+      kicker: 'Personal data',
+      titulo: 'Data processing policy',
+      lead: 'How we handle the data of people who request a quote or write to us, and how to exercise your rights.',
+      borrador: 'Draft pending legal review and company details (legal name, tax ID and address). This is not the version in force.',
+      pendiente: 'Pending confirmation',
+      version: 'Authorization version',
+      secciones: [
+        {
+          t: '1. Data controller',
+          p: [`Antídoto (legal name and tax ID pending confirmation), based in Colombia. Email: ${SITE.email}. Phone and WhatsApp: ${SITE.phoneDisplay}.`],
+        },
+        {
+          t: '2. What data we process',
+          p: [
+            'When you request a quote on the site and authorize us: name, organization, email, phone, the service you are interested in, approximate date, number of people, city and the message you build.',
+            'We also store the page you wrote from, the site or campaign that brought you, the date of your authorization and a hashed summary of your IP address that changes every day. We do not store your IP.',
+            'If you do not tick the authorization, we store nothing: the message goes from your browser straight to WhatsApp.',
+          ],
+        },
+        {
+          t: '3. What we use it for',
+          p: [
+            'To answer your request, prepare the quote, follow up and, if we work together, manage the project. We do not send marketing under this authorization; we will ask for a separate one for that.',
+          ],
+        },
+        {
+          t: '4. Who else processes it',
+          p: [
+            'We use providers that process data on our behalf and only for these purposes: Cloudflare (hosting for the site and the database) and Resend (email delivery). Their servers may be outside Colombia, including the United States.',
+            'If you write on WhatsApp, Meta handles that conversation under its own terms.',
+          ],
+        },
+        {
+          t: '5. Your rights',
+          p: [
+            'You can access, update and correct your data; request proof of your authorization; know how we use it; revoke the authorization or ask us to delete it when there is no legal or contractual duty to keep it, and file complaints with the Superintendencia de Industria y Comercio after going through the process with us.',
+          ],
+        },
+        {
+          t: '6. How to exercise them',
+          p: [
+            `Write to ${SITE.email} with your name, how to reach you and what you are asking for. We answer inquiries within ten business days and claims within fifteen business days, as Colombian Law 1581 of 2012 requires. If we need more time we will tell you before the deadline, with the reason and the new date.`,
+            'When you ask us to delete your data we erase your name, contact details, message and notes, and revoke the authorization. We keep only non-identifying data (service and dates) for statistics.',
+          ],
+        },
+        {
+          t: '7. Security',
+          p: [
+            'Data travels encrypted (HTTPS). Only the Antídoto team can open the request inbox, with single-use sign-in links and sessions that can be closed. Every change is logged with its author.',
+          ],
+        },
+        {
+          t: '8. Validity',
+          p: [
+            'This policy applies from its publication. We keep data while it is needed for the purposes above or while the law requires it. If we change it substantially we will publish it here and, when needed, ask for a new authorization.',
+          ],
+        },
+      ],
+    };
+---
+<Base locale={locale} pagina={null} title={txt.title} description={txt.description} alternates={rutaPolitica} noindex>
+  <section class="seccion" aria-labelledby="pagina-title">
+    <div class="wrap estrecho">
+      <Encabezado kicker={txt.kicker} titulo={txt.titulo} lead={txt.lead} id="pagina-title" nivel={1} />
+      <p class="borrador panel" role="note"><span class="mono">{txt.pendiente}</span>{txt.borrador}</p>
+      {txt.secciones.map((sec) => (
+        <section class="bloque">
+          <h2>{sec.t}</h2>
+          {sec.p.map((p) => <p>{p}</p>)}
+        </section>
+      ))}
+      <p class="mono version">{txt.version}: {CONSENTIMIENTO_VERSION}</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .estrecho { max-width: 780px; }
+  .borrador { display: grid; gap: 6px; margin: 28px 0 8px; padding: 16px 18px; border-color: rgb(255 122 89 / 0.4); font-size: 14.5px; }
+  .borrador .mono { color: var(--color-reto); }
+  .bloque { padding: 22px 0; border-bottom: 1px solid var(--color-line); }
+  .bloque h2 { margin: 0 0 10px; font: 400 24px/1.15 var(--font-display); }
+  .bloque p { margin: 0 0 10px; color: var(--color-fg-muted); line-height: 1.65; }
+  .bloque p:last-child { margin-bottom: 0; }
+  .version { margin: 24px 0 0; }
+</style>
