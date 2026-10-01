@@ -3,8 +3,8 @@
 //
 // Estrategias (solo GET del mismo origen; la API, WhatsApp y todo lo externo pasan de largo):
 //   páginas     red primero (con navigation preload); sin red, la copia guardada o /offline/
-//   /_astro/    caché primero: llevan hash en el nombre y no cambian nunca
-//   fuentes e íconos  caché primero
+//   /_astro/    caché primero: llevan hash en el nombre y no cambian nunca (con tope de entradas)
+//   fuentes, íconos y manifest  caché y revalidación: tienen nombre fijo y pueden cambiar
 //   imágenes    caché y revalidación en segundo plano, con tope de entradas
 // Para retirar el service worker: reemplaza este archivo por uno que llame a
 // self.registration.unregister() y borre las cachés.
@@ -20,6 +20,8 @@ const VIGENTES = [NUCLEO, PAGINAS, ESTATICOS, IMAGENES];
 
 const MAX_PAGINAS = 40;
 const MAX_IMAGENES = 80;
+// Cada despliegue trae /_astro/ nuevos con otro hash: sin tope, la caché crece para siempre.
+const MAX_ESTATICOS = 150;
 // Si la red tarda más que esto en una página ya guardada, se muestra la copia (conexiones lentas).
 const ESPERA_RED_MS = 3500;
 
@@ -54,17 +56,35 @@ async function recortar(nombre, max) {
 
 const guardable = (res) => res && res.ok && res.type === 'basic';
 
+/** Guarda una copia sin frenar la respuesta y recorta la caché. */
+function guardar(event, nombre, clave, res, max) {
+  const copia = res.clone();
+  event.waitUntil(
+    caches
+      .open(nombre)
+      .then((c) => c.put(clave, copia))
+      .then(() => recortar(nombre, max))
+      .catch(() => {}),
+  );
+}
+
+/** Una página se guarda sin query: los UTM de cada visita no crean copias aparte. */
+const sinQuery = (request) => {
+  const u = new URL(request.url);
+  u.search = '';
+  u.hash = '';
+  return u.href;
+};
+
 async function pagina(event) {
   const { request } = event;
-  const cache = await caches.open(PAGINAS);
-  const guardada = await cache.match(request, { ignoreSearch: true });
+  const clave = sinQuery(request);
+  const guardada = await (await caches.open(PAGINAS)).match(clave);
 
   const red = (async () => {
-    const res = (await event.preloadResponse) || (await fetch(request));
-    if (guardable(res)) {
-      const copia = res.clone();
-      event.waitUntil(cache.put(request, copia).then(() => recortar(PAGINAS, MAX_PAGINAS)));
-    }
+    // Si la precarga falla (o el navegador no la tiene) se intenta con un fetch normal.
+    const res = (await Promise.resolve(event.preloadResponse).catch(() => null)) || (await fetch(request));
+    if (guardable(res)) guardar(event, PAGINAS, clave, res, MAX_PAGINAS);
     return res;
   })();
 
@@ -79,23 +99,25 @@ async function pagina(event) {
   }
 }
 
-async function cachePrimero(request, nombre) {
+/** Archivos con hash en el nombre: si están guardados, no hace falta preguntar. */
+async function inmutable(event) {
+  const { request } = event;
   const guardada = await caches.match(request);
   if (guardada) return guardada;
   const res = await fetch(request);
-  if (guardable(res)) {
-    const copia = res.clone();
-    caches.open(nombre).then((c) => c.put(request, copia));
-  }
+  if (guardable(res)) guardar(event, ESTATICOS, request, res, MAX_ESTATICOS);
   return res;
 }
 
-async function imagen(event) {
+/**
+ * Caché y revalidación: sale la copia guardada (la de esta caché o la del precache) y la red la
+ * actualiza para la próxima vez. Sin copia, espera a la red.
+ */
+async function revalidar(event, nombre, max) {
   const { request } = event;
-  const cache = await caches.open(IMAGENES);
-  const guardada = await cache.match(request);
+  const guardada = (await (await caches.open(nombre)).match(request)) || (await caches.match(request));
   const red = fetch(request).then((res) => {
-    if (guardable(res)) cache.put(request, res.clone()).then(() => recortar(IMAGENES, MAX_IMAGENES));
+    if (guardable(res)) guardar(event, nombre, request, res, max);
     return res;
   });
   if (guardada) {
@@ -113,9 +135,9 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname === '/sw.js') return;
 
   if (request.mode === 'navigate') return event.respondWith(pagina(event));
-  if (url.pathname.startsWith('/_astro/') && request.destination !== 'image') return event.respondWith(cachePrimero(request, ESTATICOS));
+  if (url.pathname.startsWith('/_astro/') && request.destination !== 'image') return event.respondWith(inmutable(event));
   if (url.pathname.startsWith('/fonts/') || /\.(ico|svg|webmanifest)$/.test(url.pathname) || /^\/(icon|apple-touch)/.test(url.pathname)) {
-    return event.respondWith(cachePrimero(request, ESTATICOS));
+    return event.respondWith(revalidar(event, ESTATICOS, MAX_ESTATICOS));
   }
-  if (request.destination === 'image') return event.respondWith(imagen(event));
+  if (request.destination === 'image') return event.respondWith(revalidar(event, IMAGENES, MAX_IMAGENES));
 });

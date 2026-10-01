@@ -5,6 +5,7 @@ import { and, eq, gt, isNull, sql } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { enlaces, sesiones, usuarios, type Usuario } from './db/schema';
 import { enviar, correoEnlaceAcceso } from './correo';
+import { dentroDelLimite } from './limite';
 import type { Env } from './env';
 import { ahora, sha256, token, json, escapar, HORA, DIA } from './util';
 
@@ -55,11 +56,7 @@ export async function pedirEnlace(req: Request, env: Env, db: DrizzleD1Database,
   if (!u) return respuesta;
 
   const t = ahora();
-  const [fila] = await db
-    .select({ n: sql<number>`count(*)` })
-    .from(enlaces)
-    .where(and(eq(enlaces.usuarioId, u.id), gt(enlaces.creado, t - HORA)));
-  if ((fila?.n ?? 0) >= ENLACES_POR_HORA) return respuesta;
+  if (!(await dentroDelLimite(db, `enlace:${u.id}`, ENLACES_POR_HORA, t))) return respuesta;
 
   const secreto = token();
   await db.insert(enlaces).values({ hash: await sha256(secreto), usuarioId: u.id, creado: t, expira: t + MINUTOS_ENLACE * 60_000, usado: null });

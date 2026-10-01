@@ -1,14 +1,14 @@
 // POST /v1/leads: guarda lo que pidió alguien en el cotizador, con su consentimiento, y avisa.
 // El sitio lo envía con fetch keepalive (text/plain, sin preflight) justo antes de abrir WhatsApp,
 // así que la respuesta casi nunca se lee: el cotizador funciona igual si esto falla.
-import { and, eq, gt, sql } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { leads, consentimientos, eventos, type Lead } from './db/schema';
 import { validarLead } from './validar';
 import { enviar, correoLeadEquipo, correoLeadCliente } from './correo';
 import { suscribir } from './marketing/suscripciones';
 import type { Env } from './env';
-import { ahora, hashIp, uuid, json, HORA } from './util';
+import { ahora, hashIp, uuid, json } from './util';
+import { dentroDelLimite } from './limite';
 
 /** Envíos por IP y hora antes de responder 429. */
 export const LIMITE_POR_HORA = 5;
@@ -38,13 +38,7 @@ export async function crearLead(
 
   const t = ahora();
   const ipHash = await hashIp(req.headers.get('cf-connecting-ip'), env.SAL_IP, t);
-  if (ipHash) {
-    const [fila] = await db
-      .select({ n: sql<number>`count(*)` })
-      .from(leads)
-      .where(and(eq(leads.ipHash, ipHash), gt(leads.creado, t - HORA)));
-    if ((fila?.n ?? 0) >= LIMITE_POR_HORA) return json({ ok: false, error: 'limite' }, 429, cors);
-  }
+  if (ipHash && !(await dentroDelLimite(db, `lead:${ipHash}`, LIMITE_POR_HORA, t))) return json({ ok: false, error: 'limite' }, 429, cors);
 
   const lead: Lead = {
     ...r.lead,

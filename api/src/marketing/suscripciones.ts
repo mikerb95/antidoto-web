@@ -10,6 +10,7 @@ import { aceptada, vigente, type Version } from '../consentimiento';
 import type { Env } from '../env';
 import { ahora, hashIp, uuid, json, token, escapar, HORA } from '../util';
 import { TIEMPO_MINIMO_MS } from '../validar';
+import { dentroDelLimite } from '../limite';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /** No se reenvía la confirmación a la misma persona antes de esto. */
@@ -166,13 +167,7 @@ export async function crearSuscripcion(req: Request, env: Env, db: DrizzleD1Data
   if (!autorizacion) return json({ ok: false, errores: ['consentimiento'] }, 422, cors);
 
   const ipHash = await hashIp(req.headers.get('cf-connecting-ip'), env.SAL_IP);
-  if (ipHash) {
-    const [fila] = await db
-      .select({ n: sql<number>`count(*)` })
-      .from(consentimientosMarketing)
-      .where(and(eq(consentimientosMarketing.ipHash, ipHash), gt(consentimientosMarketing.aceptado, ahora() - HORA)));
-    if ((fila?.n ?? 0) >= SUSCRIPCIONES_POR_HORA) return json({ ok: false, error: 'limite' }, 429, cors);
-  }
+  if (ipHash && !(await dentroDelLimite(db, `suscripcion:${ipHash}`, SUSCRIPCIONES_POR_HORA))) return json({ ok: false, error: 'limite' }, 429, cors);
 
   diferir(
     suscribir(
