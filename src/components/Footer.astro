@@ -51,8 +51,11 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
       </div>
     </div>
     <div class="base">
-      <span>© {year} Antídoto. {s.footerDerechos}</span>
-      <a class="politica" href={rutaPolitica[locale]}>{s.footerPolitica}</a>
+      <div class="legal">
+        <span>© {year} Antídoto. {s.footerDerechos}</span>
+        <a class="politica" href={rutaPolitica[locale]}>{s.footerPolitica}</a>
+      </div>
+      <p class="credito">{s.footerCredito} <a href="https://codebymike.net" target="_blank" rel="noopener">codebymike<span aria-hidden="true"> ↗</span></a></p>
     </div>
   </div>
 </footer>
@@ -119,6 +122,10 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
   .base { border-top: 1px solid rgb(255 255 255 / 0.16); padding-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; }
   .politica { color: var(--color-fg-soft); display: inline-flex; align-items: center; min-height: 44px; }
   .politica:hover { color: var(--color-antidote); }
+  .legal { display: flex; flex-wrap: wrap; align-items: center; column-gap: 20px; }
+  .credito { margin: 0; color: var(--color-fg-muted); }
+  .credito a { color: var(--color-fg-soft); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
+  .credito a:hover { color: var(--color-antidote); }
 
   .novedades { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 8px; max-width: 30em; }
   .novedades[hidden] { display: none; }

@@ -203,6 +203,7 @@ export const ui = {
     navParaQuien: 'Para quién',
     footerLema: 'Estudio creativo empresarial. Colombia, desde 2020.',
     footerDerechos: 'Todos los derechos reservados.',
+    footerCredito: 'Diseño y desarrollo:',
     inicio: {
       insignia: 'Estudio creativo con licencia de SST',
       titulo: ['Formación, video y eventos que tu equipo ', 'sí recuerda'],
@@ -535,6 +536,7 @@ export const ui = {
     navParaQuien: 'Who it is for',
     footerLema: 'Creative studio for organizations. Colombia, since 2020.',
     footerDerechos: 'All rights reserved.',
+    footerCredito: 'Design and development:',
     inicio: {
       insignia: 'Creative studio with a health and safety license',
       titulo: ['Training, video and events your team ', 'actually remembers'],
