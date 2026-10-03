@@ -1,0 +1,104 @@
+---
+// Servicios: columna de introducción con los espacios de testimonio y logos, y una tarjeta
+// ancha por servicio con afiche vertical.
+import { Image } from 'astro:assets';
+import taller from '../../assets/fotos/taller.jpg';
+import grabacion from '../../assets/fotos/grabacion.jpg';
+import catering from '../../assets/fotos/catering-buffet.jpg';
+import figura from '../../assets/fotos/figura-piezas.jpg';
+import { SERVICIOS } from '../../data/servicios';
+import { t, rutas, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const h = t(locale).inicio.servicios;
+const AFICHES = {
+  formaciones: [taller, 'center'],
+  audiovisual: [grabacion, 'center'],
+  catering: [catering, '62% center'],
+  diseno: [figura, 'center'],
+} as const;
+const tarjetas = SERVICIOS.map((sv) => {
+  const id = sv.id as keyof typeof AFICHES;
+  return { id, titulo: sv[locale].title, texto: h.items[id], afiche: AFICHES[id] };
+});
+---
+<section id="servicios" class="servicios" aria-labelledby="servicios-t">
+  <div class="wrap interior">
+    <div class="intro">
+      <h2 id="servicios-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
+      <p>{h.lead}</p>
+      <p class="pendiente">{h.testimonio}</p>
+      <p class="pendiente">{h.logos}</p>
+    </div>
+
+    <div class="lista">
+      {tarjetas.map(({ id, titulo, texto, afiche: [foto, posicion] }) => (
+        <article class="tarjeta">
+          <div class="info">
+            <h3>{titulo}</h3>
+            <p>{texto.resumen}</p>
+            <ul class="puntos">
+              {texto.puntos.map((p) => (
+                <li>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+            {id === 'formaciones' && (
+              <p class="plataforma"><span>{h.plataforma}</span><span class="nombre">{h.plataformaNombre}</span></p>
+            )}
+            <dl class="cifras">
+              {texto.cifras.map(([valor, etiqueta]) => (
+                <div><dt>{etiqueta}</dt><dd>{valor}</dd></div>
+              ))}
+            </dl>
+            <a class="boton boton-cian" href={rutas.contacto[locale]}>{texto.cotizar}</a>
+          </div>
+          <div class="afiche">
+            <Image src={foto} alt={texto.alt} widths={[240, 440]} sizes="220px" style={`object-position: ${posicion}`} />
+            <span aria-hidden="true">{texto.afiche}</span>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .servicios { background: var(--color-mist); }
+  .interior { padding-block: 80px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 40px; }
+
+  .intro { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+  .intro .titulo-seccion { font-size: clamp(32px, 3.4vw, 46px); }
+  /* La columna es angosta: el resaltado puede partirse en dos líneas en vez de desbordarse. */
+  .intro .resaltado { white-space: normal; }
+  .intro > p:not(.pendiente) { margin: 0; color: var(--color-slate); }
+  .intro .pendiente { margin: 0; justify-content: flex-start; text-align: left; }
+
+  .lista { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+  .tarjeta { display: flex; flex-wrap: wrap; gap: 24px; padding: 26px; border-radius: 22px; background: var(--color-paper); border: 1px solid var(--color-line-soft); box-shadow: 0 10px 30px rgb(15 24 29 / 0.06); }
+  .info { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  h3 { margin: 0; font-size: 28px; line-height: 1.15; }
+  .info > p { margin: 0; font-size: 16px; }
+  .puntos { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; color: var(--color-slate); font-size: 15px; }
+  .puntos li { display: flex; gap: 10px; align-items: center; }
+  .puntos svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--color-mid); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+  .info > .plataforma { align-self: flex-start; display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-radius: 10px; background: var(--color-ink); color: var(--color-paper); font-size: 13px; font-weight: 500; }
+  .plataforma .nombre { color: var(--color-glow); font-weight: 600; }
+
+  .cifras { margin: 0; display: flex; flex-wrap: wrap; gap: 8px 32px; }
+  .cifras div { display: flex; flex-direction: column-reverse; }
+  dd { margin: 0; font: 400 34px/1.1 var(--font-accent); color: var(--color-deep); }
+  dt { font-size: 14px; color: var(--color-slate); }
+  .boton { align-self: flex-start; }
+
+  .afiche { flex: 0 1 220px; min-width: 180px; min-height: 300px; position: relative; border-radius: 16px; overflow: hidden; background: var(--color-ink); }
+  .afiche img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .afiche::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(15 24 29 / 0) 45%, rgb(15 24 29 / 0.88) 100%); }
+  .afiche span { position: absolute; z-index: 1; left: 16px; right: 16px; bottom: 16px; color: var(--color-paper); font: 400 24px/1.1 var(--font-display); }
+</style>
