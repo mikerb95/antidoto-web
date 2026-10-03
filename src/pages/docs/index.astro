@@ -1,0 +1,60 @@
+---
+import Docs from '../../layouts/Docs.astro';
+import { PAGINAS_DOCS } from '../../data/docs/indice';
+import { REQUISITOS_FUNCIONALES, REQUISITOS_NO_FUNCIONALES } from '../../data/docs/requisitos';
+import { CASOS_DE_USO } from '../../data/docs/casos-de-uso';
+import { HISTORIAS } from '../../data/docs/historias';
+import { ITERACIONES, TARJETAS } from '../../data/docs/iteraciones';
+import { INVESTIGACIONES } from '../../data/docs/fuentes';
+
+const impl = (xs: { estado: string }[]) => xs.filter((x) => x.estado === 'implementado').length;
+const cifras = [
+  [`${impl(REQUISITOS_FUNCIONALES)} de ${REQUISITOS_FUNCIONALES.length}`, 'requisitos funcionales implementados'],
+  [`${impl(REQUISITOS_NO_FUNCIONALES)} de ${REQUISITOS_NO_FUNCIONALES.length}`, 'requisitos no funcionales implementados'],
+  [`${impl(CASOS_DE_USO)} de ${CASOS_DE_USO.length}`, 'casos de uso implementados'],
+  [`${impl(HISTORIAS)} de ${HISTORIAS.length}`, 'historias de usuario implementadas'],
+  [`${ITERACIONES.length}`, 'iteraciones'],
+  [`${TARJETAS.length}`, 'tarjetas en el kanban'],
+  [`${INVESTIGACIONES.length}`, 'investigaciones documentadas'],
+];
+---
+<Docs titulo="Documentación" descripcion="Documentación del proyecto Antídoto web: iteraciones, requisitos, casos de uso, historias de usuario y fuentes." ruta="/docs/">
+  <h1>Documentación del proyecto</h1>
+  <p class="lead">Cómo se construyó el sitio de Antídoto, qué hace hoy y qué falta. Todo sale de datos tipados en <code>src/data/docs/</code>, y una prueba comprueba que cada evidencia exista en el repositorio.</p>
+
+  <div class="resumen">
+    {cifras.map(([n, t]) => <div class="dato"><b>{n}</b><span>{t}</span></div>)}
+  </div>
+
+  <h2>Páginas</h2>
+  <ul class="lista">
+    {PAGINAS_DOCS.map((p) => (
+      <li>
+        <a class="tarjeta-link" href={p.ruta}>
+          <span class="grupo-e">{p.grupo}</span>
+          <strong>{p.titulo}</strong>
+          <span>{p.resumen}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+
+  <h2>Cómo leer el estado</h2>
+  <div class="caja">
+    <p><strong>Implementado:</strong> existe en el código y tiene evidencia verificable.</p>
+    <p><strong>Parcial:</strong> existe, pero falta algo que se explica en la nota (casi siempre un dato del cliente o una configuración de producción).</p>
+    <p><strong>Pendiente:</strong> decidido, sin construir.</p>
+  </div>
+
+  <h2>Alcance y límites</h2>
+  <p>Las iteraciones y las historias de usuario se reconstruyeron del historial de git (74 commits entre el 22/09 y el 03/10/2026) y no se planearon de antemano. Esta sección es interna: lleva <code>noindex</code>, pero se despliega con el sitio.</p>
+</Docs>
+
+<style>
+  .lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .tarjeta-link { display: flex; flex-direction: column; gap: 6px; height: 100%; padding: 20px 22px; border-radius: 16px; background: var(--color-mist); color: var(--color-ink); text-decoration: none; transition: background var(--t-base) var(--ease-out), box-shadow var(--t-base) var(--ease-out); }
+  .tarjeta-link:hover { background: rgb(59 200 243 / 0.16); box-shadow: 0 6px 20px rgb(15 24 29 / 0.08); }
+  .tarjeta-link strong { font-family: var(--font-display); font-weight: 400; font-size: 21px; }
+  .tarjeta-link span { font-size: 15px; color: var(--color-slate); }
+  .tarjeta-link .grupo-e { font: 600 11px/1.3 var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-deep); }
+</style>

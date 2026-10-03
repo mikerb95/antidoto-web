@@ -22,7 +22,7 @@ interface Props {
 const { locale } = Astro.props;
 const [title, description] = t(locale).seo.inicio;
 ---
-<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema(await obtenerServicios())} tema="claro" scroll="suave">
+<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema(await obtenerServicios(), locale)} tema="claro" scroll="suave">
   <Hero locale={locale} />
   <ClientesCifras locale={locale} />
   <Dolores locale={locale} />

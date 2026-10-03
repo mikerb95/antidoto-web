@@ -7,7 +7,15 @@ import { t, type Locale } from '../i18n/ui';
 const ORG_ID = `${SITE.url}/#org`;
 const absoluta = (ruta: string) => new URL(ruta, SITE.url).href;
 
-export function organizationSchema(servicios: Servicio[]) {
+// Textos de la organización que no están en ui.ts.
+const ORG_TXT = {
+  es: { cargo: 'CEO y fundadora', catalogo: 'Servicios' },
+  en: { cargo: 'CEO and founder', catalogo: 'Services' },
+} as const;
+
+/** La organización en el idioma de la página: descripción, cargo y servicios con sus URLs. */
+export function organizationSchema(servicios: Servicio[], locale: Locale) {
+  const txt = ORG_TXT[locale];
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
@@ -16,21 +24,20 @@ export function organizationSchema(servicios: Servicio[]) {
     url: `${SITE.url}/`,
     logo: `${SITE.url}/logo-512.png`,
     image: `${SITE.url}/og/antidoto-og.jpg`,
-    description:
-      'Estudio creativo empresarial: formaciones vivenciales, producción audiovisual, catering corporativo y diseño de productos y experiencias.',
+    description: t(locale).seo.inicio[1],
     telephone: SITE.phoneDisplay,
     email: SITE.email,
     foundingDate: String(SITE.foundingYear),
-    founder: { '@type': 'Person', name: 'María Paula Ramos', jobTitle: 'CEO y fundadora' },
+    founder: { '@type': 'Person', name: 'María Paula Ramos', jobTitle: txt.cargo },
     areaServed: { '@type': 'Country', name: 'Colombia' },
     knowsLanguage: ['es', 'pt', 'en'],
     sameAs: [SITE.instagram, SITE.linkedin],
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
-      name: 'Servicios',
+      name: txt.catalogo,
       itemListElement: servicios.map((s) => ({
         '@type': 'Offer',
-        itemOffered: { '@type': 'Service', name: s.es.title, url: `${SITE.url}/servicios/${s.es.slug}/` },
+        itemOffered: { '@type': 'Service', name: s[locale].title, url: absoluta(servicioPath(s, locale)) },
       })),
     },
   };

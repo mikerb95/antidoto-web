@@ -1,0 +1,50 @@
+---
+import Docs from '../../layouts/Docs.astro';
+import Estado from '../../components/docs/Estado.astro';
+import { HISTORIAS } from '../../data/docs/historias';
+import { ITERACIONES } from '../../data/docs/iteraciones';
+
+const rutaReq = (r: string) => `/docs/${r.startsWith('RNF') ? 'requerimientos-no-funcionales' : 'requerimientos-funcionales'}/#${r}`;
+const nombre = (id: string) => ITERACIONES.find((i) => i.id === id)?.nombre ?? id;
+const por = (e: string) => HISTORIAS.filter((h) => h.estado === e).length;
+---
+<Docs titulo="Historias de usuario" descripcion="Historias de usuario de Antídoto web con criterios de aceptación, iteración, requisitos y casos de uso." ruta="/docs/historias-de-usuario/">
+  <h1>Historias de usuario</h1>
+  <p class="lead">{HISTORIAS.length} historias reconstruidas del trabajo hecho en cada iteración y de lo pendiente. Cada una enlaza a sus requisitos y casos de uso.</p>
+
+  <div class="resumen">
+    <div class="dato"><b>{HISTORIAS.length}</b><span>historias</span></div>
+    <div class="dato"><b>{por('implementado')}</b><span>implementadas</span></div>
+    <div class="dato"><b>{por('parcial')}</b><span>parciales</span></div>
+    <div class="dato"><b>{por('pendiente')}</b><span>pendientes</span></div>
+  </div>
+
+  <div class="rejilla">
+    {HISTORIAS.map((h) => (
+      <article class="hu" id={h.id}>
+        <header>
+          <code>{h.id}</code>
+          <Estado estado={h.estado} />
+        </header>
+        <p class="historia"><strong>{h.actor}</strong> quiero {h.quiero}, para {h.para}.</p>
+        <h3>Criterios de aceptación</h3>
+        <ul>{h.criterios.map((c) => <li>{c}</li>)}</ul>
+        <p class="refs">
+          Iteración {h.iteracion} ({nombre(h.iteracion)}) · {h.requisitos.map((r, i) => <><a href={rutaReq(r)}>{r}</a>{i < h.requisitos.length - 1 && ', '}</>)}
+          {h.casos.length > 0 && <> · {h.casos.map((c, i) => <><a href={`/docs/casos-de-uso-extendidos/#${c}`}>{c}</a>{i < h.casos.length - 1 && ', '}</>)}</>}
+        </p>
+      </article>
+    ))}
+  </div>
+</Docs>
+
+<style>
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 24px; }
+  .hu { background: var(--color-mist); border-radius: 18px; padding: 22px; scroll-margin-top: 16px; }
+  .hu header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .historia { font-size: 17px; line-height: 1.45; }
+  .hu h3 { font: 600 11px/1.3 var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-slate); margin: 16px 0 8px; }
+  .hu ul { margin: 0; padding-left: 20px; font-size: 15px; }
+  .hu li { margin-bottom: 4px; }
+  .refs { font-size: 13px; color: var(--color-slate); margin: 16px 0 0 !important; }
+</style>

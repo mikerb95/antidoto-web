@@ -1,0 +1,6 @@
+---
+import { ESTADOS, type Estado } from '../../data/docs/tipos';
+interface Props { estado: Estado }
+const { estado } = Astro.props;
+---
+<span class={`chip ${estado}`}>{ESTADOS[estado]}</span>

@@ -1,0 +1,81 @@
+---
+import Docs from '../../layouts/Docs.astro';
+import { ITERACIONES, TARJETAS } from '../../data/docs/iteraciones';
+import { COLUMNAS, type Columna } from '../../data/docs/tipos';
+
+const columnas = Object.keys(COLUMNAS) as Columna[];
+const fecha = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+const rango = (a: string, b: string) => (a === b ? fecha(a) : `${fecha(a)} a ${fecha(b)}`);
+---
+<Docs titulo="Kanban de iteraciones" descripcion="Tablero de iteraciones del proyecto Antídoto web: hecho, en curso, pendiente y a la espera del cliente." ruta="/docs/kanban/">
+  <h1>Kanban de iteraciones</h1>
+  <p class="lead">Ocho iteraciones entre el 22 de septiembre y hoy, reconstruidas del historial de git. El tablero muestra cada tarjeta en su columna y la iteración en que se hizo o se hará.</p>
+
+  <h2>Iteraciones</h2>
+  <ol class="iters">
+    {ITERACIONES.map((it) => {
+      const n = TARJETAS.filter((t) => t.iteracion === it.id);
+      const hechas = n.filter((t) => t.columna === 'hecho').length;
+      return (
+        <li class="iter">
+          <div class="iter-cab">
+            <span class="chip neutro id">{it.id}</span>
+            <h3>{it.nombre}</h3>
+          </div>
+          <p class="iter-meta">{rango(it.desde, it.hasta)}{it.commits > 0 && ` · ${it.commits} commits`}{it.prs && ` · PR ${it.prs.join(', ')}`}</p>
+          <p>{it.objetivo}</p>
+          <p class="iter-meta">{hechas} de {n.length} tarjetas hechas</p>
+        </li>
+      );
+    })}
+  </ol>
+
+  <h2>Tablero</h2>
+  <div class="tablero">
+    {columnas.map((c) => {
+      const items = TARJETAS.filter((t) => t.columna === c);
+      return (
+        <section class={`col col-${c}`} aria-labelledby={`col-${c}`}>
+          <header>
+            <h3 id={`col-${c}`}>{COLUMNAS[c].titulo} <span class="cuenta">{items.length}</span></h3>
+            <p>{COLUMNAS[c].ayuda}</p>
+          </header>
+          <ul>
+            {items.map((t) => (
+              <li class="tarjeta">
+                <div class="tarjeta-cab"><code>{t.id}</code><span class="chip neutro">{t.iteracion}</span></div>
+                <strong>{t.titulo}</strong>
+                <p>{t.detalle}</p>
+                {t.historias && <p class="refs">{t.historias.join(', ')}</p>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    })}
+  </div>
+</Docs>
+
+<style>
+  .iters { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .iter { background: var(--color-mist); border-radius: 16px; padding: 18px 20px; }
+  .iter-cab { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .iter-cab h3 { margin: 0; font-size: 19px; }
+  .iter .id { font-family: var(--font-mono); background: var(--color-paper); }
+  .iter p { font-size: 14.5px; margin-bottom: 8px; }
+  .iter-meta { color: var(--color-slate); font-size: 13px !important; }
+
+  .tablero { display: grid; grid-template-columns: repeat(4, minmax(240px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 8px; align-items: start; }
+  .col { background: var(--color-mist); border-radius: 18px; padding: 14px; min-width: 240px; }
+  .col header { padding: 4px 6px 12px; }
+  .col h3 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; }
+  .col header p { margin: 2px 0 0; font-size: 13px; color: var(--color-slate); }
+  .cuenta { font: 600 12px/1 var(--font-sans); background: var(--color-paper); border-radius: 999px; padding: 5px 9px; }
+  .col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .tarjeta { background: var(--color-paper); border-radius: 12px; padding: 14px; box-shadow: 0 1px 2px rgb(15 24 29 / 0.06); }
+  .tarjeta-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .tarjeta strong { display: block; font-size: 15px; line-height: 1.3; margin-bottom: 6px; }
+  .tarjeta p { font-size: 13.5px; line-height: 1.45; color: var(--color-slate); margin-bottom: 6px; }
+  .tarjeta .refs { font-family: var(--font-mono); font-size: 12px; color: var(--color-deep); margin: 0; }
+  @media (max-width: 900px) { .tablero { grid-template-columns: repeat(4, 260px); } }
+</style>

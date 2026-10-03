@@ -35,6 +35,8 @@ ErrorDocument 404 /404.html
 
 AddType application/manifest+json .webmanifest
 AddType font/woff2 .woff2
+# robots.txt y llms.txt llevan tildes
+AddCharset utf-8 .txt
 
 # Caché: assets con hash inmutables, HTML siempre revalidado
 <IfModule mod_headers.c>

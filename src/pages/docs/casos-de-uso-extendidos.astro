@@ -1,0 +1,89 @@
+---
+import Docs from '../../layouts/Docs.astro';
+import Estado from '../../components/docs/Estado.astro';
+import { ACTORES, CASOS_DE_USO } from '../../data/docs/casos-de-uso';
+import { HISTORIAS } from '../../data/docs/historias';
+---
+<Docs titulo="Casos de uso extendidos" descripcion="Casos de uso extendidos de Antídoto web: flujos principales y alternos por actor." ruta="/docs/casos-de-uso-extendidos/">
+  <h1>Casos de uso extendidos</h1>
+  <p class="lead">{CASOS_DE_USO.length} casos de uso con precondiciones, flujo principal, flujos alternos, postcondiciones y reglas de negocio, enlazados a sus requisitos y a las historias que los cubren.</p>
+
+  <h2>Actores</h2>
+  <div class="tabla-wrap">
+    <table class="tabla">
+      <thead><tr><th>Actor</th><th>Descripción</th></tr></thead>
+      <tbody>{ACTORES.map((a) => <tr><td><strong>{a.nombre}</strong></td><td>{a.descripcion}</td></tr>)}</tbody>
+    </table>
+  </div>
+
+  <h2>Índice</h2>
+  <ul class="indice">
+    {CASOS_DE_USO.map((c) => <li><a href={`#${c.id}`}><code>{c.id}</code> {c.nombre}</a> <span class="act">{c.actor}</span></li>)}
+  </ul>
+
+  {CASOS_DE_USO.map((c) => {
+    const historias = HISTORIAS.filter((h) => h.casos.includes(c.id)).map((h) => h.id);
+    return (
+      <article class="cu" id={c.id}>
+        <header>
+          <h2><code>{c.id}</code> {c.nombre}</h2>
+          <p class="meta"><span class="chip neutro">{c.actor}</span> <Estado estado={c.estado} /></p>
+        </header>
+        <p><strong>Objetivo.</strong> {c.objetivo}</p>
+        <div class="dos">
+          <div>
+            <h3>Precondiciones</h3>
+            <ul>{c.precondiciones.map((p) => <li>{p}</li>)}</ul>
+          </div>
+          <div>
+            <h3>Disparador</h3>
+            <p>{c.disparador}</p>
+          </div>
+        </div>
+        <h3>Flujo principal</h3>
+        <ol>{c.flujoPrincipal.map((p) => <li>{p}</li>)}</ol>
+        {c.flujosAlternos.length > 0 && (
+          <>
+            <h3>Flujos alternos</h3>
+            <ul class="alt">
+              {c.flujosAlternos.map((a) => (
+                <li><strong>{a.id}. {a.condicion}</strong><ol>{a.pasos.map((p) => <li>{p}</li>)}</ol></li>
+              ))}
+            </ul>
+          </>
+        )}
+        <div class="dos">
+          <div>
+            <h3>Postcondiciones</h3>
+            <ul>{c.postcondiciones.map((p) => <li>{p}</li>)}</ul>
+          </div>
+          <div>
+            <h3>Reglas de negocio</h3>
+            <ul>{c.reglas.map((p) => <li>{p}</li>)}</ul>
+          </div>
+        </div>
+        <p class="refs">
+          Requisitos: {c.requisitos.map((r, i) => <><a href={`/docs/${r.startsWith('RNF') ? 'requerimientos-no-funcionales' : 'requerimientos-funcionales'}/#${r}`}>{r}</a>{i < c.requisitos.length - 1 && ', '}</>)}
+          {historias.length > 0 && <> · Historias: {historias.map((h, i) => <><a href={`/docs/historias-de-usuario/#${h}`}>{h}</a>{i < historias.length - 1 && ', '}</>)}</>}
+        </p>
+      </article>
+    );
+  })}
+</Docs>
+
+<style>
+  .indice { list-style: none; padding: 0; margin: 0; columns: 2 280px; column-gap: 24px; }
+  .indice li { padding: 6px 0; break-inside: avoid; }
+  .act { font-size: 13px; color: var(--color-slate); }
+  .cu { margin-top: 56px; padding: 28px; background: var(--color-mist); border-radius: 20px; scroll-margin-top: 16px; }
+  .cu h2 { margin: 0 0 8px; font-size: 26px; }
+  .cu h3 { margin: 22px 0 8px; font-size: 17px; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px !important; }
+  .cu ul, .cu ol { margin: 0 0 8px; padding-left: 22px; max-width: 70ch; }
+  .cu li { margin-bottom: 6px; }
+  .alt { list-style: none; padding-left: 0 !important; }
+  .alt > li { background: var(--color-paper); border-radius: 12px; padding: 12px 16px; }
+  .alt ol { margin-top: 6px; }
+  .dos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .refs { font-size: 14px; color: var(--color-slate); margin-top: 20px; }
+</style>

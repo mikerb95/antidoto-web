@@ -1,0 +1,77 @@
+---
+import Docs from '../../layouts/Docs.astro';
+import { INVESTIGACIONES } from '../../data/docs/fuentes';
+import { TIPOS_FUENTE } from '../../data/docs/tipos';
+
+const fecha = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+const externo = (e: string) => /^https?:/.test(e);
+---
+<Docs titulo="Fuentes e investigaciones" descripcion="Fuentes e investigaciones detrás de las decisiones del sitio de Antídoto, como la del above the fold." ruta="/docs/fuentes/">
+  <h1>Fuentes e investigaciones</h1>
+  <p class="lead">Las lecturas y el análisis que sustentan las decisiones de diseño y de ingeniería. Cada investigación termina en decisiones concretas y dice dónde quedaron en el código, y también hasta dónde llega lo que sabemos.</p>
+
+  <ul class="indice">
+    {INVESTIGACIONES.map((i) => <li><a href={`#${i.id}`}><code>{i.id}</code> {i.titulo}</a></li>)}
+  </ul>
+
+  {INVESTIGACIONES.map((inv) => (
+    <article class="inv" id={inv.id}>
+      <h2><code>{inv.id}</code> {inv.titulo}</h2>
+      <p class="meta">{fecha(inv.fecha)}</p>
+      <p><strong>Pregunta.</strong> {inv.pregunta}</p>
+      <p>{inv.resumen}</p>
+
+      {inv.diagnostico && (
+        <>
+          <h3>Diagnóstico de partida</h3>
+          <ul>{inv.diagnostico.map((d) => <li>{d}</li>)}</ul>
+        </>
+      )}
+
+      <h3>Fuentes</h3>
+      <ul class="fuentes">
+        {inv.fuentes.map((f) => (
+          <li>
+            <span class="chip neutro">{TIPOS_FUENTE[f.tipo]}</span>
+            <strong>{externo(f.enlace) ? <a href={f.enlace} rel="noopener noreferrer" target="_blank">{f.titulo}</a> : f.titulo}</strong>
+            <span class="autor">{f.autor}</span>
+            <p>{f.hallazgo}</p>
+            {!externo(f.enlace) && <code>{f.enlace}</code>}
+          </li>
+        ))}
+      </ul>
+
+      <h3>Decisiones que salieron de aquí</h3>
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead><tr><th>Decisión</th><th>Por qué</th><th>Dónde quedó</th></tr></thead>
+          <tbody>
+            {inv.decisiones.map((d) => (
+              <tr><td>{d.decision}</td><td>{d.porque}</td><td><code>{d.donde}</code></td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Límites</h3>
+      <ul>{inv.limites.map((l) => <li>{l}</li>)}</ul>
+    </article>
+  ))}
+</Docs>
+
+<style>
+  .indice { list-style: none; padding: 0; margin: 0 0 8px; }
+  .indice li { padding: 6px 0; }
+  .inv { margin-top: 56px; padding: 28px; background: var(--color-mist); border-radius: 20px; scroll-margin-top: 16px; }
+  .inv h2 { margin: 0 0 4px; font-size: 26px; }
+  .inv h3 { margin: 26px 0 10px; font-size: 17px; }
+  .meta { color: var(--color-slate); font-size: 14px; }
+  .inv ul { margin: 0 0 8px; padding-left: 22px; max-width: 74ch; }
+  .inv li { margin-bottom: 6px; }
+  .fuentes { list-style: none; padding: 0 !important; display: grid; gap: 10px; max-width: none !important; }
+  .fuentes li { background: var(--color-paper); border-radius: 12px; padding: 14px 16px; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  .fuentes p { flex-basis: 100%; margin: 4px 0 0; font-size: 14.5px; }
+  .fuentes code { flex-basis: 100%; }
+  .autor { font-size: 13px; color: var(--color-slate); }
+  .inv .tabla-wrap { background: var(--color-paper); }
+</style>

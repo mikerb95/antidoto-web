@@ -22,12 +22,14 @@ interface Props {
   waMessage?: string;
   jsonLd?: Record<string, unknown>;
   noindex?: boolean;
+  /** Sin URL propia (el 404 responde en cualquier ruta): sin canonical, hreflang ni og:url. */
+  sinCanonical?: boolean;
   /** Scroll suave (Lenis) en páginas de marketing; las de lectura conservan el nativo. */
   scroll?: 'suave' | 'nativo';
   /** Claro: la home rediseñada, sin el fondo con brillos ni la barra de WhatsApp. */
   tema?: 'oscuro' | 'claro';
 }
-const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, scroll = 'nativo', tema = 'oscuro' } = Astro.props;
+const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, sinCanonical = false, scroll = 'nativo', tema = 'oscuro' } = Astro.props;
 const claro = tema === 'claro';
 const s = t(locale);
 const canonical = new URL(alternates[locale], SITE.url).href;
@@ -41,15 +43,19 @@ const otro = otroIdioma(locale);
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {!sinCanonical && <link rel="canonical" href={canonical} />}
     {noindex
       ? <meta name="robots" content="noindex, follow" />
       : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />}
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="format-detection" content="telephone=no" />
-    <link rel="alternate" hreflang="es-CO" href={new URL(alternates.es, SITE.url).href} />
-    <link rel="alternate" hreflang="en" href={new URL(alternates.en, SITE.url).href} />
-    <link rel="alternate" hreflang="x-default" href={new URL(alternates.es, SITE.url).href} />
+    {!sinCanonical && (
+      <>
+        <link rel="alternate" hreflang="es-CO" href={new URL(alternates.es, SITE.url).href} />
+        <link rel="alternate" hreflang="en" href={new URL(alternates.en, SITE.url).href} />
+        <link rel="alternate" hreflang="x-default" href={new URL(alternates.es, SITE.url).href} />
+      </>
+    )}
     <meta name="theme-color" content="#FFFFFF" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
@@ -63,7 +69,7 @@ const otro = otroIdioma(locale);
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:locale" content={s.ogLocale} />
     <meta property="og:locale:alternate" content={t(otro).ogLocale} />
-    <meta property="og:url" content={canonical} />
+    {!sinCanonical && <meta property="og:url" content={canonical} />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />

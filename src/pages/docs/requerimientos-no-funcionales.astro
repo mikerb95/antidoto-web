@@ -1,0 +1,54 @@
+---
+import Docs from '../../layouts/Docs.astro';
+import Estado from '../../components/docs/Estado.astro';
+import { REQUISITOS_NO_FUNCIONALES } from '../../data/docs/requisitos';
+import { PRIORIDADES } from '../../data/docs/tipos';
+
+const calidades = [...new Set(REQUISITOS_NO_FUNCIONALES.map((r) => r.calidad))];
+const total = REQUISITOS_NO_FUNCIONALES.length;
+const por = (e: string) => REQUISITOS_NO_FUNCIONALES.filter((r) => r.estado === e).length;
+---
+<Docs titulo="Requerimientos no funcionales" descripcion="Requerimientos no funcionales de Antídoto web, agrupados por característica de calidad ISO/IEC 25010." ruta="/docs/requerimientos-no-funcionales/">
+  <h1>Requerimientos no funcionales</h1>
+  <p class="lead">Cómo debe comportarse el sistema, agrupado por característica de calidad (ISO/IEC 25010). Cada uno trae un criterio medible.</p>
+
+  <div class="resumen">
+    <div class="dato"><b>{total}</b><span>requisitos</span></div>
+    <div class="dato"><b>{por('implementado')}</b><span>implementados</span></div>
+    <div class="dato"><b>{por('parcial')}</b><span>parciales</span></div>
+    <div class="dato"><b>{por('pendiente')}</b><span>pendientes</span></div>
+  </div>
+
+  {calidades.map((c) => (
+    <section>
+      <h2>{c}</h2>
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead><tr><th>ID</th><th>Requisito</th><th>Criterio medible</th><th>Prioridad</th><th>Estado</th><th>Evidencia</th></tr></thead>
+          <tbody>
+            {REQUISITOS_NO_FUNCIONALES.filter((r) => r.calidad === c).map((r) => (
+              <tr id={r.id}>
+                <td class="id">{r.id}</td>
+                <td>
+                  <strong>{r.titulo}</strong>
+                  <p>{r.descripcion}</p>
+                  {r.nota && <p class="nota"><em>{r.nota}</em></p>}
+                </td>
+                <td>{r.criterio}</td>
+                <td>{PRIORIDADES[r.prioridad]}</td>
+                <td><Estado estado={r.estado} /></td>
+                <td>{r.evidencia.map((e) => <div><code>{e}</code></div>)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+</Docs>
+
+<style>
+  td p { font-size: 14.5px; margin: 4px 0 0; }
+  .nota { color: var(--color-slate); }
+  td div { margin-bottom: 4px; }
+</style>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { grafo, migasSchema, servicioSchema } from '../src/data/schema';
+import { grafo, migasSchema, organizationSchema, servicioSchema } from '../src/data/schema';
 import type { Servicio } from '../src/lib/servicios';
 
 const texto = (slug: string, title: string) => ({ slug, title, lead: `${title}.`, facts: [], includes: [], alt: '' });
@@ -26,6 +26,22 @@ describe('servicioSchema', () => {
       provider: { '@id': 'https://antidotocolombia.com/#org' },
     });
     expect(servicioSchema(servicio, 'es', '/x.jpg').inLanguage).toBe('es-CO');
+  });
+});
+
+describe('organizationSchema', () => {
+  it('describe la organización y su catálogo en el idioma de la página', () => {
+    const en = organizationSchema([servicio], 'en');
+    expect(en.founder.jobTitle).toBe('CEO and founder');
+    expect(en.description).toMatch(/^Creative studio/);
+    expect(en.hasOfferCatalog.itemListElement[0].itemOffered).toEqual({
+      '@type': 'Service',
+      name: 'Video production',
+      url: 'https://antidotocolombia.com/en/services/video-production/',
+    });
+    const es = organizationSchema([servicio], 'es');
+    expect(es['@id']).toBe(en['@id']);
+    expect(es.hasOfferCatalog.itemListElement[0].itemOffered.url).toBe('https://antidotocolombia.com/servicios/produccion-audiovisual/');
   });
 });
 

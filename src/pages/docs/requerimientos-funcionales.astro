@@ -1,0 +1,55 @@
+---
+import Docs from '../../layouts/Docs.astro';
+import Estado from '../../components/docs/Estado.astro';
+import { MODULOS_RF, REQUISITOS_FUNCIONALES } from '../../data/docs/requisitos';
+import { PRIORIDADES } from '../../data/docs/tipos';
+
+const total = REQUISITOS_FUNCIONALES.length;
+const por = (e: string) => REQUISITOS_FUNCIONALES.filter((r) => r.estado === e).length;
+---
+<Docs titulo="Requerimientos funcionales" descripcion="Requerimientos funcionales del proyecto Antídoto web con su estado y evidencia en el código." ruta="/docs/requerimientos-funcionales/">
+  <h1>Requerimientos funcionales</h1>
+  <p class="lead">Lo que el sistema debe hacer. Cada requisito tiene prioridad (MoSCoW), estado y la evidencia en el repositorio.</p>
+
+  <div class="resumen">
+    <div class="dato"><b>{total}</b><span>requisitos</span></div>
+    <div class="dato"><b>{por('implementado')}</b><span>implementados</span></div>
+    <div class="dato"><b>{por('parcial')}</b><span>parciales</span></div>
+    <div class="dato"><b>{por('pendiente')}</b><span>pendientes</span></div>
+  </div>
+
+  {MODULOS_RF.map((m) => {
+    const rs = REQUISITOS_FUNCIONALES.filter((r) => r.modulo === m);
+    return (
+      <section>
+        <h2>{m}</h2>
+        <div class="tabla-wrap">
+          <table class="tabla">
+            <thead><tr><th>ID</th><th>Requisito</th><th>Prioridad</th><th>Estado</th><th>Evidencia</th></tr></thead>
+            <tbody>
+              {rs.map((r) => (
+                <tr id={r.id}>
+                  <td class="id">{r.id}</td>
+                  <td>
+                    <strong>{r.titulo}</strong>
+                    <p>{r.descripcion}</p>
+                    {r.nota && <p class="nota"><em>{r.nota}</em></p>}
+                  </td>
+                  <td>{PRIORIDADES[r.prioridad]}</td>
+                  <td><Estado estado={r.estado} /></td>
+                  <td>{r.evidencia.length ? r.evidencia.map((e) => <div><code>{e}</code></div>) : 'Sin construir'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  })}
+</Docs>
+
+<style>
+  td p { font-size: 14.5px; margin: 4px 0 0; }
+  .nota { color: var(--color-slate); }
+  td div { margin-bottom: 4px; }
+</style>
