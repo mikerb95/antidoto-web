@@ -111,6 +111,7 @@ export const TARJETAS: Tarjeta[] = [
   { id: 'K-27', titulo: 'Cabeceras de seguridad y metadatos SEO', detalle: 'Canonical, Open Graph y JSON-LD propios; CSP en Report-Only y 404 real en Hostinger.', columna: 'hecho', iteracion: 'I6', historias: ['HU-25'] },
   // I7
   { id: 'K-28', titulo: 'Documentación del proyecto en /docs/', detalle: 'Kanban, requisitos, casos de uso extendidos, historias de usuario y fuentes.', columna: 'curso', iteracion: 'I7' },
+  { id: 'K-41', titulo: 'Chat con IA en el sitio', detalle: 'Hecho y probado con un modelo falso. Para activarlo faltan el secret ANTHROPIC_API_KEY y la prueba con la API real.', columna: 'curso', iteracion: 'I7', historias: ['HU-30'] },
   { id: 'K-29', titulo: 'Hero a pantalla completa con video de fondo', detalle: 'El código admite el clip en VIDEO_HERO; hoy el hero usa fotos con ola.', columna: 'cliente', iteracion: 'I7', historias: ['HU-11'] },
   // Pendiente
   { id: 'K-30', titulo: 'Activar la API en producción', detalle: 'Permisos del token (Workers Scripts, D1, Account Settings: Read), dominio verificado en Resend, webhook y primer admin.', columna: 'pendiente', iteracion: 'I7', historias: ['HU-07', 'HU-15'] },
