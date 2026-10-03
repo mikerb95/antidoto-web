@@ -1,5 +1,5 @@
 # API de Antídoto: leads del cotizador, bandeja en el admin y avisos de seguimiento.
-# Secrets (wrangler secret put): RESEND_API_KEY, SAL_IP, RESEND_WEBHOOK_SECRET. Ver api/README.md.
+# Secrets (wrangler secret put): RESEND_API_KEY, SAL_IP, RESEND_WEBHOOK_SECRET, ANTHROPIC_API_KEY. Ver api/README.md.
 name = "antidoto-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
@@ -28,3 +28,5 @@ MAIL_EQUIPO = "antidoto.colombia@outlook.com"
 MAIL_FROM_NOVEDADES = "Antídoto <novedades@antidotocolombia.com>"
 # Horas sin respuesta antes de avisar al equipo.
 HORAS_SEGUIMIENTO = "24"
+# Tope de gasto diario del chat con IA (USD). Si no se puede leer el gasto, el chat no responde.
+ASESOR_TOPE_DIARIO_USD = "1"

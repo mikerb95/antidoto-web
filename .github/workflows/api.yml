@@ -9,6 +9,7 @@ name: API (Cloudflare Worker)
 #   RESEND_API_KEY         opcional; sin ella la API funciona pero no salen correos
 #   SAL_IP                 opcional; texto aleatorio largo para el hash de IP
 #   RESEND_WEBHOOK_SECRET  opcional; secreto whsec_ del webhook de Resend (aperturas, rebotes)
+#   ANTHROPIC_API_KEY      opcional; sin ella el chat con IA no se ofrece y el sitio muestra solo WhatsApp
 # Variable (Settings > Secrets and variables > Actions > Variables):
 #   PUBLIC_API_URL         URL pública del Worker; la usan los enlaces de los correos
 # Sin CLOUDFLARE_API_TOKEN o CLOUDFLARE_ACCOUNT_ID se omite con un aviso.
@@ -16,7 +17,8 @@ name: API (Cloudflare Worker)
 on:
   push:
     branches: [main]
-    paths: ['api/**', 'src/data/consentimiento.json', '.github/workflows/api.yml']
+    # El chat con IA lee los textos del sitio (servicios, ui.ts, contacto, clientes): si cambian, se redespliega.
+    paths: ['api/**', 'src/data/consentimiento.json', 'src/content/servicios/**', 'src/i18n/ui.ts', 'src/data/site.ts', 'src/data/clientes.ts', '.github/workflows/api.yml']
   workflow_dispatch:
 
 concurrency:
@@ -80,8 +82,9 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SAL_IP: ${{ secrets.SAL_IP }}
           RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          for nombre in RESEND_API_KEY SAL_IP RESEND_WEBHOOK_SECRET; do
+          for nombre in RESEND_API_KEY SAL_IP RESEND_WEBHOOK_SECRET ANTHROPIC_API_KEY; do
             valor="${!nombre}"
             if [ -n "$valor" ]; then printf '%s' "$valor" | npx wrangler secret put "$nombre"; else echo "::notice::$nombre no está configurado."; fi
           done
