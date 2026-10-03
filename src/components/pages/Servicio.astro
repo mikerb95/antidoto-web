@@ -1,14 +1,23 @@
 ---
+// Página de una línea de negocio: qué es, sus ofertas (cada una con su página), para qué áreas,
+// casos, preguntas frecuentes y las otras líneas. El cuerpo del Markdown del servicio, si lo
+// hay, va como texto largo; si no, una caja .pendiente lo pide al cliente.
+import { getEntry, render } from 'astro:content';
+import { getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
-import Encabezado from '../Encabezado.astro';
-import Escena from '../Escena.astro';
-import ContactoCta from '../ContactoCta.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import TarjetaIndice from '../TarjetaIndice.astro';
+import ListaFaq from '../ListaFaq.astro';
+import BloqueCta from '../BloqueCta.astro';
 import WhatsappIcon from '../WhatsappIcon.astro';
 import { obtenerServicios, servicioPath, type Servicio } from '../../data/servicios';
-import { getImage } from 'astro:assets';
+import { obtenerOfertas, obtenerCasos, ofertaPath, casoPath } from '../../data/contenido';
+import { SOLUCIONES, solucionPath } from '../../data/soluciones';
+import { preguntas, TEMAS_FAQ, type TemaFaq } from '../../data/faq';
 import { t, rutas, type Locale } from '../../i18n/ui';
-import { SITE, waLink } from '../../data/site';
-import { grafo, migasSchema, servicioSchema } from '../../data/schema';
+import { tp } from '../../i18n/paginas';
+import { waLink } from '../../data/site';
+import { grafo, migasSchema, servicioSchema, faqSchema } from '../../data/schema';
 
 interface Props {
   locale: Locale;
@@ -16,19 +25,29 @@ interface Props {
 }
 const { locale, servicio } = Astro.props;
 const s = t(locale);
-const SERVICIOS = await obtenerServicios();
+const p = tp(locale);
 const txt = servicio[locale];
 const msg = s.waService(txt.title);
-const n = SERVICIOS.indexOf(servicio) + 1;
-const otros = SERVICIOS.filter((x) => x.id !== servicio.id);
-// Migas visibles y su BreadcrumbList salen de la misma lista.
+const servicios = await obtenerServicios();
+const otras = servicios.filter((x) => x.id !== servicio.id);
+const ofertas = await obtenerOfertas(servicio.id);
+const claves = ofertas.map((o) => o.id);
+const soluciones = SOLUCIONES.filter((sol) => sol.ofertas.some((o) => claves.includes(o)));
+const casos = (await obtenerCasos()).filter((c) => c.es.linea === servicio.id);
+const tema = (TEMAS_FAQ as readonly string[]).includes(servicio.id) ? (servicio.id as TemaFaq) : undefined;
+const faq = tema ? preguntas(locale, { tema }) : [];
+
+const entrada = txt.entrada ? await getEntry('servicios', txt.entrada) : undefined;
+const { Content } = entrada?.body?.trim() ? await render(entrada) : { Content: undefined };
+
 const migas: Array<[string, string]> = [
-  [SITE.name, rutas.inicio[locale]],
+  [p.inicio, rutas.inicio[locale]],
   [s.nav.servicios, rutas.servicios[locale]],
   [txt.title, servicioPath(servicio, locale)],
 ];
 const foto = await getImage({ src: servicio.image, width: 1200, format: 'jpeg' });
-const jsonLd = grafo(servicioSchema(servicio, locale, foto.src), migasSchema(migas));
+const jsonLd = grafo(servicioSchema(servicio, locale, foto.src), migasSchema(migas), ...(faq.length ? [faqSchema(faq)] : []));
+const perfiles = s.inicio.paraQuien.perfiles;
 ---
 <Base
   locale={locale}
@@ -38,150 +57,105 @@ const jsonLd = grafo(servicioSchema(servicio, locale, foto.src), migasSchema(mig
   alternates={{ es: servicioPath(servicio, 'es'), en: servicioPath(servicio, 'en') }}
   waMessage={msg}
   jsonLd={jsonLd}
+  tema="claro"
   scroll="suave"
- 
 >
-  <section class="seccion intro" aria-labelledby="servicio-title">
-    <div class="wrap grid">
-      <div class="copy">
-        <nav class="migas mono" aria-label={s.migasLabel}>
-          <ol>
-            {migas.map(([nombre, ruta], i) =>
-              i < migas.length - 1 ? <li><a href={ruta}>{nombre}</a></li> : <li><span class="mono-acento" aria-current="page">{nombre}</span></li>,
-            )}
-          </ol>
-        </nav>
-        <h1 id="servicio-title" data-titular style={`view-transition-name: servicio-${servicio.id}-title`}>{txt.title}</h1>
-        <p class="lead">{txt.lead}</p>
-        <div class="ctas">
-          <a class="btn btn-primary" href={waLink(msg)} target="_blank" rel="noopener" data-magnetico><span class="btn-inner" data-magnetico-texto><WhatsappIcon />{s.heroCta}</span></a>
-          <a class="btn btn-ghost" href={rutas.contacto[locale]}>{s.ctaCotizador} →</a>
-        </div>
-      </div>
-      <div class="visual">
-        <Escena servicio={servicio} alt={txt.alt} provisionalLabel={s.provisional} />
-      </div>
-    </div>
-  </section>
+  <CabeceraPagina locale={locale} migas={migas} titulo={txt.title} lead={txt.lead} imagen={servicio.image} alt={txt.alt} vt={`servicio-${servicio.id}-title`}>
+    <a class="boton boton-cian boton-grande" href={`${rutas.contacto[locale]}?servicio=${servicio.id}`} data-magnetico>{p.cta.cotizador}</a>
+    <a class="boton boton-borde boton-grande" href={waLink(msg)} target="_blank" rel="noopener"><WhatsappIcon />WhatsApp</a>
+    <ul class="hechos" slot="pie">{txt.facts.map((f) => <li>{f}</li>)}</ul>
+  </CabeceraPagina>
 
-  <section class="seccion ficha-sec" aria-labelledby="ficha-title">
-    <div class="wrap bento">
-      <div class="ficha panel">
-        <p class="mono" id="ficha-title">{s.fichaServicio} · 0{n}</p>
-        <dl>
-          <div><dt class="mono">{s.servicioCols[0]}</dt><dd>{txt.title}</dd></div>
-          <div><dt class="mono">{s.publico}</dt><dd>{s.publicoTexto}</dd></div>
-          {txt.facts.map((f, i) => <div><dt class="mono">{s.servicioCols[2]} 0{i + 1}</dt><dd>{f}</dd></div>)}
-        </dl>
-      </div>
-      <div class="incluye">
-        <Encabezado num="02" kicker={txt.title} titulo={s.serviceFor} />
-        <ol>
-          {txt.includes.map((item, i) => (
-            <li class="panel"><span class="mono mono-acento">{String(i + 1).padStart(2, '0')}</span><span>{item}</span></li>
-          ))}
-        </ol>
-      </div>
-    </div>
-  </section>
-
-  {txt.herramientas && (
-    <section class="seccion" aria-labelledby="herramientas-title">
+  {ofertas.length > 0 && (
+    <section class="bloque" aria-labelledby="ofertas-t">
       <div class="wrap">
-        <Encabezado kicker={s.herramientas} titulo={s.herramientasTitulo} id="herramientas-title" />
-        <ul class="herramientas" data-entra>
-          {txt.herramientas.map((h) => (
-            <li class="panel">
-              <span class="h-n">{h.nombre}</span>
-              <span class="h-t">{h.texto}</span>
+        <div class="cab-izq">
+          <h2 id="ofertas-t">{p.linea.ofertas[0]}<span class="resaltado">{p.linea.ofertas[1]}</span></h2>
+          <p>{p.linea.ofertasLead}</p>
+        </div>
+        <ul class="rejilla-tarjetas" data-entra>
+          {ofertas.map((o, i) => (
+            <li>
+              <TarjetaIndice href={ofertaPath(servicio, o, locale)} titulo={o[locale].title} texto={o[locale].lead} etiqueta={`0${i + 1}`} cta={p.linea.verOferta} vt={`oferta-${o.id}-title`} />
             </li>
           ))}
         </ul>
-        {txt.aliado && (
-          <div class="aliado panel">
-            <p>{txt.aliado.texto}</p>
-            <a class="btn btn-ghost" href={txt.aliado.url} target="_blank" rel="noopener">{s.aliadoEnlace(txt.aliado.nombre)} ↗</a>
-          </div>
-        )}
       </div>
     </section>
   )}
 
-  <section class="seccion" aria-labelledby="otros-title">
+  <section class="bloque bloque-mist detalle" aria-label={txt.title}>
     <div class="wrap">
-      <Encabezado num="03" kicker={s.otherServices} titulo={s.servicesTitle} id="otros-title" />
-      <ul class="otros">
-        {otros.map((o) => {
-          const k = SERVICIOS.indexOf(o) + 1;
-          return (
-            <li>
-              <a class="panel" href={servicioPath(o, locale)}>
-                <span class="mono mono-acento">0{k}</span>
-                <span class="o-t" style={`view-transition-name: servicio-${o.id}-title`}>{o[locale].title}</span>
-                <span class="o-d">{o[locale].lead}</span>
-                <span class="flecha" aria-hidden="true">↗</span>
-              </a>
-            </li>
-          );
-        })}
+      {Content ? <div class="prosa"><Content /></div> : <p class="pendiente">{p.linea.detallePendiente}</p>}
+    </div>
+  </section>
+
+  {soluciones.length > 0 && (
+    <section class="bloque" aria-labelledby="para-t">
+      <div class="wrap">
+        <div class="cab-izq">
+          <h2 id="para-t">{p.linea.paraQuien[0]}<span class="resaltado">{p.linea.paraQuien[1]}</span></h2>
+          <p>{p.linea.paraQuienLead}</p>
+        </div>
+        <ul class="rejilla-tarjetas" data-entra>
+          {soluciones.map((sol) => (
+            <li><TarjetaIndice href={solucionPath(sol, locale)} titulo={perfiles[sol.perfil][0]} texto={perfiles[sol.perfil][1]} cta={s.inicio.paraQuien.verSoluciones} /></li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <section class="bloque" aria-labelledby="casos-t">
+    <div class="wrap">
+      <div class="cab-izq">
+        <h2 id="casos-t">{p.linea.casos[0]}<span class="resaltado">{p.linea.casos[1]}</span></h2>
+      </div>
+      {casos.length > 0 ? (
+        <ul class="rejilla-tarjetas" data-entra>
+          {casos.map((c) => (
+            <li><TarjetaIndice href={casoPath(c, locale)} titulo={c[locale].title} texto={c[locale].lead} imagen={c.image} alt={c[locale].alt} cta={p.leerMas} /></li>
+          ))}
+        </ul>
+      ) : (
+        <p class="pendiente">{p.linea.casoPendiente}</p>
+      )}
+    </div>
+  </section>
+
+  {faq.length > 0 && (
+    <section class="bloque bloque-mist" aria-labelledby="faq-t">
+      <div class="wrap dos">
+        <div class="cab-izq">
+          <h2 id="faq-t">{p.linea.faq[0]}<span class="resaltado">{p.linea.faq[1]}</span></h2>
+          <a class="mas" href={rutas.faq[locale]}>{p.faq.todas}</a>
+        </div>
+        <ListaFaq items={faq} />
+      </div>
+    </section>
+  )}
+
+  <section class="bloque" aria-labelledby="otras-t">
+    <div class="wrap">
+      <div class="cab-izq">
+        <h2 id="otras-t">{p.linea.otras[0]}<span class="resaltado">{p.linea.otras[1]}</span></h2>
+      </div>
+      <ul class="rejilla-tarjetas" data-entra>
+        {otras.map((o) => (
+          <li><TarjetaIndice href={servicioPath(o, locale)} titulo={o[locale].title} texto={o[locale].lead} imagen={o.image} alt={o[locale].alt} cta={p.servicios.verLinea} vt={`servicio-${o.id}-title`} /></li>
+        ))}
       </ul>
     </div>
   </section>
 
-  <ContactoCta locale={locale} message={msg} num="04" />
+  <BloqueCta locale={locale} servicio={servicio.id} mensaje={msg} />
 </Base>
 
-<script>
-  import { pieza } from '../../lib/motion/core';
-  import { activar } from '../../lib/motion/escenas';
-
-  // La escena del servicio se anima una vez al cargar: la firma demuestra el servicio.
-  const escena = document.querySelector<HTMLElement>('.visual [data-escena]');
-  if (escena) pieza('escena', () => void activar(escena));
-</script>
-
 <style>
-  .intro { padding-top: 40px; }
-  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 48px; align-items: center; }
-  .migas { margin: 0 0 6px; }
-  .migas ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; }
-  .migas li { display: inline-flex; align-items: center; }
-  .migas li + li::before { content: '/'; margin: 0 0.6em; color: var(--color-fg-muted); }
-  .migas a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-fg-muted); text-decoration: none; }
-  .migas a:hover { color: var(--color-fg); }
-  h1 { font-size: clamp(40px, 4vw + 12px, 72px); line-height: 1; letter-spacing: -0.025em; margin: 0 0 20px; }
-  .ctas { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
-  .visual :global(.escena) { aspect-ratio: 4 / 3.2; }
-
-  .ficha-sec { padding-top: 24px; }
-  .bento { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 20px; align-items: start; }
-  .ficha { padding: 24px; position: sticky; top: 100px; }
-  .ficha > .mono { margin: 0 0 12px; color: var(--color-antidote); }
-  dl { margin: 0; display: grid; }
-  dl div { display: grid; gap: 2px; padding: 12px 0; border-top: 1px solid var(--color-line); }
-  dt { margin: 0; }
-  dd { margin: 0; font-size: 15px; }
-  .incluye ol { list-style: none; margin: 24px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .incluye li { display: flex; flex-direction: column; gap: 18px; padding: 18px; min-height: 120px; justify-content: space-between; font: 400 20px/1.2 var(--font-display); }
-
-  .herramientas { list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
-  .herramientas li { display: grid; align-content: start; gap: 10px; padding: 20px; }
-  .h-n { font: 400 28px/1.1 var(--font-display); color: var(--color-antidote); }
-  .h-t { font-size: 15px; color: var(--color-fg-muted); }
-  .aliado { margin-top: 12px; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
-  .aliado p { margin: 0; max-width: 60ch; }
-
-  .otros { list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
-  .otros a { display: grid; gap: 10px; padding: 20px; height: 100%; color: var(--color-fg); }
-  .o-t { font: 400 24px/1.1 var(--font-display); }
-  .o-d { font-size: 14px; color: var(--color-fg-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .flecha { color: var(--color-antidote); }
-
-  @media (max-width: 900px) {
-    .grid, .bento { grid-template-columns: 1fr; }
-    .visual { order: -1; }
-    .ficha { position: static; }
-    .otros { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 480px) { .incluye ol { grid-template-columns: 1fr; } }
+  .hechos { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .hechos li { padding: 6px 12px; border-radius: 999px; background: var(--color-paper); border: 1px solid var(--color-line-soft); font-size: 14px; font-weight: 500; }
+  .detalle .pendiente { padding: 32px; }
+  .dos { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 40px; align-items: start; }
+  .mas { align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
+  @media (max-width: 900px) { .dos { grid-template-columns: 1fr; gap: 0; } }
 </style>
