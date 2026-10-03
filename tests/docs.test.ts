@@ -77,7 +77,7 @@ describe('documentación: evidencia', () => {
 
 describe('documentación: iteraciones', () => {
   it('los commits por iteración suman el historial reconstruido', () => {
-    expect(ITERACIONES.reduce((n, i) => n + i.commits, 0)).toBe(74);
+    expect(ITERACIONES.reduce((n, i) => n + i.commits, 0)).toBe(107);
   });
   it('las páginas del índice son rutas /docs/ con barra final', () => {
     for (const p of PAGINAS_DOCS) expect(p.ruta).toMatch(/^\/docs\/[a-z-]+\/$/);
