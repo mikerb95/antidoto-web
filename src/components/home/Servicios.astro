@@ -58,7 +58,7 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
             </dl>
             <a class="boton boton-cian" href={rutas.contacto[locale]}>{texto.cotizar}</a>
           </div>
-          <div class="afiche" data-afiche>
+          <div class="afiche" data-afiche data-paralaje>
             <Image src={foto} alt={texto.alt} widths={[240, 440]} sizes="220px" style={`object-position: ${posicion}`} />
             <span aria-hidden="true">{texto.afiche}</span>
           </div>

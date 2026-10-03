@@ -44,6 +44,7 @@ export const ui = {
     heroCta: 'Cotizar por WhatsApp',
     migasLabel: 'Migas de pan',
     pause: 'Pausar animación',
+    resume: 'Reanudar animación',
     stats: [
       ['+150', 'producciones'],
       ['+200', 'eventos'],
@@ -366,6 +367,7 @@ export const ui = {
     heroCta: 'Get a quote on WhatsApp',
     migasLabel: 'Breadcrumb',
     pause: 'Pause animation',
+    resume: 'Resume animation',
     stats: [
       ['150+', 'productions'],
       ['200+', 'events'],

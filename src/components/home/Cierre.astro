@@ -1,5 +1,8 @@
 ---
 // Cierre con cotización: el botón lleva al cotizador y el teléfono llama directo.
+// El borde superior es oleaje: dos olas que se desplazan a distinta velocidad y en sentido
+// contrario (src/lib/motion/inicio.ts). Es un bucle: tiene botón de pausa y se detiene fuera
+// de pantalla. Sin JS o con movimiento reducido, las olas quedan quietas.
 import { SITE } from '../../data/site';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
@@ -7,10 +10,17 @@ interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
-const h = t(locale).inicio.cierre;
+const s = t(locale);
+const h = s.inicio.cierre;
+// Dos periodos idénticos de 1440 de ancho: al desplazar la mitad, el dibujo calza consigo mismo.
+const OLA_FRENTE = 'M0 26 C240 6 480 6 720 26 S1200 46 1440 26 S1920 6 2160 26 S2640 46 2880 26 V48 H0 Z';
+const OLA_FONDO = 'M0 18 C180 34 540 34 720 18 S1260 2 1440 18 S1980 34 2160 18 S2700 2 2880 18 V48 H0 Z';
 ---
 <section id="cotizar" class="cierre" aria-labelledby="cta-t" data-cierre>
-  <div class="liquido" aria-hidden="true" data-liquido></div>
+  <div class="olas" aria-hidden="true" data-olas>
+    <svg class="ola fondo" viewBox="0 0 2880 48" preserveAspectRatio="none" data-ola="fondo"><path d={OLA_FONDO}></path></svg>
+    <svg class="ola frente" viewBox="0 0 2880 48" preserveAspectRatio="none" data-ola="frente"><path d={OLA_FRENTE}></path></svg>
+  </div>
   <div class="wrap interior">
     <div class="texto">
       <h2 id="cta-t" class="titulo-seccion">{h.titulo}</h2>
@@ -20,19 +30,30 @@ const h = t(locale).inicio.cierre;
       <a class="boton boton-tinta boton-grande" href={rutas.contacto[locale]} data-magnetico>{h.cotizar}</a>
       <a class="boton boton-borde boton-grande" href={`tel:+${SITE.whatsapp}`}>{SITE.phoneDisplay}</a>
     </div>
+    <button class="pausa" type="button" hidden aria-pressed="false" data-olas-pausa data-pausar={s.pause} data-reanudar={s.resume}>{s.pause}</button>
   </div>
 </section>
 
 <style>
   .cierre { position: relative; isolation: isolate; background: var(--color-antidote); color: var(--color-ink); }
-  /* Capa de líquido: el script vacía la sección y la llena de abajo arriba al asomar. */
-  .liquido { position: absolute; inset: 0; z-index: -1; background: var(--color-antidote); }
-  .cierre:global(.vaciado) { background: var(--color-paper); }
-  .interior { padding-block: 72px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px; }
+  /* Las olas sobresalen por encima de la franja, sobre el blanco de la sección anterior. */
+  .olas { position: absolute; left: 0; right: 0; bottom: 100%; height: 48px; overflow: hidden; pointer-events: none; transform-origin: bottom; }
+  .ola { position: absolute; left: 0; bottom: -1px; width: 200%; height: 100%; }
+  .fondo path { fill: var(--color-glow); }
+  .fondo { opacity: 0.7; }
+  .frente path { fill: var(--color-antidote); }
+  @media (max-width: 700px) { .olas { height: 30px; } }
+
+  .interior { position: relative; padding-block: 72px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px; }
   .texto { flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
   .titulo-seccion { line-height: 1.12; }
   .texto p { margin: 0; font-size: 18px; }
   .ctas { display: flex; flex-wrap: wrap; gap: 14px; }
   .boton-grande { min-height: 56px; padding: 0 30px; }
   .cierre :focus-visible { outline-color: var(--color-ink); }
+
+  .pausa { position: absolute; right: 24px; bottom: 10px; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--color-ink); font: 500 13px/1 var(--font-sans); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .pausa[hidden] { display: none; }
+  @media (max-width: 600px) { .pausa { right: 16px; } }
+  @media (prefers-reduced-motion: reduce) { .pausa { display: none; } }
 </style>

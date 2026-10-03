@@ -1,12 +1,12 @@
 // Motion de la home: "una dosis de color". El problema se ve gris y quieto; la solución entra
 // como el líquido cian del frasco del logo, que sube con una ola (liquido.ts). El mismo gesto
-// llena los resaltados de los títulos, los dolores, los pasos, los afiches y el cierre.
+// llena los resaltados de los títulos, los dolores, los pasos y los afiches, y es el oleaje del cierre.
 //
 // El HTML del servidor es el estado final (todo lleno y visible). Cada pieza fija su estado
 // inicial al arrancar y lo devuelve si falla (pieza() en core.ts); con movimiento reducido no
 // corre ninguna, salvo los dolores en táctil, que no son movimiento sino mostrar la solución.
 import { SplitText } from 'gsap/SplitText';
-import { gsap, ScrollTrigger, pieza } from './core';
+import { gsap, ScrollTrigger, pieza, soloVisible } from './core';
 import { ola } from './liquido';
 import { odometro } from './cifras';
 
@@ -156,22 +156,75 @@ function afiches() {
   );
 }
 
-/** Cierre: la sección se llena de cian de abajo arriba, como el frasco al final de la página. */
-function cierre(seccion: HTMLElement) {
-  const liquido = seccion.querySelector<HTMLElement>('[data-liquido]');
-  if (!liquido) return;
+/**
+ * Oleaje del cierre: al asomar, la ola crece desde la línea recta; después las dos capas se
+ * desplazan sin fin a distinta velocidad y en sentido contrario. Bucle con pausa: se detiene
+ * fuera de pantalla, con la pestaña oculta y cuando la persona lo pausa.
+ */
+function oleaje(seccion: HTMLElement) {
+  const olas = seccion.querySelector<HTMLElement>('[data-olas]');
+  const frente = seccion.querySelector<SVGElement>('[data-ola="frente"]');
+  const fondo = seccion.querySelector<SVGElement>('[data-ola="fondo"]');
+  const boton = seccion.querySelector<HTMLButtonElement>('[data-olas-pausa]');
+  if (!olas || !frente || !fondo) return;
   pieza(
-    'cierre',
+    'oleaje',
     () => {
-      seccion.classList.add('vaciado');
-      liquido.style.clipPath = ola(0);
-      alAsomar(seccion, () => llenar(liquido, { duracion: 1.4, alTerminar: () => seccion.classList.remove('vaciado') }), 'top 78%');
+      const bucle = gsap.timeline({ paused: true, repeat: -1 });
+      bucle.fromTo(frente, { xPercent: 0 }, { xPercent: -50, duration: 9, ease: 'none' }, 0);
+      bucle.fromTo(fondo, { xPercent: -50 }, { xPercent: 0, duration: 9, ease: 'none' }, 0);
+      // Un leve vaivén vertical del fondo para que el oleaje respire (mismo periodo, sin costura).
+      bucle.fromTo(fondo, { yPercent: 0 }, { yPercent: 14, duration: 4.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+
+      let pausado = false;
+      soloVisible(seccion, { play: () => !pausado && bucle.play(), pause: () => bucle.pause() });
+      if (boton) {
+        boton.hidden = false;
+        boton.addEventListener('click', () => {
+          pausado = !pausado;
+          if (pausado) bucle.pause();
+          else bucle.play();
+          boton.setAttribute('aria-pressed', String(pausado));
+          boton.textContent = (pausado ? boton.dataset.reanudar : boton.dataset.pausar) ?? '';
+        });
+      }
+
+      gsap.set(olas, { scaleY: 0 });
+      alAsomar(seccion, () => gsap.to(olas, { scaleY: 1, duration: 1.4, ease: 'elastic.out(1, 0.55)' }), 'top 92%');
     },
-    () => {
-      seccion.classList.remove('vaciado');
-      liquido.style.clipPath = '';
-    },
+    () => gsap.set(olas, { clearProps: 'transform' }),
   );
+}
+
+/**
+ * Profundidad ligada al scroll (no es un bucle: responde a la persona). Las fotos `[data-paralaje]`
+ * se desplazan dentro de su marco, ampliadas lo justo para no dejar huecos; el hero se aleja al bajar.
+ */
+function paralaje() {
+  document.querySelectorAll<HTMLElement>('[data-paralaje]').forEach((marco) => {
+    const fotos = marco.querySelectorAll<HTMLElement>('img');
+    pieza(
+      'paralaje',
+      () => {
+        gsap.fromTo(fotos, { yPercent: -7, scale: 1.16 }, { yPercent: 7, scale: 1.16, ease: 'none', scrollTrigger: { trigger: marco, start: 'top bottom', end: 'bottom top', scrub: true } });
+      },
+      () => gsap.set(fotos, { clearProps: 'transform' }),
+    );
+  });
+  const h = document.querySelector<HTMLElement>('[data-hero]');
+  const foto = h?.querySelector<HTMLElement>('.foto');
+  const centro = h?.querySelector<HTMLElement>('.centro');
+  if (h && foto && centro) {
+    pieza(
+      'hero-scroll',
+      () => {
+        const st = { trigger: h, start: 'top top', end: 'bottom top', scrub: true };
+        gsap.to(foto, { yPercent: 18, ease: 'none', scrollTrigger: st });
+        gsap.to(centro, { yPercent: -18, opacity: 0.35, ease: 'none', scrollTrigger: { ...st } });
+      },
+      () => gsap.set([foto, centro], { clearProps: 'transform,opacity' }),
+    );
+  }
 }
 
 export function iniciarInicio() {
@@ -184,5 +237,6 @@ export function iniciarInicio() {
   afiches();
   document.querySelectorAll<HTMLElement>('[data-odometro]').forEach((f) => odometro(f));
   const c = document.querySelector<HTMLElement>('[data-cierre]');
-  if (c) cierre(c);
+  if (c) oleaje(c);
+  paralaje();
 }

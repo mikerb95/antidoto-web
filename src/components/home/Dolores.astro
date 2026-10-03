@@ -38,7 +38,7 @@ const FOTOS = [
       {h.items.map(([dolor, solucion], i) => {
         const [foto, posicion, destino] = FOTOS[i];
         return (
-          <a class="dolor" href={destino}>
+          <a class="dolor" href={destino} data-paralaje>
             <Image src={foto} alt="" widths={[400, 640, 800]} sizes="(max-width: 720px) 100vw, 380px" style={`object-position: ${posicion}`} />
             <Image class="gris" src={foto} alt="" widths={[400, 640, 800]} sizes="(max-width: 720px) 100vw, 380px" style={`object-position: ${posicion}`} />
             <span class="tinte" aria-hidden="true"></span>

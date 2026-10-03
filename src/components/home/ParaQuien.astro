@@ -42,8 +42,14 @@ const [aliadosTitulo, aliadosTexto, aliadosCta] = h.aliados;
   .para-quien { background: var(--color-paper); }
   .interior { padding-block: 80px; display: flex; flex-direction: column; gap: 36px; }
   .perfiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 20px; }
-  .perfil { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 26px; border-radius: 20px; background: var(--color-mist); border: 1px solid var(--color-line-soft); text-decoration: none; color: var(--color-ink); transition: transform var(--t-base) var(--ease-out); }
-  .perfil:hover { transform: translateY(-4px); }
+  .perfil { position: relative; isolation: isolate; overflow: hidden; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 26px; border-radius: 20px; background: var(--color-mist); border: 1px solid var(--color-line-soft); text-decoration: none; color: var(--color-ink); transition: transform var(--t-base) var(--ease-out); }
+  /* Dosis al apuntar o enfocar: el cian sube desde abajo y los textos pasan a tinta (contraste sobre cian). */
+  .perfil::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--color-antidote); clip-path: inset(100% 0 0 0); transition: clip-path var(--t-slow) var(--ease-in-out); }
+  .perfil:hover, .perfil:focus-visible { transform: translateY(-4px); }
+  .perfil:hover::before, .perfil:focus-visible::before { clip-path: inset(0 0 0 0); }
+  .perfil:hover .p-d, .perfil:hover .p-cta, .perfil:focus-visible .p-d, .perfil:focus-visible .p-cta { color: var(--color-ink); }
+  .p-cta::after { content: ' →'; display: inline-block; transition: transform var(--t-base) var(--ease-out); }
+  .perfil:hover .p-cta::after, .perfil:focus-visible .p-cta::after { transform: translateX(4px); }
   .p-t { font: 400 22px/1.2 var(--font-display); }
   .p-d { color: var(--color-slate); font-size: 15px; }
   .p-cta { margin-top: 8px; color: var(--color-deep); font-weight: 600; font-size: 15px; }
@@ -53,6 +59,8 @@ const [aliadosTitulo, aliadosTexto, aliadosCta] = h.aliados;
   .a-t { font: 400 22px/1.2 var(--font-display); }
   .a-d { color: var(--color-fg-soft); font-size: 15px; }
   .a-cta { color: var(--color-glow); font-weight: 600; }
+  .a-cta::after { content: ' →'; display: inline-block; transition: transform var(--t-base) var(--ease-out); }
+  .aliados:hover .a-cta::after, .aliados:focus-visible .a-cta::after { transform: translateX(4px); }
 
   .pendientes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 20px; }
   .pendientes .pendiente { margin: 0; padding: 26px; border-radius: 20px; justify-content: flex-start; text-align: left; align-items: flex-start; }
