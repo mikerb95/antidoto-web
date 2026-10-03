@@ -12,7 +12,7 @@ let servicios: Promise<Servicio[]> | undefined;
 /** Servicios publicables en orden. En `npm run dev` incluye los borradores. */
 export function obtenerServicios(): Promise<Servicio[]> {
   servicios ??= getCollection('servicios').then((entradas) =>
-    emparejar(entradas.map((e) => e.data), { borradores: import.meta.env.DEV }),
+    emparejar(entradas.map((e) => ({ ...e.data, entrada: e.id })), { borradores: import.meta.env.DEV }),
   );
   return servicios;
 }
