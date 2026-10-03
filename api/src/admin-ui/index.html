@@ -97,6 +97,27 @@
           </table>
           <p class="vacio" id="campanas-vacio" hidden>Todavía no hay campañas. Escribe la primera con "Nueva campaña".</p>
         </div>
+
+        <div class="rejilla bloques">
+          <div class="tarjeta">
+            <h2>Correos automáticos</h2>
+            <p class="suave">Salen solos. La bienvenida llega cuando alguien confirma; si hay un regalo (una guía, por ejemplo), su enlace va aquí.</p>
+            <ul class="mini" id="automaticos"></ul>
+          </div>
+          <div class="tarjeta">
+            <h2>Plantillas</h2>
+            <p class="suave">Se crean desde el editor de una campaña con "Guardar como plantilla" y se usan al empezar una nueva.</p>
+            <ul class="mini" id="plantillas"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="vista-automatico" class="vista" aria-labelledby="t-automatico" hidden>
+        <div class="cabeza">
+          <h1 id="t-automatico" tabindex="-1">Correo automático</h1>
+          <a class="btn-texto" href="#campanas">Volver a campañas</a>
+        </div>
+        <div id="automatico"></div>
       </section>
 
       <section id="vista-campana" class="vista" aria-labelledby="t-campana" hidden>
@@ -110,8 +131,19 @@
       <section id="vista-contactos" class="vista" aria-labelledby="t-contactos" hidden>
         <div class="cabeza">
           <h1 id="t-contactos">Contactos</h1>
-          <button class="btn-texto" type="button" id="abrir-invitar">Invitar a alguien</button>
+          <div class="acciones">
+            <button class="btn-texto" type="button" id="abrir-importar">Importar CSV</button>
+            <button class="btn-texto" type="button" id="abrir-invitar">Invitar a alguien</button>
+          </div>
         </div>
+        <form class="invitar importar" id="form-importar" hidden>
+          <h2>Importar contactos</h2>
+          <p class="suave">Cada persona recibe una invitación para confirmar y solo queda suscrita si confirma. Importa solo a quienes ya tienen relación con Antídoto (clientes, asistentes, aliados). Quien ya está en la lista, incluido quien se dio de baja, no se toca.</p>
+          <p class="suave">Columnas reconocidas: <code>email</code> (o <code>correo</code>), <code>nombre</code>, <code>empresa</code>, <code>idioma</code> (es o en) e <code>intereses</code> (separados por <code>|</code>). Separador coma o punto y coma.</p>
+          <label class="campo">Archivo CSV<input name="archivo" type="file" accept=".csv,text/csv"></label>
+          <p class="aviso" id="importar-resumen" role="status" hidden></p>
+          <div class="acciones"><button class="btn" type="submit" disabled>Importar e invitar</button></div>
+        </form>
         <form class="nuevo invitar" id="form-invitar" hidden>
           <h2>Invitar a recibir novedades</h2>
           <p class="suave">Le llega un correo para confirmar. Solo queda suscrito si confirma.</p>

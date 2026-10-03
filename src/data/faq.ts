@@ -4,7 +4,7 @@
 // Regla: solo hechos del brief o del sitio; nada de cifras ni promesas sin validar.
 import type { Locale } from '../i18n/ui';
 
-export const TEMAS_FAQ = ['general', 'formaciones', 'audiovisual', 'catering', 'diseno', 'cotizacion'] as const;
+export const TEMAS_FAQ = ['general', 'formaciones', 'audiovisual', 'catering', 'diseno', 'ia', 'cotizacion'] as const;
 export type TemaFaq = (typeof TEMAS_FAQ)[number];
 
 export interface Pregunta {
@@ -93,6 +93,30 @@ export const FAQ: Pregunta[] = [
     tema: 'diseno',
     es: ['¿Pueden llevar una idea hasta el producto final?', 'Sí. Acompañamos desde el prototipo hasta el producto funcional, con la identidad de tu marca.'],
     en: ['Can you take an idea all the way to a finished product?', 'Yes. We work from the prototype to the functional product, with your brand’s identity.'],
+  },
+  {
+    clave: 'ia-quien',
+    tema: 'ia',
+    es: ['¿Quién dicta la capacitación en IA?', 'codebymike, aliado de Antídoto para esta línea, diseña y dicta las capacitaciones. Antídoto pone la metodología vivencial y la logística.'],
+    en: ['Who teaches the AI training?', 'codebymike, Antídoto’s partner for this line, designs and teaches the training. Antídoto brings the experiential method and the logistics.'],
+  },
+  {
+    clave: 'ia-herramienta',
+    tema: 'ia',
+    es: ['¿Con qué herramienta trabajamos?', 'Con la que tu empresa ya usa o piensa usar: Claude, Gemini, ChatGPT o Copilot. Si todavía no hay una definida, la capacitación ayuda a elegir.'],
+    en: ['Which tool do we work with?', 'The one your company already uses or plans to use: Claude, Gemini, ChatGPT or Copilot. If none is chosen yet, the training helps you decide.'],
+  },
+  {
+    clave: 'ia-a-medida',
+    tema: 'ia',
+    es: ['¿La capacitación se adapta a mi área?', 'Sí. Los ejercicios se arman con documentos y procesos parecidos a los de tu equipo, ya sea talento humano, SST, comunicaciones, finanzas o educación.'],
+    en: ['Is the training tailored to my team?', 'Yes. The exercises are built with documents and processes similar to your team’s, whether HR, health and safety, communications, finance or education.'],
+  },
+  {
+    clave: 'ia-datos',
+    tema: 'ia',
+    es: ['¿Qué pasa con la información confidencial de la empresa?', 'Es parte del programa: el equipo aprende qué datos no se entregan a un asistente de IA y cómo revisar lo que responde antes de usarlo.'],
+    en: ['What about the company’s confidential information?', 'It is part of the program: the team learns which data never goes into an AI assistant and how to check its answers before using them.'],
   },
   {
     clave: 'como-cotizar',

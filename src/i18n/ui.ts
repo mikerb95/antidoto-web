@@ -231,7 +231,8 @@ export const ui = {
     publico: 'Para',
     publicoTexto: 'Empresas, colegios, universidades y organizaciones',
     herramientas: 'Herramientas',
-    herramientasTitulo: 'Con qué trabajamos',
+    herramientasTitulo: ['Las herramientas ', 'que enseñamos'],
+    herramientasLead: 'Trabajamos con la que tu empresa ya usa o piensa usar.',
     aliadoEnlace: (nombre: string) => `Conoce a ${nombre}`,
 
     footerServicios: 'Servicios',
@@ -632,7 +633,8 @@ export const ui = {
     publico: 'For',
     publicoTexto: 'Companies, schools, universities and organizations',
     herramientas: 'Tools',
-    herramientasTitulo: 'What we work with',
+    herramientasTitulo: ['The tools ', 'we teach'],
+    herramientasLead: 'We work with the one your company already uses or plans to use.',
     aliadoEnlace: (nombre: string) => `Meet ${nombre}`,
 
     footerServicios: 'Services',

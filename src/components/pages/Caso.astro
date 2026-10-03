@@ -1,0 +1,89 @@
+---
+// Caso del portafolio: reto, solución y resultado, con el cuerpo del Markdown como texto largo.
+import { getEntry, render } from 'astro:content';
+import { getImage } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import TarjetaIndice from '../TarjetaIndice.astro';
+import BloqueCta from '../BloqueCta.astro';
+import { obtenerServicios, servicioPath } from '../../data/servicios';
+import { obtenerCasos, casoPath, type Caso } from '../../data/contenido';
+import { grafo, migasSchema, publicacionSchema } from '../../data/schema';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+
+interface Props {
+  locale: Locale;
+  caso: Caso;
+}
+const { locale, caso } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const txt = caso[locale];
+const linea = (await obtenerServicios()).find((sv) => sv.id === txt.linea)!;
+const otros = (await obtenerCasos()).filter((c) => c.id !== caso.id).slice(0, 3);
+const entrada = txt.entrada ? await getEntry('casos', txt.entrada) : undefined;
+const { Content } = entrada?.body?.trim() ? await render(entrada) : { Content: undefined };
+const ruta = casoPath(caso, locale);
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.portafolio, rutas.portafolio[locale]],
+  [txt.title, ruta],
+];
+const foto = await getImage({ src: caso.image, width: 1200, format: 'jpeg' });
+const jsonLd = grafo(
+  publicacionSchema('CreativeWork', { titulo: txt.title, descripcion: txt.lead, ruta, fecha: caso.fecha, imagen: foto.src }, locale),
+  migasSchema(migas),
+);
+const ficha: Array<[string, string]> = [
+  [p.portafolio.reto, txt.reto],
+  [p.portafolio.solucion, txt.solucionTexto],
+  [p.portafolio.resultado, txt.resultado],
+];
+---
+<Base
+  locale={locale}
+  pagina="portafolio"
+  title={`${txt.title} | Antídoto`}
+  description={txt.lead}
+  alternates={{ es: casoPath(caso, 'es'), en: casoPath(caso, 'en') }}
+  jsonLd={jsonLd}
+  tema="claro"
+  scroll="suave"
+>
+  <CabeceraPagina locale={locale} migas={migas} kicker={txt.cliente} titulo={txt.title} lead={txt.lead} imagen={caso.image} alt={txt.alt}>
+    <a class="boton boton-tinta" href={servicioPath(linea, locale)}>{p.portafolio.linea}: {linea[locale].title}</a>
+  </CabeceraPagina>
+
+  <section class="bloque" aria-label={txt.title}>
+    <div class="wrap">
+      <dl class="ficha" data-entra>
+        {ficha.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+      </dl>
+      {Content && <div class="prosa cuerpo"><Content /></div>}
+    </div>
+  </section>
+
+  {otros.length > 0 && (
+    <section class="bloque bloque-mist" aria-labelledby="otros-t">
+      <div class="wrap">
+        <div class="cab-izq"><h2 id="otros-t">{p.portafolio.otros[0]}<span class="resaltado">{p.portafolio.otros[1]}</span></h2></div>
+        <ul class="rejilla-tarjetas">
+          {otros.map((c) => <li><TarjetaIndice href={casoPath(c, locale)} titulo={c[locale].title} texto={c[locale].lead} imagen={c.image} alt={c[locale].alt} cta={p.leerMas} /></li>)}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <BloqueCta locale={locale} servicio={linea.id} mensaje={s.waService(linea[locale].title)} />
+</Base>
+
+<style>
+  .ficha { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; }
+  .ficha div { padding: 24px; border-radius: 20px; background: var(--color-mist); display: flex; flex-direction: column; gap: 8px; }
+  .ficha div:last-child { background: var(--color-antidote); }
+  dt { font: 600 12px/1.3 var(--font-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-deep); }
+  .ficha div:last-child dt { color: var(--color-ink); }
+  dd { margin: 0; font-size: 17px; }
+  .cuerpo { margin-top: 40px; }
+</style>

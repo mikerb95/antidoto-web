@@ -66,6 +66,28 @@ const perfiles = s.inicio.paraQuien.perfiles;
     <ul class="hechos" slot="pie">{txt.facts.map((f) => <li>{f}</li>)}</ul>
   </CabeceraPagina>
 
+  {txt.herramientas && (
+    <section class="bloque" aria-labelledby="herramientas-t">
+      <div class="wrap">
+        <div class="cab-izq">
+          <h2 id="herramientas-t">{s.herramientasTitulo[0]}<span class="resaltado">{s.herramientasTitulo[1]}</span></h2>
+          <p>{s.herramientasLead}</p>
+        </div>
+        <ul class="herramientas" data-entra>
+          {txt.herramientas.map((h) => (
+            <li><span class="h-n">{h.nombre}</span><span class="h-t">{h.texto}</span></li>
+          ))}
+        </ul>
+        {txt.aliado && (
+          <div class="aliado">
+            <p>{txt.aliado.texto}</p>
+            <a class="boton boton-borde" href={txt.aliado.url} target="_blank" rel="noopener">{s.aliadoEnlace(txt.aliado.nombre)}</a>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+
   {ofertas.length > 0 && (
     <section class="bloque" aria-labelledby="ofertas-t">
       <div class="wrap">
@@ -155,6 +177,14 @@ const perfiles = s.inicio.paraQuien.perfiles;
   .hechos { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
   .hechos li { padding: 6px 12px; border-radius: 999px; background: var(--color-paper); border: 1px solid var(--color-line-soft); font-size: 14px; font-weight: 500; }
   .detalle .pendiente { padding: 32px; }
+  .herramientas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 20px; }
+  .herramientas li { display: grid; align-content: start; gap: 10px; padding: 24px; border-radius: 22px; background: var(--color-paper); border: 1px solid var(--color-line-soft); box-shadow: 0 10px 30px rgb(15 24 29 / 0.06); }
+  .h-n { display: flex; align-items: center; gap: 10px; font: 400 26px/1.1 var(--font-display); }
+  .h-n::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--color-antidote); flex: none; }
+  .h-t { color: var(--color-slate); font-size: 15px; }
+  .aliado { margin-top: 20px; padding: 22px 26px; border-radius: 22px; background: var(--color-ink); color: var(--color-paper); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; }
+  .aliado p { margin: 0; max-width: 60ch; }
+  .aliado .boton { color: var(--color-paper); border-color: currentColor; }
   .dos { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 40px; align-items: start; }
   .mas { align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
   @media (max-width: 900px) { .dos { grid-template-columns: 1fr; gap: 0; } }
