@@ -40,17 +40,17 @@ export function conocimiento(locale: Locale): string {
   const lista = (xs: readonly string[]) => xs.map(sinPendientes).filter(Boolean).map((x) => `- ${x}`).join('\n');
   const base = `${SITE.url}${rutas.servicios[locale]}`;
 
+  // Solo el Markdown de cada servicio: los puntos y cifras de la home repiten lo mismo con otras
+  // palabras, y con dos listas el modelo cuenta dos veces.
   const servicios = SERVICIOS_PUBLICOS.map((sv) => {
     const t = sv[locale];
-    const home = i.servicios.items[sv.clave];
     return [
       `### ${t.titulo} (${es ? 'clave' : 'key'}: ${sv.clave})`,
       t.resumen,
-      home.resumen,
       `${L.incluye}:`,
-      lista([...t.incluye, ...home.puntos]),
+      lista(t.incluye),
       `${L.datos}:`,
-      lista([...t.datos, ...home.cifras.filter(([n]) => !TIENE_PENDIENTE.test(n)).map(([n, d]) => `${n} ${d}`)]),
+      lista(t.datos),
       `${L.pagina}: ${base}${t.slug}/`,
     ].join('\n');
   }).join('\n\n');
@@ -63,7 +63,7 @@ export function conocimiento(locale: Locale): string {
 ${s.nosotrosLead}
 ${i.lead}
 ${i.servicios.lead}
-${s.ubicacion}. ${s.footerLema}
+${s.footerLema}
 ${i.insignia}.
 
 ## ${L.servicios}

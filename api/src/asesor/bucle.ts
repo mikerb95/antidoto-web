@@ -61,7 +61,7 @@ export function validarEntrada(cuerpo: unknown): Entrada | ErrorEntrada {
     if (rol !== (i % 2 === 0 ? 'usuario' : 'asesor')) return formato;
     const limpio = texto.trim();
     if (!limpio || limpio.length > (rol === 'usuario' ? MAX_TEXTO_USUARIO : MAX_TEXTO_ASESOR)) return formato;
-    mensajes.push({ rol, texto: limpio });
+    mensajes.push({ rol: rol as 'usuario' | 'asesor', texto: limpio });
   }
   if (mensajes.at(-1)!.rol !== 'usuario') return formato;
   return { locale: o.locale, pagina: o.pagina as Pagina | undefined, mensajes };
