@@ -21,4 +21,11 @@ export function waLink(message: string): string {
  * texto, logos ni audio), codifícalo a MP4 H.264 de 720p y ~1 MB (y si se quiere, WebM AV1),
  * déjalo en public/video/ y pon aquí sus rutas. Mientras sea null, la escena son las fotos.
  */
+/**
+ * Regalo por suscribirse (una guía en PDF, por ejemplo). Mientras sea null no se promete nada.
+ * Cuando el cliente lo entregue: pon aquí su nombre en los dos idiomas y su enlace en el correo
+ * de bienvenida (bandeja > Campañas > Correos automáticos).
+ */
+export const REGALO_NOVEDADES: { es: string; en: string } | null = null as { es: string; en: string } | null;
+
 export const VIDEO_HERO: { mp4: string; webm?: string } | null = null as { mp4: string; webm?: string } | null;

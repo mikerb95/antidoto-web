@@ -1,0 +1,105 @@
+---
+// Índice completo del sitio por grupos, generado con las mismas fuentes que la nav. Lo usan el
+// mapa del sitio y la página 404.
+import { obtenerServicios, servicioPath } from '../data/servicios';
+import { obtenerOfertas, obtenerCasos, obtenerArticulos, ofertaPath, casoPath, articuloPath } from '../data/contenido';
+import { SOLUCIONES, solucionPath } from '../data/soluciones';
+import { t, rutas, rutaPolitica, type Locale } from '../i18n/ui';
+import { tp } from '../i18n/paginas';
+
+interface Props {
+  locale: Locale;
+  /** Con detalle: ofertas, casos y artículos. Sin detalle: solo las secciones. */
+  detalle?: boolean;
+}
+const { locale, detalle = true } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const servicios = await obtenerServicios();
+const ofertas = await obtenerOfertas();
+const casos = await obtenerCasos();
+const articulos = await obtenerArticulos();
+type Enlace = { texto: string; href: string; hijos?: Enlace[] };
+const grupos: Array<{ titulo: string; enlaces: Enlace[] }> = [
+  {
+    titulo: p.mapa.grupos.servicios,
+    enlaces: [
+      { texto: p.todosServicios, href: rutas.servicios[locale] },
+      ...servicios.map((sv) => ({
+        texto: sv[locale].title,
+        href: servicioPath(sv, locale),
+        hijos: detalle ? ofertas.filter((o) => o.linea === sv.id).map((o) => ({ texto: o[locale].title, href: ofertaPath(sv, o, locale) })) : undefined,
+      })),
+    ],
+  },
+  {
+    titulo: p.mapa.grupos.soluciones,
+    enlaces: [
+      { texto: p.todasSoluciones, href: rutas.soluciones[locale] },
+      ...SOLUCIONES.map((sol) => ({ texto: s.inicio.paraQuien.perfiles[sol.perfil][0], href: solucionPath(sol, locale) })),
+    ],
+  },
+  {
+    titulo: p.mapa.grupos.empresa,
+    enlaces: [
+      { texto: p.navEmpresa, href: rutas.nosotros[locale] },
+      { texto: s.nav.comoTrabajamos, href: rutas.comoTrabajamos[locale] },
+      { texto: s.nav.clientes, href: rutas.clientes[locale] },
+      {
+        texto: s.nav.portafolio,
+        href: rutas.portafolio[locale],
+        hijos: detalle && casos.length ? casos.map((c) => ({ texto: c[locale].title, href: casoPath(c, locale) })) : undefined,
+      },
+      { texto: s.nav.trabaja, href: rutas.trabaja[locale] },
+      { texto: s.nav.contacto, href: rutas.contacto[locale] },
+    ],
+  },
+  {
+    titulo: p.mapa.grupos.recursos,
+    enlaces: [
+      { texto: s.nav.faq, href: rutas.faq[locale] },
+      {
+        texto: s.nav.blog,
+        href: rutas.blog[locale],
+        hijos: detalle && articulos.length ? articulos.map((a) => ({ texto: a[locale].title, href: articuloPath(a, locale) })) : undefined,
+      },
+    ],
+  },
+  {
+    titulo: p.mapa.grupos.legal,
+    enlaces: [
+      { texto: s.footerPolitica, href: rutaPolitica[locale] },
+      { texto: s.nav.terminos, href: rutas.terminos[locale] },
+      { texto: s.nav.cookies, href: rutas.cookies[locale] },
+    ],
+  },
+];
+---
+<div class="indice">
+  {grupos.map((g) => (
+    <section aria-label={g.titulo}>
+      <h2>{g.titulo}</h2>
+      <ul>
+        {g.enlaces.map((e) => (
+          <li>
+            <a href={e.href}>{e.texto}</a>
+            {e.hijos && e.hijos.length > 0 && (
+              <ul class="hijos">{e.hijos.map((h) => <li><a href={h.href}>{h.texto}</a></li>)}</ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</div>
+
+<style>
+  .indice { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 36px 32px; }
+  h2 { margin: 0 0 10px; font-size: 24px; display: flex; align-items: center; gap: 10px; }
+  h2::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--color-antidote); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink); font-weight: 500; text-decoration: none; }
+  a:hover { color: var(--color-deep); text-decoration: underline; text-underline-offset: 3px; }
+  .hijos { padding-left: 16px; border-left: 2px solid var(--color-line-soft); margin-bottom: 6px; }
+  .hijos a { min-height: 40px; color: var(--color-slate); font-weight: 400; font-size: 15px; }
+</style>

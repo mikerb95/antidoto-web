@@ -29,8 +29,12 @@ interface Props {
   scroll?: 'suave' | 'nativo';
   /** Claro: la home rediseñada, sin el fondo con brillos ni la barra de WhatsApp. */
   tema?: 'oscuro' | 'claro';
+  /** Formulario de novedades en el pie. Por defecto, en todas menos la home, que tiene su sección. */
+  novedadesPie?: boolean;
+  /** Sin referente al salir (páginas con un token en la URL). */
+  sinReferente?: boolean;
 }
-const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, sinCanonical = false, scroll = 'nativo', tema = 'oscuro' } = Astro.props;
+const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, sinCanonical = false, scroll = 'nativo', tema = 'oscuro', novedadesPie = pagina !== 'inicio', sinReferente = false } = Astro.props;
 const claro = tema === 'claro';
 const s = t(locale);
 const canonical = new URL(alternates[locale], SITE.url).href;
@@ -45,6 +49,7 @@ const otro = otroIdioma(locale);
     <title>{title}</title>
     <meta name="description" content={description} />
     {!sinCanonical && <link rel="canonical" href={canonical} />}
+    {sinReferente && <meta name="referrer" content="no-referrer" />}
     {noindex
       ? <meta name="robots" content="noindex, follow" />
       : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />}
@@ -91,7 +96,7 @@ const otro = otroIdioma(locale);
     <main id="main">
       <slot />
     </main>
-    <Footer locale={locale} novedades={pagina !== 'inicio'} />
+    <Footer locale={locale} novedades={novedadesPie} />
     {!claro && <BarraWhatsapp locale={locale} message={waMessage} />}
     {!noindex && <Asesor locale={locale} pagina={pagina} />}
     <Motion />

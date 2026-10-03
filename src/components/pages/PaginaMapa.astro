@@ -1,0 +1,25 @@
+---
+// Mapa del sitio en HTML: todas las páginas publicables, generado desde las colecciones.
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import IndiceSitio from '../IndiceSitio.astro';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { grafo, migasSchema } from '../../data/schema';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const [title, description] = s.seo.mapa;
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.mapa, rutas.mapa[locale]],
+];
+---
+<Base locale={locale} pagina="mapa" title={title} description={description} alternates={rutas.mapa} jsonLd={grafo(migasSchema(migas))} tema="claro">
+  <CabeceraPagina locale={locale} migas={migas} titulo={p.mapa.titulo} lead={p.mapa.lead} />
+  <div class="bloque"><div class="wrap"><IndiceSitio locale={locale} /></div></div>
+</Base>

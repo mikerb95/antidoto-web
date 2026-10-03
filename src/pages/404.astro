@@ -1,22 +1,28 @@
 ---
+// 404: responde en cualquier ruta (sin canonical) y muestra las secciones del sitio.
 import Base from '../layouts/Base.astro';
+import IndiceSitio from '../components/IndiceSitio.astro';
 import { t } from '../i18n/ui';
+import { tp } from '../i18n/paginas';
 
 const s = t('es');
+const p = tp('es');
 ---
-<Base locale="es" pagina={null} title={`${s.notFoundTitle} | Antídoto`} description={s.notFoundLead} alternates={{ es: '/', en: '/en/' }} noindex sinCanonical>
+<Base locale="es" pagina={null} title={`${s.notFoundTitle} | Antídoto`} description={s.notFoundLead} alternates={{ es: '/', en: '/en/' }} noindex sinCanonical tema="claro">
   <section class="nf">
     <div class="wrap">
-      <p class="eyebrow">404</p>
+      <p class="codigo">404</p>
       <h1>{s.notFoundTitle}</h1>
-      <p class="lead">{s.notFoundLead}</p>
-      <a class="btn btn-primary" href="/">{s.notFoundCta}</a>
+      <p class="lead-nf">{p.noEncontrada.lead}</p>
+      <a class="boton boton-cian boton-grande" href="/">{s.notFoundCta}</a>
     </div>
   </section>
+  <div class="bloque bloque-mist"><div class="wrap"><IndiceSitio locale="es" detalle={false} /></div></div>
 </Base>
 
 <style>
-  .nf { padding-block: 120px; }
-  h1 { font-size: clamp(36px, 3vw + 12px, 60px); margin-block: 14px 16px; }
-  .lead { margin-bottom: 28px; }
+  .nf { padding-block: 72px 56px; }
+  .codigo { margin: 0; font: 400 72px/1 var(--font-accent); color: var(--color-antidote); }
+  h1 { font-size: clamp(36px, 3vw + 12px, 60px); margin: 14px 0 12px; }
+  .lead-nf { margin: 0 0 28px; color: var(--color-slate); max-width: 34em; font-size: 18px; }
 </style>
