@@ -29,7 +29,8 @@ function raf(time: number) {
  */
 function iniciarScroll() {
   if (reducido() || document.body.dataset.scroll !== 'suave') return;
-  lenis = new Lenis({ anchors: { offset: -90 } });
+  // La nav no es fija: el ancla deja solo un respiro arriba.
+  lenis = new Lenis({ anchors: { offset: -16 } });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add(raf);
   gsap.ticker.lagSmoothing(0);

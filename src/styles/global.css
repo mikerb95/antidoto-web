@@ -174,6 +174,11 @@
     color: var(--color-slate); font-size: 15px; font-weight: 500; line-height: 1.45;
   }
 
+  /* Odómetro (src/lib/motion/cifras.ts): una celda de alto fijo recorta la tira de dígitos.
+     El ancho es el del cero, el dígito más ancho de Modulus: ninguna cifra se recorta al rodar. */
+  .odo-col { display: inline-block; height: 1.1em; overflow: hidden; vertical-align: top; }
+  .odo-tira { display: block; width: 1ch; word-break: break-all; line-height: 1.1em; text-align: center; }
+
   .pause-btn {
     display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px;
     background: none; border: 1px solid var(--color-line); color: var(--color-fg-muted);

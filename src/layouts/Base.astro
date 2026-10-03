@@ -24,7 +24,7 @@ interface Props {
   noindex?: boolean;
   /** Scroll suave (Lenis) en páginas de marketing; las de lectura conservan el nativo. */
   scroll?: 'suave' | 'nativo';
-  /** Claro: la home rediseñada, sin el fondo con brillos, la barra de WhatsApp ni el núcleo de motion. */
+  /** Claro: la home rediseñada, sin el fondo con brillos ni la barra de WhatsApp. */
   tema?: 'oscuro' | 'claro';
 }
 const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, scroll = 'nativo', tema = 'oscuro' } = Astro.props;
@@ -77,7 +77,7 @@ const otro = otroIdioma(locale);
     </main>
     <Footer locale={locale} />
     {!claro && <BarraWhatsapp locale={locale} message={waMessage} />}
-    {!claro && <Motion />}
+    <Motion />
   </body>
 </html>
 
