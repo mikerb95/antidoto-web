@@ -1,12 +1,17 @@
 ---
+// Home rediseñada (antidoto-home-diseno/home.html): base clara con secciones oscuras.
+// La nav y el pie son los del layout; aquí van las diez secciones del cuerpo, en orden.
 import Base from '../../layouts/Base.astro';
-import HeroBento from '../HeroBento.astro';
-import Stats from '../Stats.astro';
-import Encabezado from '../Encabezado.astro';
-import ServiciosIndice from '../ServiciosIndice.astro';
-import Retos from '../Retos.astro';
-import Clientes from '../Clientes.astro';
-import ContactoCta from '../ContactoCta.astro';
+import Hero from '../home/Hero.astro';
+import ClientesCifras from '../home/ClientesCifras.astro';
+import Dolores from '../home/Dolores.astro';
+import Pasos from '../home/Pasos.astro';
+import Servicios from '../home/Servicios.astro';
+import Actividades from '../home/Actividades.astro';
+import ParaQuien from '../home/ParaQuien.astro';
+import Equipo from '../home/Equipo.astro';
+import Faq from '../home/Faq.astro';
+import Cierre from '../home/Cierre.astro';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { organizationSchema } from '../../data/schema';
 
@@ -14,32 +19,17 @@ interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
-const s = t(locale);
-const [title, description] = s.seo.inicio;
+const [title, description] = t(locale).seo.inicio;
 ---
-<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema()} scroll="suave">
-  <HeroBento locale={locale} />
-  <div class="wrap franja"><Stats locale={locale} /></div>
-
-  <section class="seccion" aria-labelledby="servicios-title">
-    <div class="wrap">
-      <div class="cab">
-        <Encabezado num="01" kicker={s.servicesKicker} titulo={s.servicesTitle} lead={s.servicesLead} id="servicios-title" />
-        <a class="todos" href={rutas.servicios[locale]}>{s.servicesAll} →</a>
-      </div>
-      <ServiciosIndice locale={locale} />
-    </div>
-  </section>
-
-  <Retos locale={locale} num="02" />
-  <Clientes locale={locale} num="03" limite={12} />
-  <ContactoCta locale={locale} num="04" />
+<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema()} tema="claro">
+  <Hero locale={locale} />
+  <ClientesCifras locale={locale} />
+  <Dolores locale={locale} />
+  <Pasos locale={locale} />
+  <Servicios locale={locale} />
+  <Actividades locale={locale} />
+  <ParaQuien locale={locale} />
+  <Equipo locale={locale} />
+  <Faq locale={locale} />
+  <Cierre locale={locale} />
 </Base>
-
-<style>
-  .franja { margin-top: 8px; }
-  .franja :global(.wrap) { padding-inline: 0; }
-  .cab { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: 32px; }
-  .todos { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-antidote); font-weight: 600; text-decoration: none; font-size: 14px; }
-  .todos:hover { text-decoration: underline; }
-</style>

@@ -1,0 +1,59 @@
+---
+// Entradas por tipo de comprador, franja de aliados y espacios para caso y testimonios.
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const h = t(locale).inicio.paraQuien;
+const [aliadosTitulo, aliadosTexto, aliadosCta] = h.aliados;
+---
+<section id="para-quien" class="para-quien" aria-labelledby="perfiles-t">
+  <div class="wrap interior">
+    <div class="cab-seccion">
+      <h2 id="perfiles-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
+      <p>{h.lead}</p>
+    </div>
+    <ul class="perfiles">
+      {h.perfiles.map(([titulo, texto]) => (
+        <li>
+          <a class="perfil" href="#cotizar">
+            <span class="p-t">{titulo}</span>
+            <span class="p-d">{texto}</span>
+            <span class="p-cta">{h.verSoluciones}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+    <a class="aliados" href="#cotizar">
+      <span class="a-txt"><span class="a-t">{aliadosTitulo}</span><span class="a-d">{aliadosTexto}</span></span>
+      <span class="a-cta">{aliadosCta}</span>
+    </a>
+    <div id="clientes" class="pendientes">
+      <p class="pendiente">{h.caso}</p>
+      <p class="pendiente">{h.testimonio}</p>
+      <p class="pendiente">{h.testimonio}</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .para-quien { background: var(--color-paper); }
+  .interior { padding-block: 80px; display: flex; flex-direction: column; gap: 36px; }
+  .perfiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 20px; }
+  .perfil { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 26px; border-radius: 20px; background: var(--color-mist); border: 1px solid var(--color-line-soft); text-decoration: none; color: var(--color-ink); transition: transform var(--t-base) var(--ease-out); }
+  .perfil:hover { transform: translateY(-4px); }
+  .p-t { font: 400 22px/1.2 var(--font-display); }
+  .p-d { color: var(--color-slate); font-size: 15px; }
+  .p-cta { margin-top: 8px; color: var(--color-deep); font-weight: 600; font-size: 15px; }
+
+  .aliados { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 22px 26px; border-radius: 20px; background: var(--color-ink); color: var(--color-paper); text-decoration: none; }
+  .a-txt { display: flex; flex-direction: column; gap: 4px; }
+  .a-t { font: 400 22px/1.2 var(--font-display); }
+  .a-d { color: var(--color-fg-soft); font-size: 15px; }
+  .a-cta { color: var(--color-glow); font-weight: 600; }
+
+  .pendientes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 20px; }
+  .pendientes .pendiente { margin: 0; padding: 26px; border-radius: 20px; justify-content: flex-start; text-align: left; align-items: flex-start; }
+</style>

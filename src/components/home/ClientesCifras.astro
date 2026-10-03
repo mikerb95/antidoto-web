@@ -1,0 +1,64 @@
+---
+// Logos de clientes (los seis más reconocibles y un enlace al resto) y franja de cifras.
+// Sobre blanco van los logos originales a color (marca/clientes), no las versiones en blanco.
+import { Image } from 'astro:assets';
+import enel from '../../assets/clientes-color/enel.png';
+import claro from '../../assets/clientes-color/claro.png';
+import bolivar from '../../assets/clientes-color/seguros-bolivar.png';
+import wom from '../../assets/clientes-color/wom.png';
+import cruzVerde from '../../assets/clientes-color/cruz-verde.png';
+import stanley from '../../assets/clientes-color/stanley-black-decker.png';
+import { CLIENTES } from '../../data/clientes';
+import { t, rutas, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const h = s.inicio;
+// Orden y altura del diseño.
+const logos = [
+  { nombre: 'Enel', logo: enel, alto: 46 },
+  { nombre: 'Claro', logo: claro, alto: 52 },
+  { nombre: 'Seguros Bolívar', logo: bolivar, alto: 52 },
+  { nombre: 'WOM', logo: wom, alto: 52 },
+  { nombre: 'Cruz Verde', logo: cruzVerde, alto: 52 },
+  { nombre: 'Stanley Black & Decker', logo: stanley, alto: 52 },
+];
+const resto = CLIENTES.length - logos.length;
+---
+<section class="clientes" aria-label={h.cifrasLabel}>
+  <div class="wrap logos-wrap">
+    <p class="confian">{h.confian}</p>
+    <div class="logos">
+      {logos.map((c) => (
+        <Image src={c.logo} alt={c.nombre} style={`height: ${c.alto}px`} />
+      ))}
+      <a href={rutas.clientes[locale]}>{h.masMarcas(resto)}</a>
+    </div>
+  </div>
+  <div class="wrap franja">
+    <dl class="cifras">
+      {h.cifras.map(([valor, etiqueta]) => (
+        <div><dt>{etiqueta}</dt><dd>{valor}</dd></div>
+      ))}
+    </dl>
+  </div>
+</section>
+
+<style>
+  .clientes { background: var(--color-paper); }
+  .logos-wrap { padding-block: 44px 20px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .confian { margin: 0; color: var(--color-slate); font-size: 16px; }
+  .logos { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px 52px; }
+  .logos img { width: auto; }
+  .logos a { font-weight: 600; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center; color: var(--color-deep); }
+  .logos a:hover { color: var(--color-ink); }
+
+  .franja { padding-block: 20px 64px; }
+  .cifras { margin: 0; background: var(--color-ink); border-radius: 24px; padding: 34px 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: 24px; text-align: center; }
+  .cifras div { display: flex; flex-direction: column-reverse; gap: 4px; }
+  dd { margin: 0; font: 400 44px/1 var(--font-accent); color: var(--color-antidote); }
+  dt { color: var(--color-fg-soft); font-size: 15px; }
+</style>
