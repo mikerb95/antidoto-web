@@ -2,7 +2,11 @@
 //   POST /v1/leads                  público (solo orígenes del sitio): guarda un lead
 //   POST /v1/suscripciones          público (solo orígenes del sitio): suscripción a novedades
 //   GET|POST /v1/asesor             público (solo orígenes del sitio): chat con IA (src/asesor/)
-//   GET|POST /v1/suscripcion/confirmar|baja?t=   doble confirmación y baja (por token)
+//   GET|POST /v1/suscripcion/confirmar|baja|preferencias?t=   por token: el GET lleva a la página
+//                                   del sitio y el POST hace la acción (la baja de un clic, también)
+//   GET  /v1/suscripcion/datos?t=   público (solo orígenes del sitio): datos para la página de preferencias
+//   GET  /v1/novedades[?locale=]    archivo público de campañas (JSON)
+//   GET  /v1/novedades/<id>         versión web de una campaña enviada
 //   POST /v1/resend/webhook         eventos de Resend, firmados con Svix
 //   POST /auth/enlace               pide el enlace de acceso por correo
 //   GET|POST /auth/entrar           abre la sesión con el enlace
@@ -16,9 +20,11 @@ import { origenPermitido, cabecerasCors } from './cors';
 import { pedirEnlace, paginaEntrar, entrar, sesionActual, salir, mismoOrigen } from './auth';
 import { listarLeads, verLead, editarLead, anonimizarLead, metricas, exportarCsv, listarUsuarios, crearUsuario, editarUsuario } from './admin';
 import { seguimiento } from './seguimiento';
-import { crearSuscripcion, confirmar, baja } from './marketing/suscripciones';
+import { crearSuscripcion, confirmar, baja, preferencias, datosPreferencias } from './marketing/suscripciones';
+import { listarPublicas, verPublica } from './marketing/publico';
+import { recordatorios, invitaciones } from './marketing/automaticos';
 import { webhookResend } from './marketing/webhook';
-import { procesarEnvios } from './marketing/envios';
+import { procesarEnvios, arrancarProgramadas, decidirPruebas } from './marketing/envios';
 import * as mk from './marketing/admin';
 import { rutaAsesor } from './asesor/ruta';
 import { ADMIN_HTML, ADMIN_JS, ADMIN_CSS } from './admin-ui';
@@ -59,10 +65,25 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
     return rutaAsesor(req, env, db, diferir, cors);
   }
 
+  // Lecturas públicas para el sitio: CORS solo para sus orígenes.
+  if (ruta === '/v1/suscripcion/datos' || ruta === '/v1/novedades') {
+    const origen = req.headers.get('origin');
+    const cors = origenPermitido(origen, env, env.ENTORNO === 'local') ? { ...cabecerasCors(origen!), 'access-control-allow-methods': 'GET, OPTIONS' } : {};
+    if (metodo === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    if (metodo !== 'GET') return json({ ok: false }, 405, cors);
+    if (ruta === '/v1/novedades') return listarPublicas(url, db, cors);
+    if (!origen || !Object.keys(cors).length) return json({ ok: false, error: 'origen' }, 403);
+    return datosPreferencias(req, db, cors);
+  }
+  const publica = ruta.match(/^\/v1\/novedades\/([0-9a-f-]{36})$/);
+  if (publica && metodo === 'GET') return verPublica(publica[1]!, env, db);
+
   // Autorizadas por token o por firma, no por sesión: los proveedores de correo hacen el POST de
-  // baja de un clic sin Origin, y Resend llama al webhook desde sus servidores.
-  if (ruta === '/v1/suscripcion/confirmar' && (metodo === 'GET' || metodo === 'POST')) return confirmar(req, db, env);
-  if (ruta === '/v1/suscripcion/baja' && (metodo === 'GET' || metodo === 'POST')) return baja(req, db);
+  // baja de un clic sin Origin, el sitio envía formularios normales (sin fetch) y Resend llama al
+  // webhook desde sus servidores.
+  if (ruta === '/v1/suscripcion/confirmar' && (metodo === 'GET' || metodo === 'POST')) return confirmar(req, db, env, appUrl, diferir);
+  if (ruta === '/v1/suscripcion/baja' && (metodo === 'GET' || metodo === 'POST')) return baja(req, db, env);
+  if (ruta === '/v1/suscripcion/preferencias' && (metodo === 'GET' || metodo === 'POST')) return preferencias(req, db, env);
   if (ruta === '/v1/resend/webhook' && metodo === 'POST') return webhookResend(req, env, db);
 
   if (ruta === '/salud') return json({ ok: true });
@@ -107,6 +128,8 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
     if (usuario && metodo === 'PATCH') return editarUsuario(usuario[1]!, req, db, sesion);
 
     // Email marketing
+    if (ruta === '/admin/api/marketing' && metodo === 'GET') return mk.metricasMarketing(url, db);
+    if (ruta === '/admin/api/contactos/importar' && metodo === 'POST') return mk.importarContactos(req, db);
     if (ruta === '/admin/api/contactos' && metodo === 'GET') return mk.listarContactos(url, db);
     if (ruta === '/admin/api/contactos' && metodo === 'POST') return mk.invitarContacto(req, env, db, appUrl);
     const contacto = ruta.match(/^\/admin\/api\/contactos\/([0-9a-f-]{36})(\/baja|\/suprimir)?$/);
@@ -118,16 +141,32 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
     }
     if (ruta === '/admin/api/campanas' && metodo === 'GET') return mk.listarCampanas(db);
     if (ruta === '/admin/api/campanas' && metodo === 'POST') return mk.crearCampana(req, db, sesion);
-    const campana = ruta.match(/^\/admin\/api\/campanas\/([0-9a-f-]{36})(\/vista|\/prueba|\/enviar|\/cancelar)?$/);
+    const campana = ruta.match(/^\/admin\/api\/campanas\/([0-9a-f-]{36})(\/vista|\/prueba|\/enviar|\/cancelar|\/programar|\/desprogramar|\/duplicar)?$/);
     if (campana) {
       const [, id, accion] = campana as unknown as [string, string, string | undefined];
       if (!accion && metodo === 'GET') return mk.verCampana(id, db);
       if (!accion && metodo === 'PATCH') return mk.editarCampana(id, req, db);
       if (!accion && metodo === 'DELETE') return mk.borrarCampana(id, db);
-      if (accion === '/vista' && metodo === 'GET') return mk.vistaCampana(id, db, appUrl);
+      if (accion === '/vista' && metodo === 'GET') return mk.vistaCampana(id, env, db, appUrl);
       if (accion === '/prueba' && metodo === 'POST') return mk.probarCampana(id, env, db, sesion, appUrl);
       if (accion === '/enviar' && metodo === 'POST') return mk.enviarCampana(id, req, env, db, appUrl, diferir);
       if (accion === '/cancelar' && metodo === 'POST') return mk.cancelarCampana(id, db);
+      if (accion === '/programar' && metodo === 'POST') return mk.programarCampana(id, req, env, db, appUrl);
+      if (accion === '/desprogramar' && metodo === 'POST') return mk.desprogramarCampana(id, db);
+      if (accion === '/duplicar' && metodo === 'POST') return mk.duplicarCampana(id, db, sesion);
+    }
+    if (ruta === '/admin/api/plantillas' && metodo === 'GET') return mk.listarPlantillas(db);
+    if (ruta === '/admin/api/plantillas' && metodo === 'POST') return mk.crearPlantilla(req, db, sesion);
+    const plantilla = ruta.match(/^\/admin\/api\/plantillas\/([0-9a-f-]{36})$/);
+    if (plantilla && metodo === 'DELETE') return mk.borrarPlantilla(plantilla[1]!, db);
+    if (ruta === '/admin/api/automaticos' && metodo === 'GET') return mk.listarAutomaticos(db);
+    const auto = ruta.match(/^\/admin\/api\/automaticos\/([a-z]+:(?:es|en))(\/vista|\/prueba)?$/);
+    if (auto) {
+      const [, clave, accion] = auto as unknown as [string, string, string | undefined];
+      if (!accion && metodo === 'PUT') return mk.guardarAutomatico(clave, req, db, sesion);
+      if (!accion && metodo === 'DELETE') return mk.restaurarAutomatico(clave, db);
+      if (accion === '/vista' && metodo === 'GET') return mk.vistaAutomatico(clave, env, db, appUrl);
+      if (accion === '/prueba' && metodo === 'POST') return mk.probarAutomatico(clave, env, db, sesion, appUrl);
     }
   }
 
@@ -147,11 +186,23 @@ export default {
     const db = drizzle(env.DB);
     // A la hora en punto se disparan los dos crons. Los lotes salen solo con el de cada 5 minutos:
     // dos corridas a la vez se pisan con el límite de Resend (2 por segundo) y gastan intentos.
+    const appUrl = (env.APP_URL ?? '').replace(/\/$/, '');
     if (evento.cron === '*/5 * * * *') {
-      ctx.waitUntil(procesarEnvios(env, db).then((r) => r.enviados + r.fallidos && console.log(`[envios] ${r.enviados} enviados, ${r.fallidos} fallidos`)));
+      // Primero arrancan las programadas y se deciden las pruebas A/B: así sus envíos salen en esta misma corrida.
+      ctx.waitUntil(
+        (async () => {
+          const arrancadas = await arrancarProgramadas(env, db);
+          const decididas = await decidirPruebas(env, db);
+          const r = await procesarEnvios(env, db);
+          const inv = await invitaciones(env, db, appUrl);
+          if (arrancadas + decididas + r.enviados + r.fallidos + inv)
+            console.log(`[envios] ${arrancadas} programadas arrancadas, ${decididas} pruebas A/B decididas, ${r.enviados} enviados, ${r.fallidos} fallidos, ${inv} invitaciones`);
+        })(),
+      );
     }
     if (evento.cron === '0 * * * *') {
       ctx.waitUntil(seguimiento(env, db).then((r) => console.log(`[seguimiento] ${r.avisados} leads avisados`)));
+      ctx.waitUntil(recordatorios(env, db, appUrl).then((n) => n && console.log(`[recordatorios] ${n} enviados`)));
     }
   },
 } satisfies ExportedHandler<Env>;

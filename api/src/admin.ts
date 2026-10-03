@@ -3,7 +3,7 @@
 import { and, desc, eq, gte, isNull, like, or, sql, type SQL } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { leads, eventos, consentimientos, usuarios, contactos, ESTADOS, SERVICIOS, ROLES, type Estado, type Lead } from './db/schema';
-import { suprimir } from './marketing/admin';
+import { suprimir, suscripcionDeLead } from './marketing/admin';
 import type { Sesion } from './auth';
 import { ahora, uuid, json, DIA } from './util';
 
@@ -43,7 +43,7 @@ export async function verLead(id: string, db: DrizzleD1Database): Promise<Respon
       .from(consentimientos)
       .where(eq(consentimientos.leadId, id)),
   ]);
-  return json({ lead: sinIp(lead), eventos: hist, consentimientos: cons });
+  return json({ lead: sinIp(lead), eventos: hist, consentimientos: cons, suscripcion: await suscripcionDeLead(db, lead) });
 }
 
 export interface Cambios {

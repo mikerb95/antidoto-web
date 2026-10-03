@@ -506,7 +506,7 @@ export async function metricasMarketing(url: URL, db: DrizzleD1Database): Promis
   const semanas = Math.min(52, Math.max(4, Number(url.searchParams.get('semanas')) || 12));
   const fin = ahora();
   const desde = fin - semanas * SEMANA;
-  const porSemana = (col: typeof contactos.creado) =>
+  const porSemana = (col: typeof contactos.creado | typeof contactos.confirmado | typeof contactos.baja) =>
     db
       .select({ semana: sql<number>`cast((${col} - ${desde}) / ${SEMANA} as integer)`, n: sql<number>`count(*)` })
       .from(contactos)

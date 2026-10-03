@@ -103,6 +103,9 @@ export async function suscribir(env: Env, db: DrizzleD1Database, s: Solicitud, a
       confirmado: null,
       baja: null,
       motivoBaja: null,
+      recordatorio: null,
+      bienvenida: null,
+      pausaHasta: null,
     };
     await db.insert(contactos).values(contacto);
   }
