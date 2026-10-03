@@ -4,14 +4,18 @@
 // claves de los servicios, y la bandeja segmenta las campañas con ellos. Como el pie, solo existe
 // si el build trae PUBLIC_API_URL y se muestra cuando el script la conecta (src/lib/novedades.ts,
 // iniciado desde Footer.astro).
-import { t, rutaPolitica, type Locale } from '../../i18n/ui';
+import { t, rutaPolitica, rutaNovedades, type Locale } from '../../i18n/ui';
+import { REGALO_NOVEDADES } from '../../data/site';
 import { NOVEDADES, NOVEDADES_VERSION } from '../../data/consentimiento';
 import { obtenerServicios } from '../../data/servicios';
 
 interface Props {
   locale: Locale;
+  /** De qué formulario llega la suscripción (la bandeja mide la confirmación por origen). */
+  origen?: 'inicio' | 'archivo';
 }
-const { locale } = Astro.props;
+const { locale, origen = 'inicio' } = Astro.props;
+const regalo = REGALO_NOVEDADES?.[locale];
 const s = t(locale);
 const h = s.inicio.novedades;
 const servicios = await obtenerServicios();
@@ -24,9 +28,11 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
         <div class="texto">
           <h2 id="novedades-inicio-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
           <p class="lead">{h.lead}</p>
+          {regalo && <p class="regalo">{s.novedadesRegalo(regalo)}</p>}
           <p class="pendiente frecuencia">{h.frecuencia}</p>
+          {origen === 'inicio' && <a class="archivo" href={rutaNovedades[locale]}>{s.novedadesArchivo}</a>}
         </div>
-        <form data-novedades data-api={api} data-version={NOVEDADES_VERSION} novalidate aria-labelledby="novedades-inicio-t">
+        <form data-novedades data-api={api} data-version={NOVEDADES_VERSION} data-origen={origen} novalidate aria-labelledby="novedades-inicio-t">
           <fieldset>
             <legend>{h.intereses}</legend>
             <div class="chips">
@@ -64,6 +70,8 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
   @media (max-width: 860px) { .caja { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
   .texto { display: flex; flex-direction: column; gap: 16px; }
   .lead { margin: 0; color: var(--color-slate); font-size: 17px; max-width: 34em; }
+  .regalo { margin: 0; font-weight: 600; }
+  .archivo { align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink); font-weight: 600; text-underline-offset: 3px; }
   .frecuencia { align-self: flex-start; padding: 10px 16px; border-radius: 12px; font-size: 13.5px; }
 
   form { display: flex; flex-direction: column; gap: 16px; min-width: 0; }

@@ -1,6 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Encabezado from '../Encabezado.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import { tp } from '../../i18n/paginas';
+import { grafo, migasSchema } from '../../data/schema';
 import WhatsappIcon from '../WhatsappIcon.astro';
 import { obtenerServicios } from '../../data/servicios';
 import { t, rutas, rutaPolitica, type Locale } from '../../i18n/ui';
@@ -15,6 +17,10 @@ const s = t(locale);
 const SERVICIOS = await obtenerServicios();
 const c = s.cot;
 const [title, description] = s.seo.contacto;
+const migas: Array<[string, string]> = [
+  [tp(locale).inicio, rutas.inicio[locale]],
+  [s.nav.contacto, rutas.contacto[locale]],
+];
 // Con la API configurada en el build, el cotizador suma un paso de contacto y guarda el lead
 // (con autorización) antes de abrir WhatsApp. Sin ella funciona como antes: solo WhatsApp.
 const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
@@ -27,15 +33,15 @@ const canales = [
   { k: s.canales.linkedin, v: 'Antídoto Colombia', href: SITE.linkedin, externo: true },
 ];
 ---
-<Base locale={locale} pagina="contacto" title={title} description={description} alternates={rutas.contacto}>
-  <section class="seccion" aria-labelledby="pagina-title">
+<Base locale={locale} pagina="contacto" title={title} description={description} alternates={rutas.contacto} jsonLd={grafo(migasSchema(migas))} tema="claro">
+  <CabeceraPagina locale={locale} migas={migas} titulo={s.contactoTitle} lead={s.contactoLead} />
+  <section class="bloque" aria-label={s.contactoKicker}>
     <div class="wrap">
-      <Encabezado num="01" kicker={s.contactoKicker} titulo={s.contactoTitle} lead={s.contactoLead} id="pagina-title" nivel={1} />
 
       <div class="bento">
         <!-- El cotizador necesita JS para armar el mensaje: el script lo muestra. Sin JS
              quedan visibles los canales directos. -->
-        <form class="cotizador panel" hidden data-cotizador data-wa={SITE.whatsapp} data-api={api || undefined} novalidate aria-labelledby="cot-title">
+        <form class="cotizador caja" hidden data-cotizador data-wa={SITE.whatsapp} data-api={api || undefined} novalidate aria-labelledby="cot-title">
           <div class="cot-top">
             <p class="mono mono-acento" id="cot-title">{c.titulo}</p>
             <p class="mono" aria-live="polite" data-paso-texto>{c.paso(1, pasos.length)}</p>
@@ -109,15 +115,15 @@ const canales = [
           </fieldset>
 
           <div class="botones">
-            <button type="button" class="btn btn-ghost btn-sm" data-atras hidden>← {c.anterior}</button>
-            <button type="button" class="btn btn-primary btn-sm" data-siguiente>{c.siguiente} →</button>
-            <a class="btn btn-primary btn-sm" href="#" target="_blank" rel="noopener" data-enviar hidden><span class="btn-inner"><WhatsappIcon />{c.enviar}</span></a>
+            <button type="button" class="boton boton-borde" data-atras hidden>← {c.anterior}</button>
+            <button type="button" class="boton boton-tinta" data-siguiente>{c.siguiente} →</button>
+            <a class="boton boton-cian" href="#" target="_blank" rel="noopener" data-enviar hidden><WhatsappIcon />{c.enviar}</a>
           </div>
           <p class="guardado" role="status" hidden data-guardado>{c.guardado}</p>
           <p class="privacidad mono">{api ? c.privacidadApi : c.privacidad}</p>
         </form>
 
-        <aside class="canales panel" aria-labelledby="canales-title">
+        <aside class="canales caja" aria-labelledby="canales-title">
           <p class="mono mono-acento" id="canales-title">{s.canalesKicker}</p>
           <ul>
             {canales.map((cn) => (
@@ -273,57 +279,59 @@ const canales = [
 </script>
 
 <style>
-  .bento { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 12px; margin-top: 36px; align-items: start; }
-  .cotizador { padding: 24px; display: grid; gap: 18px; }
+  .bento { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .caja { border-radius: 24px; background: var(--color-paper); border: 1px solid var(--color-line-soft); box-shadow: 0 10px 30px rgb(15 24 29 / 0.06); }
+  .mono { color: var(--color-slate); }
+  .mono-acento { color: var(--color-deep); }
+  .cotizador { padding: clamp(20px, 3vw, 32px); display: grid; gap: 20px; }
   .cotizador[hidden] { display: none; }
   .cot-top { display: flex; justify-content: space-between; gap: 12px; }
   .cot-top .mono { margin: 0; }
   .progreso { position: relative; display: grid; grid-template-columns: repeat(var(--pasos, 3), minmax(0, 1fr)); gap: 8px; padding-bottom: 14px; }
-  .progreso > span[data-marca] { font: 500 10.5px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: rgb(167 182 186 / 0.6); }
-  .progreso > span.activo { color: var(--color-antidote); }
-  .nivel { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 2px; background: rgb(128 220 255 / 0.12); overflow: hidden; }
+  .progreso > span[data-marca] { font: 600 11px var(--font-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-dash); }
+  .progreso > span.activo { color: var(--color-deep); }
+  .nivel { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; border-radius: 3px; background: var(--color-line-soft); overflow: hidden; }
   .nivel span { position: absolute; inset: 0; transform-origin: left; background: linear-gradient(90deg, var(--color-mid), var(--color-antidote)); }
   fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   fieldset[hidden] { display: none; }
-  legend { padding: 0; margin-bottom: 14px; font: 400 26px/1.1 var(--font-display); }
-  .opciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .opcion { position: relative; display: grid; gap: 6px; padding: 16px; border-radius: 14px; border: 1px solid var(--color-line); cursor: pointer; transition: border-color var(--t-fast) var(--ease-out), background var(--t-fast) var(--ease-out); }
-  .opcion:hover { border-color: rgb(59 200 243 / 0.4); }
-  .opcion:has(input:checked) { border-color: var(--color-antidote); background: rgb(59 200 243 / 0.1); }
-  .opcion:has(input:focus-visible) { outline: 2px solid var(--color-antidote); outline-offset: 3px; }
+  legend { padding: 0; margin-bottom: 16px; font: 400 28px/1.15 var(--font-display); }
+  .opciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .opcion { position: relative; display: grid; gap: 6px; padding: 18px; border-radius: 16px; border: 1.5px solid var(--color-line-input); background: var(--color-paper); cursor: pointer; transition: border-color var(--t-fast) var(--ease-out), background var(--t-fast) var(--ease-out); }
+  .opcion:hover { border-color: var(--color-mid); }
+  .opcion:has(input:checked) { border-color: var(--color-deep); background: rgb(59 200 243 / 0.14); }
+  .opcion:has(input:focus-visible) { outline: 2px solid var(--color-deep); outline-offset: 3px; }
   .opcion input { position: absolute; opacity: 0; pointer-events: none; }
-  .op-t { font: 400 19px/1.15 var(--font-display); }
-  .op-d { font-size: 13px; color: var(--color-fg-muted); }
-  .error { margin: 10px 0 0; color: var(--color-reto); font-size: 14px; }
-  .campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .op-t { font: 400 20px/1.15 var(--font-display); }
+  .op-d { font-size: 14px; color: var(--color-slate); }
+  .error { margin: 10px 0 0; color: #a23a1f; font-size: 14px; font-weight: 500; }
+  .campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .campos label { display: grid; gap: 6px; }
-  .campos em { font-style: normal; text-transform: none; letter-spacing: 0; opacity: 0.7; }
-  input:not([type='radio']):not([type='checkbox']), select { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--color-line); background: rgb(10 17 21 / 0.6); color: var(--color-fg); font: 400 15px var(--font-sans); color-scheme: dark; }
-  input:focus-visible, select:focus-visible { outline: 2px solid var(--color-antidote); outline-offset: 2px; }
-  .resumen-lead { margin: 0 0 12px; color: var(--color-fg-muted); font-size: 14px; }
-  .resumen { margin: 0; padding: 16px; border-radius: 12px; background: rgb(10 17 21 / 0.7); border: 1px solid var(--color-line); font: 400 14px/1.6 var(--font-sans); white-space: pre-wrap; color: var(--color-fg); }
+  .campos em { font-style: normal; text-transform: none; letter-spacing: 0; opacity: 0.8; }
+  input:not([type='radio']):not([type='checkbox']), select { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--color-line-input); background: var(--color-paper); color: var(--color-ink); font: 400 16px var(--font-sans); }
+  input:focus-visible, select:focus-visible { outline: 2px solid var(--color-deep); outline-offset: 2px; }
+  .resumen-lead { margin: 0 0 12px; color: var(--color-slate); font-size: 15px; }
+  .resumen { margin: 0; padding: 18px; border-radius: 14px; background: var(--color-mist); border: 1px solid var(--color-line-soft); font: 400 15px/1.6 var(--font-sans); white-space: pre-wrap; color: var(--color-ink); }
   .botones { display: flex; gap: 10px; flex-wrap: wrap; }
   .botones [hidden] { display: none; }
   .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-  .autorizo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; margin-top: 14px; font-size: 14px; color: var(--color-fg); }
-  .autorizo input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--color-antidote); }
+  .autorizo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; margin-top: 14px; font-size: 14.5px; }
+  .autorizo input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--color-deep); }
   .autorizo label { cursor: pointer; }
-  .politica { display: inline-flex; align-items: center; min-height: 44px; margin-left: 34px; font-size: 13.5px; color: var(--color-antidote); }
-  .guardado { margin: 0; color: var(--color-glow); font-size: 14px; }
+  .politica { display: inline-flex; align-items: center; min-height: 44px; margin-left: 34px; font-size: 14px; color: var(--color-deep); }
+  .guardado { margin: 0; color: var(--color-deep); font-size: 15px; font-weight: 500; }
   .guardado[hidden] { display: none; }
-  .privacidad { margin: 0; text-transform: none; letter-spacing: 0.02em; font-size: 11.5px; }
+  .privacidad { margin: 0; text-transform: none; letter-spacing: 0.01em; font-size: 12.5px; font-weight: 500; }
 
   .canales { padding: 24px; display: grid; gap: 12px; }
   .canales > .mono { margin: 0; }
   .canales ul { list-style: none; margin: 0; padding: 0; display: grid; }
-  .canales a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 0; border-top: 1px solid var(--color-line); text-decoration: none; color: var(--color-fg); }
+  .canales a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 0; min-height: 44px; border-top: 1px solid var(--color-line-soft); text-decoration: none; color: var(--color-ink); }
   .canales li:first-child a { border-top: 0; }
   .canales a .mono { grid-column: 1; }
-  .canales .v { grid-column: 1; font-size: 15px; overflow-wrap: anywhere; }
-  .canales .flecha { grid-column: 2; grid-row: 1 / 3; align-self: center; color: var(--color-antidote); }
-  .canales a:hover .v { color: var(--color-antidote); }
-  .estado { display: flex; align-items: center; gap: 10px; margin: 6px 0 0; }
+  .canales .v { grid-column: 1; font-size: 16px; font-weight: 500; overflow-wrap: anywhere; }
+  .canales .flecha { grid-column: 2; grid-row: 1 / 3; align-self: center; color: var(--color-deep); }
+  .canales a:hover .v { color: var(--color-deep); }
 
   @media (max-width: 900px) { .bento { grid-template-columns: 1fr; } }
-  @media (max-width: 560px) { .opciones, .campos { grid-template-columns: 1fr; } .progreso > span[data-marca] { font-size: 9px; } }
+  @media (max-width: 560px) { .opciones, .campos { grid-template-columns: 1fr; } .progreso > span[data-marca] { font-size: 9.5px; } }
 </style>

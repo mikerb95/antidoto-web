@@ -1,0 +1,196 @@
+---
+// Página de las novedades por correo a la que llevan los enlaces de los correos (la API redirige
+// aquí): confirmar la suscripción, darse de baja, elegir temas, idioma o una pausa, y el resultado
+// de cada acción. El estado viene en la URL (?accion=...&t=... o ?estado=...). Los botones son
+// formularios normales que hacen POST a la API (sin fetch), y la API vuelve aquí con el
+// resultado. Sin JS se ve el texto general. noindex, sin referente (la URL lleva un token).
+import Base from '../../layouts/Base.astro';
+import { t, rutaPreferencias, rutaNovedades, rutas, type Locale } from '../../i18n/ui';
+import { SITE } from '../../data/site';
+import { obtenerServicios } from '../../data/servicios';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const p = s.preferencias;
+const servicios = await obtenerServicios();
+const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+const textos = {
+  inicio: p.inicio,
+  confirmar: p.confirmar,
+  baja: p.baja,
+  preferencias: p.editar,
+  confirmado: p.confirmado,
+  actualizado: p.actualizado,
+  fuera: p.fueraDeLista,
+  invalido: p.invalido,
+};
+---
+<Base locale={locale} pagina={null} title={p.title} description={p.description} alternates={rutaPreferencias} tema="claro" noindex sinReferente>
+  <section class="pref" aria-labelledby="pref-titulo">
+    <div class="caja" data-preferencias data-api={api} data-textos={JSON.stringify(textos)} data-pausa={JSON.stringify(p.pausaHasta('{}'))}>
+      <h1 id="pref-titulo" class="titulo-seccion" tabindex="-1" data-titulo>{p.inicio[0]}</h1>
+      <p class="lead" data-lead>{p.inicio[1]}</p>
+
+      <form method="post" class="accion" data-panel="confirmar" data-ruta="confirmar" hidden>
+        <button class="boton boton-tinta boton-grande" type="submit">{p.confirmarBoton}</button>
+      </form>
+
+      <div data-panel="baja" hidden>
+        <form method="post" class="accion" data-ruta="baja">
+          <button class="boton boton-tinta boton-grande" type="submit">{p.bajaBoton}</button>
+        </form>
+        <a class="enlace" data-ir="preferencias" href="">{p.bajaAlternativa}</a>
+      </div>
+
+      <div data-panel="preferencias" hidden>
+        <p class="estado" role="status" data-cargando>{p.cargando}</p>
+        <p class="aviso" data-no-activo hidden>{p.noActivo} <a href={rutaNovedades[locale]}>{p.volverASuscribir}</a></p>
+        <form method="post" class="ajustes" data-ruta="preferencias" hidden>
+          <p class="dato"><span>{p.correo}</span> <strong data-correo></strong></p>
+          <p class="aviso" data-en-pausa hidden></p>
+          <fieldset>
+            <legend>{p.temas}</legend>
+            <p class="ayuda">{p.temasAyuda}</p>
+            <div class="chips">
+              {servicios.map((sv) => (
+                <label class="chip"><input type="checkbox" name="intereses" value={sv.id} /><span>{sv[locale].title}</span></label>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>{p.idioma}</legend>
+            <div class="chips">
+              {(['es', 'en'] as const).map((l) => (
+                <label class="chip"><input type="radio" name="locale" value={l} /><span>{p.idiomas[l]}</span></label>
+              ))}
+            </div>
+          </fieldset>
+          <label class="campo">
+            <span>{p.pausa}</span>
+            <select name="pausa">{p.pausas.map(([v, texto]) => <option value={v}>{texto}</option>)}</select>
+          </label>
+          <div class="botones">
+            <button class="boton boton-tinta boton-grande" type="submit">{p.guardar}</button>
+            <a class="enlace" data-ir="baja" href="">{p.darmeDeBaja}</a>
+          </div>
+        </form>
+      </div>
+
+      <div class="salidas" data-panel="actualizado" hidden>
+        <a class="boton boton-tinta" data-ir="preferencias" href="">{p.seguirEditando}</a>
+      </div>
+      <div class="salidas" data-panel="fuera" hidden>
+        <a class="boton boton-tinta" href={rutaNovedades[locale]}>{p.volverASuscribir}</a>
+      </div>
+      <div class="salidas" data-panel="invalido" hidden>
+        <a class="boton boton-tinta" href={`mailto:${SITE.email}`}>{SITE.email}</a>
+      </div>
+
+      <p class="pie"><a href={rutas.inicio[locale]}>{p.irAlSitio}</a> · <a href={rutaNovedades[locale]}>{p.verArchivo}</a></p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Elige el panel según la URL y conecta los formularios a la API con el token.
+  const caja = document.querySelector<HTMLElement>('[data-preferencias]');
+  if (caja?.dataset.api) {
+    const api = caja.dataset.api;
+    const textos = JSON.parse(caja.dataset.textos!) as Record<string, [string, string]>;
+    const params = new URLSearchParams(location.search);
+    const token = params.get('t') ?? '';
+    const accion = params.get('accion');
+    const estado = params.get('estado');
+    // Cada resultado de la API tiene su panel; "baja" como estado es quien ya salió de la lista.
+    const panel = accion && token && ['confirmar', 'baja', 'preferencias'].includes(accion)
+      ? accion
+      : estado === 'baja'
+        ? 'fuera'
+        : estado && ['confirmado', 'actualizado', 'invalido'].includes(estado)
+          ? estado
+          : 'inicio';
+    const mostrar = (nombre: string) => {
+      const [titulo, lead] = textos[nombre] ?? textos.inicio!;
+      caja.querySelector('[data-titulo]')!.textContent = titulo;
+      caja.querySelector('[data-lead]')!.textContent = lead;
+      caja.querySelectorAll<HTMLElement>('[data-panel]').forEach((el) => (el.hidden = el.dataset.panel !== nombre));
+    };
+    mostrar(panel);
+
+    const conToken = (extra: Record<string, string>) => `${location.pathname}?${new URLSearchParams({ ...extra, t: token })}`;
+    caja.querySelectorAll<HTMLAnchorElement>('[data-ir]').forEach((a) => {
+      if (token) a.href = conToken({ accion: a.dataset.ir! });
+      else a.hidden = true;
+    });
+    caja.querySelectorAll<HTMLFormElement>('form[data-ruta]').forEach((f) => {
+      const campana = params.get('c');
+      f.action = `${api}/v1/suscripcion/${f.dataset.ruta}?${new URLSearchParams({ t: token, ...(campana ? { c: campana } : {}) })}`;
+    });
+
+    if (panel === 'preferencias') {
+      const cargando = caja.querySelector<HTMLElement>('[data-cargando]')!;
+      const form = caja.querySelector<HTMLFormElement>('form[data-ruta="preferencias"]')!;
+      fetch(`${api}/v1/suscripcion/datos?t=${encodeURIComponent(token)}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((d: { email: string; estado: string; locale: string; intereses: string[]; pausaHasta: number | null }) => {
+          cargando.textContent = '';
+          if (d.estado !== 'activo') {
+            caja.querySelector<HTMLElement>('[data-no-activo]')!.hidden = false;
+            return;
+          }
+          caja.querySelector('[data-correo]')!.textContent = d.email;
+          form.querySelectorAll<HTMLInputElement>('input[name="intereses"]').forEach((i) => (i.checked = d.intereses.includes(i.value)));
+          form.querySelectorAll<HTMLInputElement>('input[name="locale"]').forEach((i) => (i.checked = i.value === d.locale));
+          if (d.pausaHasta) {
+            const aviso = caja.querySelector<HTMLElement>('[data-en-pausa]')!;
+            const fecha = new Intl.DateTimeFormat(document.documentElement.lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(d.pausaHasta);
+            aviso.textContent = (JSON.parse(caja.dataset.pausa!) as string).replace('{}', fecha);
+            aviso.hidden = false;
+          }
+          form.hidden = false;
+        })
+        .catch(() => mostrar('invalido'));
+    }
+  }
+</script>
+
+<style>
+  .pref { background: var(--color-paper); }
+  .caja { max-width: 680px; margin: 0 auto; padding: 72px 24px 88px; display: flex; flex-direction: column; gap: 20px; }
+  @media (max-width: 600px) { .caja { padding: 40px 16px 64px; } }
+  .lead { margin: 0; color: var(--color-slate); font-size: 18px; }
+  [hidden] { display: none !important; }
+  .accion { margin: 0; }
+  .enlace { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink); font-weight: 600; text-underline-offset: 3px; }
+  .estado { margin: 0; color: var(--color-slate); }
+  .estado:empty { display: none; }
+  .aviso { margin: 0; padding: 14px 18px; border-radius: 14px; background: var(--color-mist); border: 1px solid var(--color-line-soft); }
+  .aviso a { color: var(--color-ink); font-weight: 600; }
+  .ajustes { display: flex; flex-direction: column; gap: 22px; padding: clamp(22px, 4vw, 36px); border-radius: 24px; background: var(--color-mist); border: 1px solid var(--color-line-soft); }
+  .dato { margin: 0; color: var(--color-slate); }
+  .dato strong { color: var(--color-ink); }
+  fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+  legend { padding: 0; margin-bottom: 6px; font-weight: 600; }
+  .ayuda { margin: 0 0 10px; font-size: 14px; color: var(--color-slate); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; display: inline-flex; }
+  .chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .chip span {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px;
+    border: 1.5px solid var(--color-line-soft); background: var(--color-paper); font-size: 14.5px; font-weight: 500;
+  }
+  .chip span::before { content: ''; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--color-slate); flex: none; }
+  .chip:hover span { border-color: var(--color-slate); }
+  .chip input:checked + span { background: color-mix(in srgb, var(--color-antidote) 22%, var(--color-paper)); border-color: var(--color-ink); }
+  .chip input:checked + span::before { background: var(--color-antidote); border-color: var(--color-ink); }
+  .chip input:focus-visible + span { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+  .campo { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+  .campo select { min-height: 48px; max-width: 280px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--color-line-soft); background: var(--color-paper); color: var(--color-ink); font: 400 16px var(--font-sans); }
+  .botones { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .salidas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .pie { margin: 12px 0 0; color: var(--color-slate); font-size: 14.5px; }
+  .pie a { color: var(--color-ink); display: inline-flex; align-items: center; min-height: 44px; }
+</style>

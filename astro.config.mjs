@@ -4,8 +4,9 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import serviceWorker from './integraciones/service-worker.mjs';
 
-// Fuera del sitemap: páginas con noindex (offline, la política que es borrador y la documentación interna).
-const FUERA_DEL_SITEMAP = ['/offline/', '/en/offline/', '/politica-de-datos/', '/en/data-policy/'];
+// Fuera del sitemap: páginas con noindex (offline, la política que es borrador, las preferencias de
+// novedades, que solo sirven con el token de un correo, y la documentación interna).
+const FUERA_DEL_SITEMAP = ['/offline/', '/en/offline/', '/politica-de-datos/', '/en/data-policy/', '/novedades/preferencias/', '/en/news/preferences/'];
 
 export default defineConfig({
   site: 'https://antidotocolombia.com',

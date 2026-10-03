@@ -17,7 +17,7 @@ https://:version.:project.pages.dev/*
   Cross-Origin-Resource-Policy: same-origin
   X-Permitted-Cross-Domain-Policies: none
   Origin-Agent-Cluster: ?1
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; font-src 'self'; connect-src 'self' https://api.antidotocolombia.com https://*.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; font-src 'self'; connect-src 'self' https://api.antidotocolombia.com https://*.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://api.antidotocolombia.com https://*.workers.dev; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
 
 # Service worker y manifest: siempre revalidados.
 /sw.js

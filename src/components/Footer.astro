@@ -29,7 +29,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
         <a href={rutas.inicio[locale]} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
         <p>{s.footerLema}</p>
         {api && novedades && (
-          <form class="novedades" hidden data-novedades data-api={api} data-version={NOVEDADES_VERSION} novalidate aria-labelledby="novedades-t">
+          <form class="novedades" hidden data-novedades data-api={api} data-version={NOVEDADES_VERSION} data-origen="pie" novalidate aria-labelledby="novedades-t">
             <p class="titulo" id="novedades-t">{s.novedadesTitulo}</p>
             <p class="nov-texto">{s.novedadesTexto}</p>
             <div class="nov-fila">

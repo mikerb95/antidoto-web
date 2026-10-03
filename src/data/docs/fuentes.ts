@@ -176,7 +176,7 @@ export const INVESTIGACIONES: Investigacion[] = [
       { titulo: 'Web Content Accessibility Guidelines (WCAG) 2.2', autor: 'W3C', tipo: 'norma', enlace: 'https://www.w3.org/TR/WCAG22/', hallazgo: 'Nivel AA como requisito no negociable: contraste, foco visible, áreas táctiles y movimiento.' },
     ],
     decisiones: [
-      { decision: 'El lenguaje visual sale del logo: frasco, líquido e infinito.', porque: 'Antídoto debe verse como Antídoto y no como un clon de la referencia.', donde: 'src/data/logo.ts, src/components/Encabezado.astro' },
+      { decision: 'El lenguaje visual sale del logo: frasco, líquido e infinito.', porque: 'Antídoto debe verse como Antídoto y no como un clon de la referencia.', donde: 'src/data/logo.ts, src/components/TarjetaIndice.astro' },
       { decision: 'Motion con fail-open, solo transform, opacity y clip-path, y pausa en bucles de más de 5 s.', porque: 'El motion no debe esconder contenido ni excluir a quien tiene sensibilidad al movimiento.', donde: 'src/lib/motion/core.ts' },
       { decision: 'Cian solo con texto tinta; sobre blanco, texto de color #0C5C7D y foco azul profundo.', porque: 'El cian no da contraste con texto blanco ni 3:1 sobre blanco.', donde: 'src/styles/global.css' },
       { decision: 'No se publican clientes, cifras ni testimonios sin confirmar; lo que falta se marca entre corchetes.', porque: 'La confianza del sitio depende de que todo lo que dice sea verdad.', donde: 'src/components/home/' },

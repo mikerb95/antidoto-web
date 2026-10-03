@@ -33,6 +33,7 @@ export function iniciarNovedades(form: HTMLFormElement): void {
         body: JSON.stringify({
           email: email.value.trim(),
           consentimiento: form.dataset.version,
+          origen: form.dataset.origen,
           intereses: [...form.querySelectorAll<HTMLInputElement>('input[name="intereses"]:checked')].map((i) => i.value),
           web: (form.elements.namedItem('web') as HTMLInputElement).value,
           locale,

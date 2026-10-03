@@ -1,0 +1,99 @@
+---
+// Archivo de novedades: las campañas que el equipo marcó como públicas (bandeja > campaña >
+// "Publicar en el archivo"), leídas de la API al cargar, y el formulario para suscribirse. Cada
+// correo se lee en su versión web, que vive en la API (es el mismo "Ver en el navegador").
+// Sin PUBLIC_API_URL no hay archivo ni formulario: la página queda con noindex.
+import Base from '../../layouts/Base.astro';
+import Novedades from '../home/Novedades.astro';
+import { t, rutaNovedades, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const p = s.novedadesPagina;
+const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+---
+<Base locale={locale} pagina={null} title={p.title} description={p.description} alternates={rutaNovedades} tema="claro" novedadesPie={false} noindex={!api}>
+  <section class="cabeza" aria-labelledby="novedades-titulo">
+    <div class="interior">
+      <h1 id="novedades-titulo" class="titulo-seccion">{p.titulo}</h1>
+      <p class="lead">{p.lead}</p>
+    </div>
+  </section>
+
+  {api && (
+    <section class="archivo" aria-labelledby="archivo-t">
+      <div class="interior">
+        <h2 id="archivo-t" class="sub">{p.anteriores}</h2>
+        <p class="estado" role="status" data-archivo-estado>{p.cargando}</p>
+        <ol class="lista" data-archivo data-api={api} data-locale={locale} data-vacio={p.vacio} data-error={p.error} data-leer={p.leer} hidden></ol>
+      </div>
+    </section>
+  )}
+
+  <Novedades locale={locale} origen="archivo" />
+</Base>
+
+<script>
+  // Lista de correos públicos. Si la API no responde, lo dice en vez de quedar cargando.
+  const lista = document.querySelector<HTMLOListElement>('[data-archivo]');
+  const estado = document.querySelector<HTMLElement>('[data-archivo-estado]');
+  if (lista && estado) {
+    const { api, locale, vacio, error, leer } = lista.dataset;
+    const fecha = new Intl.DateTimeFormat(locale === 'en' ? 'en' : 'es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' });
+    fetch(`${api}/v1/novedades?locale=${locale}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then(({ novedades }: { novedades: { id: string; asunto: string; preheader: string | null; fecha: number }[] }) => {
+        if (!novedades.length) {
+          estado.textContent = vacio!;
+          return;
+        }
+        lista.replaceChildren(
+          ...novedades.map((n) => {
+            const li = document.createElement('li');
+            const tiempo = document.createElement('time');
+            tiempo.dateTime = new Date(n.fecha).toISOString();
+            tiempo.textContent = fecha.format(n.fecha);
+            const a = document.createElement('a');
+            a.href = `${api}/v1/novedades/${n.id}`;
+            a.textContent = n.asunto;
+            a.setAttribute('aria-label', `${leer}: ${n.asunto}`);
+            li.append(tiempo, a);
+            if (n.preheader) {
+              const p = document.createElement('p');
+              p.textContent = n.preheader;
+              li.append(p);
+            }
+            return li;
+          }),
+        );
+        lista.hidden = false;
+        estado.textContent = '';
+      })
+      .catch(() => (estado.textContent = error!));
+  }
+</script>
+
+<style>
+  .cabeza { background: var(--color-paper); }
+  .interior { max-width: 860px; margin: 0 auto; padding: 64px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
+  @media (max-width: 600px) { .interior { padding-inline: 16px; padding-top: 40px; } }
+  .lead { margin: 0; color: var(--color-slate); font-size: 18px; max-width: 36em; }
+  .archivo { background: var(--color-paper); }
+  .sub { margin: 16px 0 0; font: 600 20px/1.3 var(--font-sans); }
+  .estado { margin: 0; color: var(--color-slate); }
+  .estado:empty { display: none; }
+  .lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .lista[hidden] { display: none; }
+  .lista :global(li) { position: relative; display: grid; gap: 4px; padding: 18px 22px; border-radius: 16px; border: 1px solid var(--color-line-soft); background: var(--color-mist); transition: border-color var(--t-fast) var(--ease-out); }
+  .lista :global(li:hover) { border-color: var(--color-slate); }
+  .lista :global(time) { font-size: 13.5px; color: var(--color-slate); }
+  .lista :global(a) { color: var(--color-ink); font-weight: 600; font-size: 18px; text-decoration: none; }
+  /* Toda la tarjeta es el área del enlace. */
+  .lista :global(a::after) { content: ''; position: absolute; inset: 0; border-radius: 16px; }
+  .lista :global(a:focus-visible) { outline: none; }
+  .lista :global(li:has(a:focus-visible)) { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+  .lista :global(p) { margin: 0; color: var(--color-slate); }
+</style>
