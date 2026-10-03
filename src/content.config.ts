@@ -5,8 +5,12 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
+// El id sale de la ruta del archivo y no del campo `slug`, que el loader usa por defecto: un
+// slug igual en los dos idiomas ("inclusion") haría que una entrada pisara a la otra.
+const idPorArchivo = ({ entry }: { entry: string }) => entry.replace(/\.md$/, '');
+
 const servicios = defineCollection({
-  loader: glob({ pattern: '*.md', base: './src/content/servicios' }),
+  loader: glob({ pattern: '*.md', base: './src/content/servicios', generateId: idPorArchivo }),
   schema: ({ image }) =>
     z.object({
       clave: z.string().regex(/^[a-z][a-z0-9-]*$/, 'La clave va en minúsculas, sin espacios ni puntos'),
@@ -31,7 +35,7 @@ const servicios = defineCollection({
 
 // Ofertas: subpáginas de cada línea, en src/content/ofertas/<linea>/<clave>.<idioma>.md.
 const ofertas = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/ofertas' }),
+  loader: glob({ pattern: '**/*.md', base: './src/content/ofertas', generateId: idPorArchivo }),
   schema: z.object({
     clave: z.string().regex(/^[a-z][a-z0-9-]*$/, 'La clave va en minúsculas, sin espacios ni puntos'),
     idioma: z.enum(['es', 'en']),
@@ -49,7 +53,7 @@ const ofertas = defineCollection({
 // Casos del portafolio y artículos del blog: un Markdown por idioma. Los archivos que empiezan
 // por "_" son plantillas y no se cargan. Nada se publica sin validación del cliente.
 const casos = defineCollection({
-  loader: glob({ pattern: '[!_]*.md', base: './src/content/casos' }),
+  loader: glob({ pattern: '[!_]*.md', base: './src/content/casos', generateId: idPorArchivo }),
   schema: ({ image }) =>
     z.object({
       clave: z.string().regex(/^[a-z][a-z0-9-]*$/),
@@ -74,7 +78,7 @@ const casos = defineCollection({
 });
 
 const blog = defineCollection({
-  loader: glob({ pattern: '[!_]*.md', base: './src/content/blog' }),
+  loader: glob({ pattern: '[!_]*.md', base: './src/content/blog', generateId: idPorArchivo }),
   schema: ({ image }) =>
     z.object({
       clave: z.string().regex(/^[a-z][a-z0-9-]*$/),

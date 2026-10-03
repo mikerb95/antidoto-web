@@ -1,0 +1,80 @@
+---
+// Índice del portafolio: casos validados por el cliente, filtrables por línea con enlaces de
+// ancla (sin JS). Mientras no haya casos publicados, una caja .pendiente y el enlace a clientes.
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import TarjetaIndice from '../TarjetaIndice.astro';
+import BloqueCta from '../BloqueCta.astro';
+import { obtenerServicios } from '../../data/servicios';
+import { obtenerCasos, casoPath } from '../../data/contenido';
+import { grafo, listaSchema, migasSchema } from '../../data/schema';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const [title, description] = s.seo.portafolio;
+const servicios = await obtenerServicios();
+const casos = await obtenerCasos();
+const grupos = servicios.map((sv) => ({ sv, casos: casos.filter((c) => c.es.linea === sv.id) })).filter((g) => g.casos.length > 0);
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.portafolio, rutas.portafolio[locale]],
+];
+const jsonLd = grafo(
+  listaSchema(title, rutas.portafolio[locale], casos.map((c) => [c[locale].title, casoPath(c, locale)])),
+  migasSchema(migas),
+);
+---
+<Base locale={locale} pagina="portafolio" title={title} description={description} alternates={rutas.portafolio} jsonLd={jsonLd} tema="claro" scroll="suave">
+  <CabeceraPagina locale={locale} migas={migas} titulo={p.portafolio.titulo} lead={p.portafolio.lead}>
+    {grupos.length > 1 && (
+      <nav class="filtro" aria-label={s.nav.servicios}>
+        {grupos.map(({ sv }) => <a href={`#linea-${sv.id}`}>{sv[locale].title}</a>)}
+      </nav>
+    )}
+  </CabeceraPagina>
+
+  {grupos.length > 0 ? (
+    grupos.map(({ sv, casos: suyos }) => (
+      <section class="bloque" id={`linea-${sv.id}`} aria-labelledby={`linea-${sv.id}-t`}>
+        <div class="wrap">
+          <div class="cab-izq"><h2 id={`linea-${sv.id}-t`}>{sv[locale].title}</h2></div>
+          <ul class="rejilla-tarjetas" data-entra>
+            {suyos.map((c) => (
+              <li><TarjetaIndice href={casoPath(c, locale)} titulo={c[locale].title} texto={c[locale].lead} etiqueta={c[locale].cliente} imagen={c.image} alt={c[locale].alt} cta={p.leerMas} /></li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    ))
+  ) : (
+    <section class="bloque" aria-label={s.nav.portafolio}>
+      <div class="wrap vacio">
+        <p class="pendiente">{p.portafolio.vacio}</p>
+        <p class="pendiente">{p.portafolio.vacio}</p>
+        <p class="pendiente">{p.portafolio.vacio}</p>
+        <div class="mientras">
+          <p>{p.portafolio.vacioLead}</p>
+          <a class="boton boton-tinta" href={rutas.clientes[locale]}>{p.portafolio.verClientes}</a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <BloqueCta locale={locale} />
+</Base>
+
+<style>
+  .filtro { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filtro a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; background: var(--color-paper); border: 1px solid var(--color-line-input); color: var(--color-ink); text-decoration: none; font-weight: 500; font-size: 15px; }
+  .filtro a:hover { border-color: var(--color-deep); color: var(--color-deep); }
+  .vacio { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px; }
+  .vacio .pendiente { margin: 0; min-height: 220px; }
+  .mientras { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 26px; border-radius: 20px; background: var(--color-mist); }
+  .mientras p { margin: 0; color: var(--color-slate); }
+</style>

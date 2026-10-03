@@ -33,3 +33,18 @@ aliado:
   texto: "Antídoto offers this line in partnership with codebymike, who designs and teaches the training."
 alt: "Room set up for a workshop, with the welcome screen, the whiteboard and the boxes of materials"
 ---
+
+## Applied AI, not theory
+
+Most people have already tried an AI assistant, but few use it well at work. This training closes that gap through practice: every participant leaves using Claude, Gemini, ChatGPT or Copilot for tasks they do every week.
+
+## How it works
+
+1. **Assessment.** We talk with your team to learn which tools they have, which licenses they already pay for and which tasks take up most of their time.
+2. **Tailored program.** We build the exercises with documents, processes and cases similar to your team's, never with generic examples.
+3. **Hands-on workshop.** Each person works on their own computer, in a room or by video call, with support throughout the session.
+4. **Responsible use.** We close with clear criteria: what information is never shared, how to check AI output and when not to use it.
+
+## In partnership with codebymike
+
+Antídoto offers this line in partnership with [codebymike](https://codebymike.net), who designs and teaches the training. Antídoto brings the experiential method, the logistics and the relationship with your company.
