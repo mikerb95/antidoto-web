@@ -31,3 +31,8 @@ RESEND_API_KEY=
 
 # Secreto de firma del webhook de Resend (whsec_...). Vacío: el webhook rechaza todo.
 RESEND_WEBHOOK_SECRET=
+
+# Clave de la API de Claude para el chat con IA. Vacía: el chat no se ofrece (solo WhatsApp).
+ANTHROPIC_API_KEY=
+# Solo en local: URL de un Claude falso para probar el chat sin gastar. Vacía: la API real.
+ANTHROPIC_URL=
