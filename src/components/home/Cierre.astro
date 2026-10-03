@@ -40,7 +40,10 @@ const OLA_FONDO = ola(720, 11, 28, -1);
       <a class="boton boton-tinta boton-grande" href={rutas.contacto[locale]} data-magnetico>{h.cotizar}</a>
       <a class="boton boton-borde boton-grande" href={`tel:+${SITE.whatsapp}`}>{SITE.phoneDisplay}</a>
     </div>
-    <button class="pausa" type="button" hidden aria-pressed="false" data-olas-pausa data-pausar={s.pause} data-reanudar={s.resume}>{s.pause}</button>
+    <button class="pausa" type="button" hidden aria-pressed="false" aria-label={s.pause} title={s.pause} data-olas-pausa data-pausar={s.pause} data-reanudar={s.resume}>
+      <svg class="i-pausa" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="6" width="3.2" height="12" rx="1"></rect><rect x="13.8" y="6" width="3.2" height="12" rx="1"></rect></svg>
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"></path></svg>
+    </button>
   </div>
 </section>
 
@@ -62,8 +65,12 @@ const OLA_FONDO = ola(720, 11, 28, -1);
   .boton-grande { min-height: 56px; padding: 0 30px; }
   .cierre :focus-visible { outline-color: var(--color-ink); }
 
-  .pausa { position: absolute; right: 24px; bottom: 10px; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--color-ink); font: 500 13px/1 var(--font-sans); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  /* Pausa del oleaje: solo ícono, discreto, con su nombre en aria-label (WCAG 2.2.2). */
+  .pausa { position: absolute; right: 16px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--color-ink); opacity: 0.55; cursor: pointer; transition: opacity var(--t-fast) var(--ease-out); }
+  .pausa:hover, .pausa:focus-visible { opacity: 1; }
+  .pausa svg { width: 18px; height: 18px; fill: currentColor; }
+  .pausa .i-play, .pausa[aria-pressed='true'] .i-pausa { display: none; }
+  .pausa[aria-pressed='true'] .i-play { display: block; }
   .pausa[hidden] { display: none; }
-  @media (max-width: 600px) { .pausa { right: 16px; } }
   @media (prefers-reduced-motion: reduce) { .pausa { display: none; } }
 </style>

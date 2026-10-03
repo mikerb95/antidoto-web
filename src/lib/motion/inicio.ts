@@ -185,7 +185,8 @@ function oleaje(seccion: HTMLElement) {
           if (pausado) bucle.pause();
           else bucle.play();
           boton.setAttribute('aria-pressed', String(pausado));
-          boton.textContent = (pausado ? boton.dataset.reanudar : boton.dataset.pausar) ?? '';
+          // El nombre queda fijo ("Pausar animación"): aria-pressed anuncia el estado. El título visible sí cambia.
+          boton.title = (pausado ? boton.dataset.reanudar : boton.dataset.pausar) ?? '';
         });
       }
 
