@@ -48,7 +48,7 @@ const [aliadosTitulo, aliadosTexto, aliadosCta] = h.aliados;
   .perfil:hover, .perfil:focus-visible { transform: translateY(-4px); }
   .perfil:hover::before, .perfil:focus-visible::before { clip-path: inset(0 0 0 0); }
   .perfil:hover .p-d, .perfil:hover .p-cta, .perfil:focus-visible .p-d, .perfil:focus-visible .p-cta { color: var(--color-ink); }
-  .p-cta::after { content: ' →'; display: inline-block; transition: transform var(--t-base) var(--ease-out); }
+  .p-cta::after { content: '→'; margin-left: 0.35em; display: inline-block; transition: transform var(--t-base) var(--ease-out); }
   .perfil:hover .p-cta::after, .perfil:focus-visible .p-cta::after { transform: translateX(4px); }
   .p-t { font: 400 22px/1.2 var(--font-display); }
   .p-d { color: var(--color-slate); font-size: 15px; }
@@ -59,7 +59,7 @@ const [aliadosTitulo, aliadosTexto, aliadosCta] = h.aliados;
   .a-t { font: 400 22px/1.2 var(--font-display); }
   .a-d { color: var(--color-fg-soft); font-size: 15px; }
   .a-cta { color: var(--color-glow); font-weight: 600; }
-  .a-cta::after { content: ' →'; display: inline-block; transition: transform var(--t-base) var(--ease-out); }
+  .a-cta::after { content: '→'; margin-left: 0.35em; display: inline-block; transition: transform var(--t-base) var(--ease-out); }
   .aliados:hover .a-cta::after, .aliados:focus-visible .a-cta::after { transform: translateX(4px); }
 
   .pendientes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 20px; }
