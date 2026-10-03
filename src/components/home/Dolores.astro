@@ -1,0 +1,70 @@
+---
+// Dolores del comprador: tarjetas en blanco y negro que al pasar el cursor (o con el foco)
+// toman color con un tinte cian y cambian el texto del dolor por el de la solución.
+// Solo se animan opacidades: encima de la foto a color va la misma foto en gris (el navegador
+// la descarga una vez) y se desvanece.
+import { Image } from 'astro:assets';
+import sala from '../../assets/fotos/sala-taller.jpg';
+import taller from '../../assets/fotos/taller.jpg';
+import grabacion from '../../assets/fotos/grabacion.jpg';
+import equipo from '../../assets/fotos/equipo-maqueta.jpg';
+import grupo from '../../assets/fotos/grupo-aire-libre.jpg';
+import mesa from '../../assets/fotos/mesa-evento.jpg';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const h = t(locale).inicio.dolores;
+// Foto, encuadre y destino de cada tarjeta, en el orden de los textos.
+const FOTOS = [
+  [sala, 'center', '#servicios'],
+  [taller, 'center 25%', '#servicios'],
+  [grabacion, 'center 40%', '#servicios'],
+  [equipo, 'center 35%', '#actividades'],
+  [grupo, 'center 60%', '#servicios'],
+  [mesa, 'center', '#servicios'],
+] as const;
+---
+<section class="dolores" aria-labelledby="dolores-t">
+  <div class="wrap interior">
+    <div class="cab-seccion">
+      <h2 id="dolores-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
+      <p>{h.lead}</p>
+    </div>
+    <div class="rejilla">
+      {h.items.map(([dolor, solucion], i) => {
+        const [foto, posicion, destino] = FOTOS[i];
+        return (
+          <a class="dolor" href={destino}>
+            <Image src={foto} alt="" widths={[400, 640, 800]} sizes="(max-width: 720px) 100vw, 380px" style={`object-position: ${posicion}`} />
+            <Image class="gris" src={foto} alt="" widths={[400, 640, 800]} sizes="(max-width: 720px) 100vw, 380px" style={`object-position: ${posicion}`} />
+            <span class="tinte" aria-hidden="true"></span>
+            <span class="chip"><span class="pain">{dolor}</span><span class="sol">{solucion}</span></span>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<style>
+  .dolores { background: var(--color-mist); }
+  .interior { padding-block: 80px; display: flex; flex-direction: column; gap: 36px; }
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 22px; }
+
+  .dolor { position: relative; display: block; height: 210px; border-radius: 20px; overflow: hidden; text-decoration: none; background: var(--color-ink); isolation: isolate; }
+  .dolor img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .dolor .gris { filter: grayscale(1) contrast(1.05); transition: opacity var(--t-base) var(--ease-out); }
+  .tinte { position: absolute; inset: 0; background: var(--color-antidote); mix-blend-mode: multiply; opacity: 0; transition: opacity var(--t-base) var(--ease-out); }
+  .chip { position: absolute; left: 16px; bottom: 16px; max-width: 78%; padding: 10px 14px; border-radius: 12px; background: var(--color-paper); color: var(--color-ink); font-weight: 600; font-size: 16px; line-height: 1.3; isolation: isolate; }
+  .chip::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--color-antidote); opacity: 0; transition: opacity var(--t-base) var(--ease-out); }
+  .sol { display: none; }
+
+  .dolor:hover .pain, .dolor:focus-visible .pain { display: none; }
+  .dolor:hover .sol, .dolor:focus-visible .sol { display: inline; }
+  .dolor:hover .gris, .dolor:focus-visible .gris { opacity: 0; }
+  .dolor:hover .tinte, .dolor:focus-visible .tinte { opacity: 0.38; }
+  .dolor:hover .chip::before, .dolor:focus-visible .chip::before { opacity: 1; }
+</style>

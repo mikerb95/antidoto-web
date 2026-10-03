@@ -1,0 +1,34 @@
+---
+// Cierre con cotización: el botón lleva al cotizador y el teléfono llama directo.
+import { SITE } from '../../data/site';
+import { t, rutas, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const h = t(locale).inicio.cierre;
+---
+<section id="cotizar" class="cierre" aria-labelledby="cta-t">
+  <div class="wrap interior">
+    <div class="texto">
+      <h2 id="cta-t" class="titulo-seccion">{h.titulo}</h2>
+      <p>{h.lead}</p>
+    </div>
+    <div class="ctas">
+      <a class="boton boton-tinta boton-grande" href={rutas.contacto[locale]}>{h.cotizar}</a>
+      <a class="boton boton-borde boton-grande" href={`tel:+${SITE.whatsapp}`}>{SITE.phoneDisplay}</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cierre { background: var(--color-antidote); color: var(--color-ink); }
+  .interior { padding-block: 72px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px; }
+  .texto { flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+  .titulo-seccion { line-height: 1.12; }
+  .texto p { margin: 0; font-size: 18px; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 14px; }
+  .boton-grande { min-height: 56px; padding: 0 30px; }
+  .cierre :focus-visible { outline-color: var(--color-ink); }
+</style>

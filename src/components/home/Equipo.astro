@@ -1,0 +1,63 @@
+---
+// Equipo: tarjeta destacada de la fundadora, espacios para el equipo y la licencia de SST.
+import { SITE } from '../../data/site';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const h = s.inicio.equipo;
+---
+<section id="nosotros" class="equipo" aria-labelledby="nosotros-t">
+  <div class="wrap interior">
+    <div class="cab-seccion">
+      <h2 id="nosotros-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
+      <p class="lead">{h.lead}</p>
+    </div>
+    <div class="fila">
+      <article class="fundadora">
+        <div class="datos">
+          <h3>{s.fundadoraNombre}</h3>
+          <p class="cargo">{s.fundadoraCargo}</p>
+          <ul>{h.credenciales.map((c) => <li>{c}</li>)}</ul>
+          <a class="linkedin" href={SITE.linkedin} target="_blank" rel="noopener" aria-label={h.linkedin}>in</a>
+        </div>
+        <p class="foto">{h.foto}</p>
+      </article>
+      <p class="pendiente integrante">{h.integrante}</p>
+      <p class="pendiente integrante">{h.integrante}</p>
+    </div>
+    <div class="licencia">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+      <p><strong>{h.licencia}</strong><span>{h.licenciaDatos}</span></p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .equipo { background: var(--color-mist); }
+  .interior { padding-block: 80px; display: flex; flex-direction: column; gap: 36px; }
+  .cab-seccion .lead { max-width: 620px; }
+  .fila { display: flex; flex-wrap: wrap; align-items: stretch; gap: 22px; }
+
+  .fundadora { flex: 2 1 600px; min-width: 0; display: flex; flex-wrap: wrap; gap: 24px; padding: 30px; border-radius: 24px; background: var(--color-antidote); color: var(--color-ink); }
+  .datos { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  h3 { margin: 0; font-size: 36px; line-height: 1.1; }
+  .cargo { margin: 0; font-style: italic; font-size: 17px; }
+  ul { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 16px; font-weight: 500; }
+  li { display: flex; gap: 10px; align-items: center; }
+  li::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--color-ink); flex: none; }
+  .linkedin { margin-top: auto; width: 46px; height: 46px; border-radius: 50%; background: var(--color-ink); color: var(--color-paper); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 600; font-size: 17px; }
+  .foto { margin: 0; flex: 0 1 220px; min-width: 180px; min-height: 260px; border-radius: 18px; border: 2px dashed var(--color-ink); display: flex; align-items: center; justify-content: center; padding: 18px; box-sizing: border-box; text-align: center; font-size: 14px; font-weight: 500; }
+  .fundadora :focus-visible { outline-color: var(--color-ink); }
+
+  .integrante { margin: 0; flex: 1 1 220px; min-width: 0; min-height: 200px; border-radius: 24px; background: var(--color-paper); box-sizing: border-box; }
+
+  .licencia { display: flex; gap: 16px; align-items: flex-start; padding: 20px 22px; border-radius: 18px; background: var(--color-paper); border: 1px solid var(--color-line-soft); }
+  .licencia svg { width: 34px; height: 34px; flex: none; fill: none; stroke: var(--color-deep); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .licencia p { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+  .licencia strong { font-weight: 600; }
+  .licencia span { color: var(--color-slate); font-size: 15px; }
+</style>

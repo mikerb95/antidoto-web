@@ -13,55 +13,46 @@ const s = t(locale);
 const year = new Date().getFullYear();
 // La suscripción solo aparece si el build trae la API (ver api/README.md).
 const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
-const sitio = [
-  [rutas.inicio[locale], locale === 'es' ? 'Inicio' : 'Home'],
-  [rutas.servicios[locale], s.nav.servicios],
-  [rutas.clientes[locale], s.nav.clientes],
-  [rutas.nosotros[locale], s.nav.nosotros],
-  [rutas.contacto[locale], s.nav.contacto],
-];
 ---
 <footer class="foot">
-  <div class="wrap grid">
-    <div class="marca">
-      <Logo class="logo" />
-      <p>{s.footerTagline}</p>
-      {api && (
-        <form class="novedades" hidden data-novedades data-api={api} data-version={NOVEDADES_VERSION} novalidate aria-labelledby="novedades-t">
-          <p class="mono mono-acento" id="novedades-t">{s.novedadesTitulo}</p>
-          <p class="nov-texto">{s.novedadesTexto}</p>
-          <div class="nov-fila">
-            <label class="sr" for="novedades-email">{s.novedadesCorreo}</label>
-            <input id="novedades-email" type="email" name="email" autocomplete="email" required placeholder={s.novedadesCorreo} />
-            <button class="btn btn-primary btn-sm" type="submit">{s.novedadesBoton}</button>
-          </div>
-          <label class="trampa" aria-hidden="true">Web<input type="text" name="web" tabindex="-1" autocomplete="off" /></label>
-          <p class="nov-legal">{NOVEDADES[locale]} <a href={rutaPolitica[locale]}>{s.footerPolitica}</a></p>
-          <p class="nov-estado" role="status" data-estado></p>
-        </form>
-      )}
+  <div class="wrap pie">
+    <div class="grid">
+      <div class="marca">
+        <a href={rutas.inicio[locale]} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
+        <p>{s.footerLema}</p>
+        {api && (
+          <form class="novedades" hidden data-novedades data-api={api} data-version={NOVEDADES_VERSION} novalidate aria-labelledby="novedades-t">
+            <p class="titulo" id="novedades-t">{s.novedadesTitulo}</p>
+            <p class="nov-texto">{s.novedadesTexto}</p>
+            <div class="nov-fila">
+              <label class="sr" for="novedades-email">{s.novedadesCorreo}</label>
+              <input id="novedades-email" type="email" name="email" autocomplete="email" required placeholder={s.novedadesCorreo} />
+              <button class="boton boton-cian" type="submit">{s.novedadesBoton}</button>
+            </div>
+            <label class="trampa" aria-hidden="true">Web<input type="text" name="web" tabindex="-1" autocomplete="off" /></label>
+            <p class="nov-legal">{NOVEDADES[locale]} <a href={rutaPolitica[locale]}>{s.footerPolitica}</a></p>
+            <p class="nov-estado" role="status" data-estado></p>
+          </form>
+        )}
+      </div>
+      <nav aria-labelledby="pie-servicios">
+        <p class="titulo" id="pie-servicios">{s.footerServicios}</p>
+        <ul>{SERVICIOS.map((sv) => <li><a href={servicioPath(sv, locale)}>{sv[locale].title}</a></li>)}</ul>
+      </nav>
+      <div>
+        <p class="titulo">{s.nav.contacto}</p>
+        <ul>
+          <li><a href={waLink(s.waDefault)} target="_blank" rel="noopener">WhatsApp {SITE.phoneDisplay}</a></li>
+          <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+          <li><a href={SITE.instagram} target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href={SITE.linkedin} target="_blank" rel="noopener">LinkedIn</a></li>
+        </ul>
+      </div>
     </div>
-    <nav aria-label={s.footerSitio}>
-      <p class="mono">{s.footerSitio}</p>
-      <ul>{sitio.map(([href, label]) => <li><a href={href}>{label}</a></li>)}</ul>
-    </nav>
-    <nav aria-label={s.footerServicios}>
-      <p class="mono">{s.footerServicios}</p>
-      <ul>{SERVICIOS.map((sv) => <li><a href={servicioPath(sv, locale)}>{sv[locale].title}</a></li>)}</ul>
-    </nav>
-    <div>
-      <p class="mono">{s.footerContacto}</p>
-      <ul>
-        <li><a href={waLink(s.waDefault)} target="_blank" rel="noopener">WhatsApp {SITE.phoneDisplay}</a></li>
-        <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
-      </ul>
-      <p class="mono redes-t">{s.footerRedes}</p>
-      <ul class="redes">
-        <li><a href={SITE.instagram} target="_blank" rel="noopener">Instagram</a></li>
-        <li><a href={SITE.linkedin} target="_blank" rel="noopener">LinkedIn</a></li>
-      </ul>
+    <div class="base">
+      <span>© {year} Antídoto. {s.footerDerechos}</span>
+      <a class="politica" href={rutaPolitica[locale]}>{s.footerPolitica}</a>
     </div>
-    <p class="copy mono">© {year} Antídoto · {SITE.phoneDisplay} · <a href={rutaPolitica[locale]}>{s.footerPolitica}</a></p>
   </div>
 </footer>
 
@@ -113,32 +104,33 @@ const sitio = [
 </script>
 
 <style>
-  .foot { position: relative; padding-block: 56px calc(40px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--color-line); background: rgb(10 17 21 / 0.72); font-size: 14px; }
-  .grid { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); gap: 32px; }
-  .marca :global(.logo) { width: 132px; height: auto; color: var(--color-antidote); display: block; margin-bottom: 14px; }
-  .marca p { margin: 0 0 12px; color: var(--color-fg-muted); max-width: 26em; }
-  .estado { display: inline-flex; align-items: center; gap: 10px; color: var(--color-fg); }
-  .mono { margin: 0 0 10px; }
+  .foot { background: var(--color-ink); color: var(--color-fg-soft); font-size: 15px; }
+  .pie { padding-block: 56px calc(36px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 32px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 32px; }
+  .marca { display: flex; flex-direction: column; gap: 14px; }
+  .home { align-self: flex-start; display: inline-flex; min-height: 44px; align-items: center; color: var(--color-antidote); }
+  .home :global(.logo) { display: block; height: 34px; width: auto; }
+  .marca > p { margin: 0; }
+  .titulo { margin: 0 0 6px; color: var(--color-paper); font-weight: 600; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; }
-  a { color: var(--color-fg); text-decoration: none; display: inline-flex; align-items: center; min-height: 36px; }
-  a:hover { color: var(--color-antidote); }
-  .redes-t { margin-top: 18px; }
-  .redes { display: flex; gap: 16px; }
-  .novedades { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 22px; max-width: 30em; }
+  ul a { color: var(--color-fg-soft); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
+  ul a:hover { color: var(--color-antidote); }
+  .base { border-top: 1px solid rgb(255 255 255 / 0.16); padding-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; }
+  .politica { color: var(--color-fg-soft); display: inline-flex; align-items: center; min-height: 44px; }
+  .politica:hover { color: var(--color-antidote); }
+
+  .novedades { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 8px; max-width: 30em; }
   .novedades[hidden] { display: none; }
-  .novedades .mono { margin: 0; }
-  .nov-texto { margin: 0 !important; }
+  .novedades .titulo { margin: 0; }
+  .nov-texto { margin: 0; font-size: 14px; }
   .nov-fila { display: flex; gap: 8px; min-width: 0; }
-  .nov-fila input { flex: 1; min-width: 0; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--color-line); background: rgb(10 17 21 / 0.6); color: var(--color-fg); font: 400 14px var(--font-sans); color-scheme: dark; }
-  .nov-fila input:focus-visible { outline: 2px solid var(--color-antidote); outline-offset: 2px; }
-  .nov-fila .btn { min-height: 44px; }
-  .nov-legal { margin: 0 !important; font-size: 12px; line-height: 1.5; }
-  .nov-legal a { display: inline; min-height: 0; color: var(--color-antidote); }
-  .nov-estado { margin: 0 !important; font-size: 13.5px; color: var(--color-glow) !important; }
+  .nov-fila input { flex: 1; min-width: 0; min-height: 48px; padding: 0 14px; border-radius: 10px; border: 1px solid rgb(255 255 255 / 0.24); background: rgb(255 255 255 / 0.06); color: var(--color-paper); font: 400 15px var(--font-sans); color-scheme: dark; }
+  .nov-fila input::placeholder { color: var(--color-fg-muted); }
+  .nov-legal { margin: 0; font-size: 12px; line-height: 1.5; }
+  .nov-legal a { color: var(--color-glow); }
+  .nov-estado { margin: 0; font-size: 13.5px; color: var(--color-glow); }
   .nov-estado:empty { display: none; }
   .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .copy { grid-column: 1 / -1; padding-top: 20px; border-top: 1px solid var(--color-line); margin: 8px 0 0; }
-  @media (max-width: 860px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .marca { grid-column: 1 / -1; } }
-  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+  .foot :focus-visible { outline-color: var(--color-antidote); }
 </style>

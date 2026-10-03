@@ -25,6 +25,15 @@
   --color-bone-muted: #4a5a60;
   --color-reto: #ff7a59;
 
+  /* Base clara del home (antidoto-home-diseno): papel, bruma y textos sobre blanco. */
+  --color-paper: #ffffff;
+  --color-mist: #f3f8fa;
+  --color-line-soft: #e3ebee;
+  --color-line-input: #c9d6db;
+  --color-dash: #9fb3ba;
+  --color-slate: #4a5a60;
+  --color-fg-soft: #e6eef0;
+
   --font-display: 'Cal Sans', 'Poppins', system-ui, sans-serif;
   --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-accent: 'Modulus', 'Poppins', system-ui, sans-serif;
@@ -40,9 +49,12 @@
   --t-base: 280ms;
   --t-slow: 480ms;
   --t-narrative: 1000ms;
-  --nav-h: 76px;
+  --nav-h: 0px;
   color-scheme: dark;
 }
+
+/* Tema claro (home). El resto del sitio sigue oscuro hasta su rediseño. */
+:root[data-tema='claro'] { color-scheme: light; }
 
 /* Navegación entre páginas: view transitions nativas entre documentos (sin router SPA).
    Cada página se carga de verdad y el navegador anima el paso: la nueva sube como
@@ -70,6 +82,10 @@
   }
   h1, h2, h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.01em; text-wrap: balance; }
   :focus-visible { outline: 2px solid var(--color-antidote); outline-offset: 3px; border-radius: 6px; }
+  /* Sobre blanco el cian no da 3:1: el foco usa el azul profundo. */
+  :root[data-tema='claro'] { background: var(--color-paper); }
+  :root[data-tema='claro'] body { color: var(--color-ink); font-size: 17px; }
+  :root[data-tema='claro'] :focus-visible { outline-color: var(--color-deep); }
 }
 
 @layer components {
@@ -125,6 +141,39 @@
   .btn-ghost:hover { border-color: var(--color-antidote); }
   .btn-sm { min-height: 44px; padding: 0 18px; font-size: 14px; }
 
+  /* Home claro: palabra resaltada con fondo cian (el cian solo lleva texto tinta). */
+  .resaltado { background: var(--color-antidote); color: var(--color-ink); padding: 0 0.25em; border-radius: 8px; white-space: nowrap; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+  .titulo-seccion { margin: 0; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.15; text-wrap: wrap; }
+  .cab-seccion { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .cab-seccion p { margin: 0; color: var(--color-slate); max-width: 560px; }
+
+  /* Botones del diseño claro: esquinas de 10 a 12 px, no píldora. */
+  .boton {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 48px; padding: 0 20px; border-radius: 10px; border: 1.5px solid transparent;
+    font: 600 15px/1.2 var(--font-sans); text-decoration: none; cursor: pointer;
+    position: relative; isolation: isolate; overflow: hidden;
+  }
+  .boton svg { width: 18px; height: 18px; flex: none; }
+  .boton-grande { min-height: 54px; padding: 0 28px; border-radius: 12px; font-size: 17px; }
+  .boton-cian { background: var(--color-antidote); color: var(--color-ink); }
+  .boton-tinta { background: var(--color-ink); color: var(--color-paper); }
+  .boton-borde { border-color: currentColor; color: inherit; }
+  /* Hover: una capa más clara sube desde abajo (solo transform). */
+  .boton::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; background: rgb(255 255 255 / 0.22);
+    transform: translateY(101%); transition: transform var(--t-base) var(--ease-out);
+  }
+  .boton:hover::before { transform: none; }
+
+  /* Dato que falta del cliente: caja punteada visible con el texto entre corchetes. */
+  .pendiente {
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 22px; border-radius: 18px; border: 2px dashed var(--color-dash);
+    color: var(--color-slate); font-size: 15px; font-weight: 500; line-height: 1.45;
+  }
+
   .pause-btn {
     display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px;
     background: none; border: 1px solid var(--color-line); color: var(--color-fg-muted);
@@ -142,5 +191,38 @@
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
   }
+  /* Home claro: palabra resaltada con fondo cian (el cian solo lleva texto tinta). */
+  .resaltado { background: var(--color-antidote); color: var(--color-ink); padding: 0 0.25em; border-radius: 8px; white-space: nowrap; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+  .titulo-seccion { margin: 0; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.15; text-wrap: wrap; }
+  .cab-seccion { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .cab-seccion p { margin: 0; color: var(--color-slate); max-width: 560px; }
+
+  /* Botones del diseño claro: esquinas de 10 a 12 px, no píldora. */
+  .boton {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 48px; padding: 0 20px; border-radius: 10px; border: 1.5px solid transparent;
+    font: 600 15px/1.2 var(--font-sans); text-decoration: none; cursor: pointer;
+    position: relative; isolation: isolate; overflow: hidden;
+  }
+  .boton svg { width: 18px; height: 18px; flex: none; }
+  .boton-grande { min-height: 54px; padding: 0 28px; border-radius: 12px; font-size: 17px; }
+  .boton-cian { background: var(--color-antidote); color: var(--color-ink); }
+  .boton-tinta { background: var(--color-ink); color: var(--color-paper); }
+  .boton-borde { border-color: currentColor; color: inherit; }
+  /* Hover: una capa más clara sube desde abajo (solo transform). */
+  .boton::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; background: rgb(255 255 255 / 0.22);
+    transform: translateY(101%); transition: transform var(--t-base) var(--ease-out);
+  }
+  .boton:hover::before { transform: none; }
+
+  /* Dato que falta del cliente: caja punteada visible con el texto entre corchetes. */
+  .pendiente {
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 22px; border-radius: 18px; border: 2px dashed var(--color-dash);
+    color: var(--color-slate); font-size: 15px; font-weight: 500; line-height: 1.45;
+  }
+
   .pause-btn { display: none; }
 }

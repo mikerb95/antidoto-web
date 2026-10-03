@@ -6,6 +6,7 @@ import Ambiente from '../components/Ambiente.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import BarraWhatsapp from '../components/BarraWhatsapp.astro';
+import Motion from '../components/Motion.astro';
 import { t, otroIdioma, type Locale, type Pagina } from '../i18n/ui';
 import { SITE } from '../data/site';
 
@@ -23,15 +24,18 @@ interface Props {
   noindex?: boolean;
   /** Scroll suave (Lenis) en páginas de marketing; las de lectura conservan el nativo. */
   scroll?: 'suave' | 'nativo';
+  /** Claro: la home rediseñada, sin el fondo con brillos, la barra de WhatsApp ni el núcleo de motion. */
+  tema?: 'oscuro' | 'claro';
 }
-const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, scroll = 'nativo' } = Astro.props;
+const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, scroll = 'nativo', tema = 'oscuro' } = Astro.props;
+const claro = tema === 'claro';
 const s = t(locale);
 const canonical = new URL(alternates[locale], SITE.url).href;
 const ogImage = new URL('/og/antidoto-og.jpg', SITE.url).href;
 const otro = otroIdioma(locale);
 ---
 <!doctype html>
-<html lang={s.htmlLang}>
+<html lang={s.htmlLang} data-tema={tema}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -42,7 +46,7 @@ const otro = otroIdioma(locale);
     <link rel="alternate" hreflang="es-CO" href={new URL(alternates.es, SITE.url).href} />
     <link rel="alternate" hreflang="en" href={new URL(alternates.en, SITE.url).href} />
     <link rel="alternate" hreflang="x-default" href={new URL(alternates.es, SITE.url).href} />
-    <meta name="theme-color" content="#0F181D" />
+    <meta name="theme-color" content="#FFFFFF" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -66,23 +70,20 @@ const otro = otroIdioma(locale);
   </head>
   <body data-scroll={scroll}>
     <a class="skip" href="#main">{s.skip}</a>
-    <Ambiente lado={pagina === 'nosotros' || pagina === 'contacto' ? 'izquierda' : 'derecha'} />
-    <Nav locale={locale} actual={pagina} alternateHref={alternates[otro]} />
+    {!claro && <Ambiente lado={pagina === 'nosotros' || pagina === 'contacto' ? 'izquierda' : 'derecha'} />}
+    <Nav locale={locale} alternateHref={alternates[otro]} />
     <main id="main">
       <slot />
     </main>
     <Footer locale={locale} />
-    <BarraWhatsapp locale={locale} message={waMessage} />
+    {!claro && <BarraWhatsapp locale={locale} message={waMessage} />}
+    {!claro && <Motion />}
   </body>
 </html>
 
 <script>
-  import '../lib/motion/core';
-  import { titulares, magneticos } from '../lib/motion/efectos';
   import { registrarOrigen } from '../lib/origen';
 
-  titulares();
-  magneticos();
   registrarOrigen();
 
   // PWA: el service worker (generado en el build desde src/pwa/sw.js) se registra después de
@@ -95,5 +96,4 @@ const otro = otroIdioma(locale);
 <style>
   .skip { position: absolute; left: 16px; top: -60px; z-index: 60; background: var(--color-antidote); color: var(--color-ink); padding: 10px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; }
   .skip:focus { top: 8px; }
-  main { padding-top: 84px; }
 </style>
