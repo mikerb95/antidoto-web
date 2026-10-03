@@ -62,7 +62,9 @@ export async function rutaAsesor(
 
   let r;
   try {
-    r = await atender(entrada, { llamarModelo: llamador(env.ANTHROPIC_API_KEY!, entrada.locale, entrada.pagina) });
+    // Un Claude falso solo en local: en producción la URL alternativa se ignora.
+    const url = env.ENTORNO === 'local' && env.ANTHROPIC_URL ? env.ANTHROPIC_URL : undefined;
+    r = await atender(entrada, { llamarModelo: llamador(env.ANTHROPIC_API_KEY!, entrada.locale, entrada.pagina, url) });
   } catch (e) {
     console.error('[asesor] falló la llamada al modelo', e);
     return json({ ok: false, error: 'modelo' }, 502, cabeceras);

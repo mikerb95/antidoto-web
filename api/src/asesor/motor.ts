@@ -21,7 +21,7 @@ export class ErrorModelo extends Error {
 }
 
 /** Crea la función que llama al modelo para una conversación. */
-export function llamador(clave: string, locale: Locale, pagina: Pagina | undefined, hacerFetch: typeof fetch = fetch) {
+export function llamador(clave: string, locale: Locale, pagina: Pagina | undefined, url = URL_API, hacerFetch: typeof fetch = fetch) {
   // Caché en el prompt de sistema y en la última herramienta: es lo fijo de cada pregunta.
   const system = [{ type: 'text', text: systemPrompt(locale, pagina), cache_control: { type: 'ephemeral' } }];
   const tools = definiciones().map((d, i, todas) => (i === todas.length - 1 ? { ...d, cache_control: { type: 'ephemeral' } } : d));
@@ -36,7 +36,7 @@ export function llamador(clave: string, locale: Locale, pagina: Pagina | undefin
       messages,
     });
     for (let intento = 0; ; intento++) {
-      const r = await hacerFetch(URL_API, {
+      const r = await hacerFetch(url, {
         method: 'POST',
         headers: { 'x-api-key': clave, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
         body: cuerpo,
