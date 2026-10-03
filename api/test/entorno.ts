@@ -17,6 +17,7 @@ export async function crearEntorno() {
     MAIL_FROM_NOVEDADES: 'Antídoto <novedades@antidotocolombia.com>',
     MAIL_EQUIPO: 'equipo@antidoto.test',
     HORAS_SEGUIMIENTO: '24',
+    SITIO_URL: 'https://antidotocolombia.com',
   };
   const dir = fileURLToPath(import.meta.resolve('../migraciones/'));
   for (const archivo of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {

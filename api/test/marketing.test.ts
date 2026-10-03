@@ -115,14 +115,23 @@ describe('suscripción', () => {
     expect(correos[0]!.subject).toBe('Confirma tu suscripción · Antídoto');
 
     const t = tokenDe(correos[0]!.text, 'confirmar');
+    // El GET (que también hacen los filtros de correo) solo lleva al botón del sitio.
     const pagina = await llamar(`/v1/suscripcion/confirmar?t=${t}`);
-    expect(await pagina.text()).toContain('method="post"');
+    expect(pagina.status).toBe(302);
+    expect(pagina.headers.get('location')).toBe(`${SITIO}/novedades/preferencias/?accion=confirmar&t=${encodeURIComponent(t)}`);
     expect((await contacto('ana@demo.co'))?.estado).toBe('pendiente');
 
     const r = await llamar(`/v1/suscripcion/confirmar?t=${t}`, { method: 'POST' });
-    expect(await r.text()).toContain('Listo, ya estás suscrito');
+    expect(r.status).toBe(303);
+    expect(r.headers.get('location')).toBe(`${SITIO}/novedades/preferencias/?estado=confirmado`);
     const c = await contacto('ana@demo.co');
     expect(c).toMatchObject({ estado: 'activo' });
+    // Al confirmar llega la bienvenida, del remitente de novedades y con baja de un clic.
+    const bienvenida = correos.at(-1)!;
+    expect(bienvenida.subject).toBe('Bienvenida a las novedades de Antídoto');
+    expect(bienvenida.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
+    expect(bienvenida.html).toContain(`${SITIO}/servicios/`);
+    expect(c?.bienvenida).toEqual(expect.any(Number));
     const cons = await env.DB.prepare('select * from contacto_consentimientos where contacto_id = ?').bind(c!.id).first<Record<string, unknown>>();
     expect(cons).toMatchObject({ version: NOVEDADES, revocado: null });
     expect(cons?.confirmado).toEqual(expect.any(Number));
@@ -139,13 +148,13 @@ describe('suscripción', () => {
     expect((await contacto('ana@demo.co'))?.estado).toBe('baja');
 
     const r = await llamar(`/v1/suscripcion/confirmar?t=${viejo}`, { method: 'POST' });
-    expect(r.status).toBe(404);
+    expect(r.headers.get('location')).toContain('estado=invalido');
     expect((await contacto('ana@demo.co'))?.estado).toBe('baja');
 
     await suscribirse('ana@demo.co', {}, '203.0.113.23');
     const nuevo = tokenDe(correos[0]!.text, 'confirmar');
     expect(nuevo).not.toBe(viejo);
-    expect((await llamar(`/v1/suscripcion/confirmar?t=${viejo}`, { method: 'POST' })).status).toBe(404);
+    expect((await llamar(`/v1/suscripcion/confirmar?t=${viejo}`, { method: 'POST' })).headers.get('location')).toContain('estado=invalido');
     await llamar(`/v1/suscripcion/confirmar?t=${nuevo}`, { method: 'POST' });
     expect((await contacto('ana@demo.co'))?.estado).toBe('activo');
   });
