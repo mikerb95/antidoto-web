@@ -72,3 +72,61 @@ export function migasSchema(migas: Array<[nombre: string, ruta: string]>) {
 export function grafo(...nodos: Record<string, unknown>[]) {
   return { '@context': 'https://schema.org', '@graph': nodos };
 }
+
+/** Preguntas frecuentes. Omite las respuestas que son un dato pendiente (entre corchetes). */
+export function faqSchema(items: Array<{ pregunta: string; respuesta: string }>) {
+  return {
+    '@type': 'FAQPage',
+    mainEntity: items
+      .filter((i) => !/^\[.*\]$/.test(i.respuesta.trim()))
+      .map((i) => ({ '@type': 'Question', name: i.pregunta, acceptedAnswer: { '@type': 'Answer', text: i.respuesta } })),
+  };
+}
+
+/** Lista de un índice: cada elemento es [nombre, ruta]. */
+export function listaSchema(nombre: string, ruta: string, items: Array<[nombre: string, ruta: string]>) {
+  return {
+    '@type': 'CollectionPage',
+    name: nombre,
+    url: absoluta(ruta),
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: items.map(([name, r], i) => ({ '@type': 'ListItem', position: i + 1, name, url: absoluta(r) })),
+    },
+  };
+}
+
+/** Una oferta (subpágina de una línea) como Service que pertenece al servicio de su línea. */
+export function ofertaSchema(o: { nombre: string; descripcion: string; ruta: string; linea: string; rutaLinea: string }, locale: Locale) {
+  const url = absoluta(o.ruta);
+  return {
+    '@type': 'Service',
+    '@id': `${url}#servicio`,
+    name: o.nombre,
+    description: o.descripcion,
+    url,
+    inLanguage: t(locale).htmlLang,
+    isRelatedTo: { '@type': 'Service', '@id': `${absoluta(o.rutaLinea)}#servicio`, name: o.linea },
+    areaServed: { '@type': 'Country', name: 'Colombia' },
+    provider: { '@type': 'ProfessionalService', '@id': ORG_ID, name: SITE.name, url: `${SITE.url}/` },
+  };
+}
+
+/** Artículo del blog o caso del portafolio. */
+export function publicacionSchema(
+  tipo: 'BlogPosting' | 'CreativeWork',
+  p: { titulo: string; descripcion: string; ruta: string; fecha: Date; imagen: string; autor?: string },
+  locale: Locale,
+) {
+  return {
+    '@type': tipo,
+    headline: p.titulo,
+    description: p.descripcion,
+    url: absoluta(p.ruta),
+    datePublished: p.fecha.toISOString().slice(0, 10),
+    image: absoluta(p.imagen),
+    inLanguage: t(locale).htmlLang,
+    ...(p.autor ? { author: { '@type': 'Person', name: p.autor } } : {}),
+    publisher: { '@type': 'ProfessionalService', '@id': ORG_ID, name: SITE.name },
+  };
+}

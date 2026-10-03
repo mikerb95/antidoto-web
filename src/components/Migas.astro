@@ -1,0 +1,27 @@
+---
+// Migas de pan visibles. La misma lista sirve para el BreadcrumbList (migasSchema en
+// src/data/schema.ts): cada eslabón es [nombre, ruta] y el último es la página actual.
+import { t, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  migas: Array<[nombre: string, ruta: string]>;
+}
+const { locale, migas } = Astro.props;
+---
+<nav class="migas" aria-label={t(locale).migasLabel}>
+  <ol>
+    {migas.map(([nombre, ruta], i) =>
+      i < migas.length - 1 ? <li><a href={ruta}>{nombre}</a></li> : <li><span aria-current="page">{nombre}</span></li>,
+    )}
+  </ol>
+</nav>
+
+<style>
+  .migas ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; font-size: 14px; font-weight: 500; }
+  .migas li { display: inline-flex; align-items: center; min-width: 0; }
+  .migas li + li::before { content: ''; width: 5px; height: 5px; margin: 0 10px; border-radius: 50%; background: var(--color-dash); flex: none; }
+  .migas a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-slate); text-decoration: none; }
+  .migas a:hover { color: var(--color-deep); text-decoration: underline; text-underline-offset: 3px; }
+  .migas [aria-current] { color: var(--color-ink); overflow-wrap: anywhere; }
+</style>

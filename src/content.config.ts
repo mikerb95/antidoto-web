@@ -21,6 +21,10 @@ const servicios = defineCollection({
       lead: z.string().min(1),
       facts: z.array(z.string().min(1)),
       includes: z.array(z.string().min(1)),
+      /** Herramientas con las que trabaja el servicio (la capacitación en IA, por ejemplo). */
+      herramientas: z.array(z.object({ nombre: z.string().min(1), texto: z.string().min(1) })).optional(),
+      /** Aliado que presta el servicio a nombre de Antídoto. */
+      aliado: z.object({ nombre: z.string().min(1), url: z.url(), texto: z.string().min(1) }).optional(),
       alt: z.string().min(1),
     }),
 });

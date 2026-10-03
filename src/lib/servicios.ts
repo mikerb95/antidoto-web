@@ -11,6 +11,8 @@ export interface ServicioTexto {
   lead: string;
   facts: string[];
   includes: string[];
+  herramientas?: Array<{ nombre: string; texto: string }>;
+  aliado?: { nombre: string; url: string; texto: string };
   alt: string;
   /** Id de la entrada en la colección, para renderizar el cuerpo del Markdown. */
   entrada?: string;

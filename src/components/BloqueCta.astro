@@ -1,0 +1,49 @@
+---
+// Cierre común de las páginas internas: cotizador (con el servicio ya elegido si viene) y
+// WhatsApp con el mensaje escrito.
+import WhatsappIcon from './WhatsappIcon.astro';
+import { t, rutas, type Locale } from '../i18n/ui';
+import { tp } from '../i18n/paginas';
+import { waLink } from '../data/site';
+
+interface Props {
+  locale: Locale;
+  /** Clave del servicio para preseleccionarlo en el cotizador. */
+  servicio?: string;
+  /** Mensaje de WhatsApp (por defecto el general). */
+  mensaje?: string;
+  titulo?: string;
+  lead?: string;
+}
+const { locale, servicio, mensaje, titulo, lead } = Astro.props;
+const p = tp(locale);
+const cotizador = `${rutas.contacto[locale]}${servicio ? `?servicio=${encodeURIComponent(servicio)}` : ''}`;
+---
+<section class="bloque-cta" aria-labelledby="cta-pagina-t">
+  <div class="wrap">
+    <div class="caja">
+      <div class="texto">
+        <h2 id="cta-pagina-t">{titulo ?? p.cta.titulo}</h2>
+        <p>{lead ?? p.cta.lead}</p>
+      </div>
+      <div class="ctas">
+        <a class="boton boton-cian boton-grande" href={cotizador} data-magnetico>{p.cta.cotizador}</a>
+        <a class="boton boton-borde boton-grande" href={waLink(mensaje ?? t(locale).waDefault)} target="_blank" rel="noopener"><WhatsappIcon />{p.cta.whatsapp}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .bloque-cta { padding-block: 24px 88px; }
+  .caja { position: relative; overflow: hidden; isolation: isolate; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px; padding: clamp(28px, 4vw, 48px); border-radius: 26px; background: var(--color-ink); color: var(--color-paper); }
+  /* Nivel de líquido al fondo de la caja, como el frasco del logo. */
+  .caja::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 10px; z-index: -1; background: linear-gradient(90deg, var(--color-mid), var(--color-antidote), var(--color-glow)); }
+  .texto { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+  h2 { margin: 0; font-size: clamp(28px, 2.6vw + 10px, 42px); line-height: 1.12; }
+  .texto p { margin: 0; color: var(--color-fg-soft); font-size: 17px; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .boton-borde { color: var(--color-paper); border-color: rgb(255 255 255 / 0.4); }
+  .boton-borde:hover { border-color: var(--color-paper); }
+  .caja :focus-visible { outline-color: var(--color-antidote); }
+</style>

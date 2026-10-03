@@ -1,0 +1,34 @@
+---
+// Lista de preguntas frecuentes con <details> nativo (funciona sin JS). Las respuestas que son
+// un dato pendiente del cliente se muestran en una caja .pendiente. El FAQPage del JSON-LD lo
+// arma la página con faqSchema (src/data/schema.ts), que omite las pendientes.
+import { esPendiente } from '../data/faq';
+
+interface Props {
+  items: Array<{ clave: string; pregunta: string; respuesta: string }>;
+  /** Abre la primera pregunta. */
+  abrirPrimera?: boolean;
+}
+const { items, abrirPrimera = false } = Astro.props;
+---
+<div class="lista-faq" data-entra>
+  {items.map(({ clave, pregunta, respuesta }, i) => (
+    <details id={`faq-${clave}`} open={abrirPrimera && i === 0}>
+      <summary>{pregunta}</summary>
+      {esPendiente(respuesta) ? <p class="pendiente">{respuesta}</p> : <p>{respuesta}</p>}
+    </details>
+  ))}
+</div>
+
+<style>
+  .lista-faq { display: flex; flex-direction: column; gap: 12px; }
+  details { border-radius: 16px; background: var(--color-paper); border: 1px solid var(--color-line-soft); transition: box-shadow var(--t-base) var(--ease-out); }
+  details[open] { box-shadow: 0 10px 30px rgb(15 24 29 / 0.06); }
+  summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; padding: 18px 22px; font-weight: 600; font-size: 17px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: ''; flex: none; width: 12px; height: 12px; border-right: 2.5px solid var(--color-deep); border-bottom: 2.5px solid var(--color-deep); transform: translateY(-3px) rotate(45deg); transition: transform var(--t-base) var(--ease-out); }
+  details[open] summary::after { transform: translateY(3px) rotate(-135deg); }
+  details > p { margin: 0; padding: 0 22px 20px; color: var(--color-slate); }
+  details > .pendiente { margin: 0 22px 20px; padding: 14px; justify-content: flex-start; text-align: left; }
+  details:target { outline: 2px solid var(--color-antidote); outline-offset: 2px; }
+</style>

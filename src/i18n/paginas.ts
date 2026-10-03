@@ -373,7 +373,7 @@ export const paginas = {
     },
 
     mapa: {
-      titulo: ['Site', 'map'],
+      titulo: ['Site ', 'map'],
       lead: 'Every page of the site in one place.',
       grupos: { servicios: 'Services', soluciones: 'Solutions', empresa: 'Company', recursos: 'Resources', legal: 'Legal' },
     },

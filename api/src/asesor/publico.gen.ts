@@ -141,6 +141,45 @@ export const SERVICIOS_PUBLICOS = [
         "Brand experiences"
       ]
     }
+  },
+  {
+    "clave": "ia",
+    "es": {
+      "titulo": "Capacitación en IA para el trabajo",
+      "slug": "capacitacion-en-ia",
+      "resumen": "Talleres prácticos para que tu equipo use Claude, Gemini, ChatGPT y Copilot en sus tareas reales, con criterio y cuidando la información de la empresa.",
+      "datos": [
+        "Claude, Gemini, ChatGPT y Copilot",
+        "Presencial o por videollamada",
+        "Dictada por codebymike"
+      ],
+      "incluye": [
+        "Fundamentos y uso responsable de la IA",
+        "Instrucciones claras que dan buenos resultados",
+        "Redacción, resúmenes y análisis de documentos",
+        "IA dentro de Microsoft 365 y Google Workspace",
+        "Práctica con los procesos de tu área",
+        "Cuidado de los datos de la empresa"
+      ]
+    },
+    "en": {
+      "titulo": "AI training for work",
+      "slug": "ai-training",
+      "resumen": "Hands-on workshops so your team uses Claude, Gemini, ChatGPT and Copilot in their real tasks, with good judgment and care for company information.",
+      "datos": [
+        "Claude, Gemini, ChatGPT and Copilot",
+        "In person or by video call",
+        "Taught by codebymike"
+      ],
+      "incluye": [
+        "AI fundamentals and responsible use",
+        "Clear instructions that get good results",
+        "Writing, summaries and document analysis",
+        "AI inside Microsoft 365 and Google Workspace",
+        "Practice with your team's own processes",
+        "Protecting company data"
+      ]
+    }
   }
 ] as const;
 export const CLIENTES_PUBLICOS: readonly string[] = ["Enel","Claro","Stanley Black & Decker","Seguros Bolívar","Gallagher","Cruz Verde","Howden","WSP","WOM","Correcol","MAB Ingeniería","SGIN","Tabasco OC","SEQ Consultores","HSEQ Consultores","Bogotá Móvil","Capital Bus","La Lorenza"];
