@@ -26,6 +26,10 @@ MAIL_FROM = "Antídoto <hola@antidotocolombia.com>"
 MAIL_EQUIPO = "antidoto.colombia@outlook.com"
 # Remitente de las campañas de novedades.
 MAIL_FROM_NOVEDADES = "Antídoto <novedades@antidotocolombia.com>"
+# Sitio público: ahí están las páginas de confirmación, baja y preferencias de novedades.
+SITIO_URL = "https://antidotocolombia.com"
+# Pie legal de las campañas (razón social y domicilio). Vacío: "Antídoto · ... · Colombia".
+# MAIL_DIRECCION = "Antídoto S.A.S. · NIT ... · Calle ... · Ciudad, Colombia"
 # Horas sin respuesta antes de avisar al equipo.
 HORAS_SEGUIMIENTO = "24"
 # Tope de gasto diario del chat con IA (USD). Si no se puede leer el gasto, el chat no responde.

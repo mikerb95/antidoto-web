@@ -13,6 +13,10 @@ export interface Env {
   MAIL_FROM_NOVEDADES?: string;
   /** Secreto de firma del webhook de Resend (whsec_...). Sin él, el webhook rechaza todo. */
   RESEND_WEBHOOK_SECRET?: string;
+  /** Sitio público (sin barra final): las páginas de confirmación, baja y preferencias viven ahí. */
+  SITIO_URL?: string;
+  /** Razón social y domicilio para el pie de las campañas; sin ella va una línea genérica. */
+  MAIL_DIRECCION?: string;
   /** Sal para el hash de IP. Sin ella se usa una fija y el hash es menos privado. */
   SAL_IP?: string;
   /** Clave de la API de Claude para el chat con IA. Sin ella el chat no se ofrece (solo WhatsApp). */

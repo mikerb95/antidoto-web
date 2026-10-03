@@ -10,6 +10,9 @@ export interface Correo {
   html: string;
   texto: string;
   responderA?: string;
+  /** Remitente; por defecto MAIL_FROM. */
+  de?: string;
+  cabeceras?: Record<string, string>;
 }
 
 export async function enviar(env: Env, c: Correo): Promise<boolean> {
@@ -23,12 +26,13 @@ export async function enviar(env: Env, c: Correo): Promise<boolean> {
       method: 'POST',
       headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        from: env.MAIL_FROM,
+        from: c.de ?? env.MAIL_FROM,
         to: Array.isArray(c.para) ? c.para : [c.para],
         subject: c.asunto,
         html: c.html,
         text: c.texto,
         reply_to: c.responderA,
+        headers: c.cabeceras,
       }),
     });
     if (!res.ok) console.error(`[correo] Resend respondió ${res.status}: ${await res.text()}`);

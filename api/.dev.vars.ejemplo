@@ -16,6 +16,9 @@ MAIL_FROM=Antídoto <hola@antidotocolombia.com>
 MAIL_FROM_NOVEDADES=Antídoto <novedades@antidotocolombia.com>
 MAIL_EQUIPO=antidoto.colombia@outlook.com
 
+# Sitio público con las páginas de confirmación, baja y preferencias (npm run preview del sitio).
+SITIO_URL=http://localhost:4321
+
 # Horas sin respuesta antes de avisar al equipo.
 HORAS_SEGUIMIENTO=24
 
