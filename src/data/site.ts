@@ -21,4 +21,4 @@ export function waLink(message: string): string {
  * texto, logos ni audio), codifícalo a MP4 H.264 de 720p y ~1 MB (y si se quiere, WebM AV1),
  * déjalo en public/video/ y pon aquí sus rutas. Mientras sea null, la escena son las fotos.
  */
-export const VIDEO_HERO: { mp4: string; webm?: string } | null = null as { mp4: string; webm?: string } | null;
+export const VIDEO_HERO: { mp4: string; webm?: string } | null = { mp4: '/video/prueba-temporal.mp4' } as { mp4: string; webm?: string } | null;
