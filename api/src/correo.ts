@@ -76,6 +76,33 @@ const textoPlano = (pares: [string, string | number | null | undefined][]) =>
     .map(([k, v]) => `${k}: ${v}`)
     .join('\n');
 
+/**
+ * Aviso interno: alguien mostró interés en el chat con IA. No lleva datos personales (el chat
+ * no los pide y tapa los que se escriban); solo lo que el asistente resumió y desde dónde.
+ */
+export function correoInteresAsesor(d: {
+  accion: 'whatsapp' | 'cotizador';
+  servicio: Lead['servicio'] | null;
+  necesidad: string | null;
+  pagina: string | null;
+  locale: 'es' | 'en';
+}): Omit<Correo, 'para'> {
+  const servicio = d.servicio ? NOMBRE_SERVICIO[d.servicio].es : null;
+  const que = d.accion === 'whatsapp' ? 'preparó un mensaje para WhatsApp' : 'pidió el enlace al cotizador para dejar sus datos';
+  const pares: [string, string | null][] = [
+    ['Servicio', servicio],
+    ['Lo que necesita', d.necesidad],
+    ['Página', d.pagina],
+    ['Idioma', d.locale === 'en' ? 'Inglés' : 'Español'],
+  ];
+  const nota = 'Si escribe por WhatsApp, el mensaje llega con este mismo resumen. El chat no guarda la conversación.';
+  return {
+    asunto: `Interés en el chat con IA${servicio ? `: ${servicio}` : ''}`,
+    html: marco(`Alguien ${que}`, `${filas(pares)}<p style="margin:0;color:#5b6b70;font-size:13px">${escapar(nota)}</p>`),
+    texto: `Alguien ${que} en el chat con IA.\n\n${textoPlano(pares)}\n\n${nota}`,
+  };
+}
+
 /** Aviso interno de lead nuevo. */
 export function correoLeadEquipo(lead: Lead, appUrl: string): Omit<Correo, 'para'> {
   const servicio = NOMBRE_SERVICIO[lead.servicio].es;

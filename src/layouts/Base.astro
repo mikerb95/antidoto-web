@@ -90,7 +90,7 @@ const otro = otroIdioma(locale);
     <main id="main">
       <slot />
     </main>
-    <Footer locale={locale} />
+    <Footer locale={locale} novedades={pagina !== 'inicio'} />
     {!claro && <BarraWhatsapp locale={locale} message={waMessage} />}
     <Motion />
   </body>

@@ -1,7 +1,7 @@
 // Modelo de datos de la fase 1: leads del cotizador, su consentimiento (Ley 1581 de 2012),
 // el historial de cada lead y el acceso del equipo al admin con enlace mágico.
 // Fechas en milisegundos desde epoch (UTC). Los ids son UUID generados en el Worker.
-import { sqliteTable, text, integer, index, uniqueIndex, primaryKey } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index, uniqueIndex, primaryKey } from 'drizzle-orm/sqlite-core';
 
 export const ESTADOS = ['nuevo', 'contactado', 'cotizado', 'ganado', 'perdido'] as const;
 export type Estado = (typeof ESTADOS)[number];
@@ -246,6 +246,16 @@ export const envios = sqliteTable(
     index('envios_resend').on(t.resendId),
   ],
 );
+
+/**
+ * Gasto del asesor con IA por día de Bogotá (USD estimados con el `usage` de la API). Sostiene
+ * el tope diario, que falla cerrado: si esta tabla no se puede leer, el asesor no responde.
+ */
+export const gastoAsesor = sqliteTable('gasto_asesor', {
+  /** AAAA-MM-DD en America/Bogota. */
+  dia: text('dia').primaryKey(),
+  usd: real('usd').notNull(),
+});
 
 export type Contacto = typeof contactos.$inferSelect;
 export type Campana = typeof campanas.$inferSelect;

@@ -7,8 +7,10 @@ import { obtenerServicios, servicioPath } from '../data/servicios';
 
 interface Props {
   locale: Locale;
+  /** La home tiene su propia sección de novedades; ahí el pie no repite el formulario. */
+  novedades?: boolean;
 }
-const { locale } = Astro.props;
+const { locale, novedades = true } = Astro.props;
 const s = t(locale);
 const SERVICIOS = await obtenerServicios();
 const year = new Date().getFullYear();
@@ -21,7 +23,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
       <div class="marca">
         <a href={rutas.inicio[locale]} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
         <p>{s.footerLema}</p>
-        {api && (
+        {api && novedades && (
           <form class="novedades" hidden data-novedades data-api={api} data-version={NOVEDADES_VERSION} novalidate aria-labelledby="novedades-t">
             <p class="titulo" id="novedades-t">{s.novedadesTitulo}</p>
             <p class="nov-texto">{s.novedadesTexto}</p>
@@ -61,50 +63,9 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 </footer>
 
 <script>
-  import { ui } from '../i18n/ui';
+  import { iniciarNovedades } from '../lib/novedades';
 
-  // Suscripción a novedades: envía a la API y la persona confirma desde su correo (doble
-  // confirmación). Al enviar el formulario acepta el texto de autorización que tiene debajo.
-  const form = document.querySelector<HTMLFormElement>('[data-novedades]');
-  if (form) {
-    const locale = document.documentElement.lang.startsWith('es') ? 'es' : 'en';
-    const s = ui[locale];
-    const estado = form.querySelector<HTMLElement>('[data-estado]')!;
-    const email = form.querySelector<HTMLInputElement>('input[name="email"]')!;
-    const inicio = Date.now();
-    form.hidden = false;
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
-        estado.textContent = s.novedadesError;
-        email.focus();
-        return;
-      }
-      const boton = form.querySelector('button')!;
-      boton.disabled = true;
-      try {
-        const r = await fetch(`${form.dataset.api}/v1/suscripciones`, {
-          method: 'POST',
-          headers: { 'content-type': 'text/plain;charset=UTF-8' },
-          body: JSON.stringify({
-            email: email.value.trim(),
-            consentimiento: form.dataset.version,
-            web: (form.elements.namedItem('web') as HTMLInputElement).value,
-            locale,
-            pagina: location.pathname,
-            t: Date.now() - inicio,
-          }),
-        });
-        if (!r.ok) throw new Error(String(r.status));
-        estado.textContent = s.novedadesEnviado;
-        form.reset();
-      } catch {
-        estado.textContent = s.novedadesError;
-      } finally {
-        boton.disabled = false;
-      }
-    });
-  }
+  document.querySelectorAll<HTMLFormElement>('[data-novedades]').forEach(iniciarNovedades);
 </script>
 
 <style>

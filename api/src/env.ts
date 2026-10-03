@@ -15,4 +15,8 @@ export interface Env {
   RESEND_WEBHOOK_SECRET?: string;
   /** Sal para el hash de IP. Sin ella se usa una fija y el hash es menos privado. */
   SAL_IP?: string;
+  /** Clave de la API de Claude para el chat con IA. Sin ella el chat no se ofrece (solo WhatsApp). */
+  ANTHROPIC_API_KEY?: string;
+  /** Tope de gasto diario del chat con IA, en USD. Por defecto, 1. */
+  ASESOR_TOPE_DIARIO_USD?: string;
 }
