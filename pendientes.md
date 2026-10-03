@@ -6,12 +6,49 @@ Revisión pendiente tras actualizar `src/data/docs/`.
 
 - [x] Páginas `/novedades/` y `/novedades/preferencias/` (y `/en/news/` y `/en/news/preferences/`). Hechas y probadas con la API en local; RF-46, HU-32 y K-49 ya están como implementados.
 - [x] ~~Marcar RF-28 y RF-30 como parciales~~: ya no hace falta, las páginas existen.
-- [ ] Reflejar en el kanban y en los requisitos lo que sigue sin commit: `PaginaPortafolio.astro`, `ia.*.md` y `src/content/ofertas/ia/`. Revisar si `K-34`, RF-11, RF-47 y RF-48 siguen vigentes.
+- [x] Reflejar en el kanban y en los requisitos el sitio multipágina: K-34 hecho, RF-01, RF-05, RF-11 (parcial: faltan casos) y RF-47 actualizados. RF-48 sigue parcial por las respuestas pendientes.
 - [ ] Activar el asesor en producción: secret `ANTHROPIC_API_KEY` y prueba con la API real (preguntas trampa de la receta `chat-ia`). Cubre RF-39 y HU-30.
 - [ ] Medir de nuevo el rendimiento (LCP y JS inicial) con el hero actual, el asesor y las secciones nuevas. Cubre RNF-01 a RNF-03.
 - [ ] Auditoría de accesibilidad formal posterior al rediseño. Cubre RNF-06.
 - [ ] Pasar la CSP de Report-Only a enforcement tras revisar la consola. Cubre RNF-12.
 - [ ] Decidir con el dueño si `/docs/` debe seguir desplegándose con el sitio público o quedarse solo en desarrollo.
+
+## Sitio multipágina (03/10/2026)
+
+El sitio ya tiene páginas e índices reales: líneas y ofertas, soluciones por área, portafolio, empresa, preguntas frecuentes, blog, legales y mapa del sitio, en los dos idiomas. Lo que queda:
+
+### Técnico
+
+- [ ] Migas de pan en `/novedades/` y `/en/news/`: son las únicas dos páginas que no pasan `npm run verificar`. Al corregirlas, agregar `npm run verificar` a `.github/workflows/ci.yml` después del build.
+- [ ] El asesor (`api/src/asesor/conocimiento.ts`) lee las preguntas de `ui.inicio.faq.items`, pero el sitio ya las toma de `src/data/faq.ts`. Pasar el asesor a `faq.ts` y borrar `inicio.faq` de `ui.ts` para no tener dos fuentes. De paso, que el asesor conozca las ofertas y las soluciones y enlace a sus páginas.
+- [ ] Decidir la barra inferior de WhatsApp en móvil (RF-07). Ahora que todas las páginas usan `tema="claro"`, `BarraWhatsapp` ya no aparece en ninguna. O se activa en las internas (cuidando que no choque con el botón del asesor) o se borra y se ajusta RF-07.
+- [ ] Limpiar el diseño oscuro que quedó sin uso: `Ambiente`, `BarraWhatsapp` (según lo anterior), `tema="oscuro"` en `Base.astro` y las clases `.panel`, `.btn`, `.eyebrow` y `.mono` de `global.css` que ya nadie use. El bloque de movimiento reducido de `global.css` repite reglas de `.resaltado`, `.boton` y `.pendiente`: revisar.
+- [ ] Cotizador: hoy acepta `?servicio=`. Sumar `?oferta=` para que el mensaje de WhatsApp nombre la oferta desde la que llegó la persona.
+- [ ] Analítica sin cookies (Plausible o Cloudflare Web Analytics) con eventos de clic a WhatsApp, envío del cotizador y uso del asesor. Al activarla, completar la sección "Medición" de `/cookies/`.
+- [ ] Prueba de accesibilidad del mega menú con lector de pantalla (NVDA y VoiceOver) y solo con teclado: Tab, Esc y el foco al cerrar. También capturas con movimiento reducido de las páginas nuevas. Hasta ahora solo se verificó con capturas en 1440 y 390 px.
+- [ ] Medir el JS inicial y el LCP de las páginas nuevas (línea, oferta, solución) contra el presupuesto. Solo se sumó el script de la nav, pero no se midió con las importaciones dinámicas.
+- [ ] Cuando haya varios casos o artículos: filtros como páginas propias en el portafolio (hoy son anclas) y búsqueda estática con Pagefind para el blog.
+- [ ] Imagen OG por tipo de página (línea, oferta, caso, artículo). Hoy todas comparten `og/antidoto-og.jpg`.
+- [ ] Los avisos de colección vacía de `casos` y `blog` en el build desaparecen con el primer caso o artículo. No son errores.
+
+### Para validar con el cliente (los escribí yo a partir del brief)
+
+- [ ] Las 17 ofertas de formaciones, audiovisual, catering y diseño (`src/content/ofertas/`): nombre, descripción corta y "Para". Salen de los `includes` de cada servicio, pero las descripciones son redacción mía.
+- [ ] Qué ofertas se recomiendan para cada área y qué retos de la home se muestran en cada una (`src/data/soluciones.ts`), y a qué página lleva cada dolor de la home (`src/components/home/Dolores.astro`).
+- [ ] Las preguntas frecuentes nuevas que no venían de la home (`src/data/faq.ts`): público, combinar servicios, colegios, calidad de video, cobertura del catering, diseño y cotización.
+- [ ] Textos de Trabaja con nosotros (aliados y talento) y de los borradores de términos y cookies. Los dos legales necesitan además la revisión del abogado, igual que la política de datos.
+
+### Contenido que falta del cliente (hoy se ve en cajas `.pendiente`)
+
+- [ ] Detalle de cada oferta: qué incluye, formato, duración, entregables y 2 o 3 fotos. Va en el cuerpo del Markdown y en `incluye` de cada archivo de `src/content/ofertas/`.
+- [ ] Descripción larga de cada línea (metodología, formatos, diferenciales), en el cuerpo de `src/content/servicios/<clave>.<idioma>.md`.
+- [ ] Casos del portafolio con autorización escrita (plantilla en `src/content/casos/_plantilla.md`): uno por línea como mínimo, y uno por área para las páginas de soluciones.
+- [ ] Primeros artículos del blog y quién los escribe (plantilla en `src/content/blog/_plantilla.md`). Mientras no haya artículos publicados, el blog no aparece en la nav.
+- [ ] Retos típicos de colegios y universidades para su página de solución.
+- [ ] Respuestas pendientes de la FAQ: sede y ciudades, uso de la IA en las formaciones, tiempo de entrega de un video, pedido mínimo de catering y tiempo de respuesta a una cotización.
+- [ ] Cómo trabajamos: entregables al cierre y tiempos de respuesta y anticipación por servicio.
+- [ ] Nosotros: foto de la fundadora, integrantes del equipo y datos de la licencia de SST (resolución, entidad y campos de acción).
+- [ ] Vacantes abiertas, si las hay, para Trabaja con nosotros.
 
 ## Email marketing con Resend (novedades)
 
@@ -75,7 +112,7 @@ La solución es lanzar el rediseño. Si el lanzamiento se demora, al menos hay q
 
 - [ ] Más sustancia en cada página de servicio. Hoy las internas tienen entre 240 y 350 palabras. Faltan: qué incluye, para quién es, formatos, duración, casos y preguntas frecuentes del servicio. Es lo que más pesa para que Google y los chats citen a Antídoto en búsquedas como "formaciones vivenciales para empresas en Colombia".
 - [ ] Sede y ciudades. Con eso se agrega `address` al JSON-LD de la organización (`src/data/schema.ts`), se completa la respuesta de la FAQ de la home que hoy va entre corchetes y se crea el perfil de Google Business para las búsquedas locales.
-- [ ] Respuestas finales de la FAQ de la home. Cuando no queden datos entre corchetes, agregar el JSON-LD `FAQPage`. Google ya casi no lo muestra como resultado enriquecido, pero sí sirve para que los asistentes de IA entiendan el contenido.
+- [ ] Respuestas finales de la FAQ (`src/data/faq.ts`). El JSON-LD `FAQPage` ya existe en `/preguntas-frecuentes/` y en cada línea, y omite las respuestas que siguen entre corchetes: se completará solo al llenarlas. Google ya casi no lo muestra como resultado enriquecido, pero sí sirve para que los asistentes de IA entiendan el contenido.
 - [ ] Una imagen OG por servicio (1200 × 630). Hoy todas las páginas comparten `og/antidoto-og.jpg`. Mejora cómo se ven los enlaces en WhatsApp, LinkedIn y los chats.
 - [ ] Opcional: un correo con el dominio propio en lugar de `antidoto.colombia@outlook.com`. Da más confianza a quien llega por primera vez.
 
