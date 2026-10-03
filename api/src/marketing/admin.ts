@@ -7,7 +7,6 @@ import {
   automaticos,
   campanas,
   contactos,
-  leads,
   plantillas,
   ORIGENES_CONTACTO,
   consentimientosMarketing,
@@ -493,8 +492,8 @@ export async function importarContactos(req: Request, db: DrizzleD1Database): Pr
     creado: t,
     actualizado: t,
   }));
-  // 7 columnas variables por fila: lotes de 10 filas para no pasar de 100 variables.
-  for (let i = 0; i < filas.length; i += 10) await db.insert(contactos).values(filas.slice(i, i + 10));
+  // Unas 15 variables por fila: lotes de 6 filas para no pasar de 100 variables.
+  for (let i = 0; i < filas.length; i += 6) await db.insert(contactos).values(filas.slice(i, i + 6));
   return json({ ok: true, creados: filas.length, existentes: existentes.size, invalidos });
 }
 

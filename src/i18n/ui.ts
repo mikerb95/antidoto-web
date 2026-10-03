@@ -5,15 +5,39 @@ export const LOCALES = ['es', 'en'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 /** Páginas del sitio y su ruta en cada idioma. */
-export const PAGINAS = ['inicio', 'servicios', 'clientes', 'nosotros', 'contacto'] as const;
+export const PAGINAS = [
+  'inicio',
+  'servicios',
+  'soluciones',
+  'portafolio',
+  'clientes',
+  'nosotros',
+  'comoTrabajamos',
+  'trabaja',
+  'faq',
+  'blog',
+  'contacto',
+  'terminos',
+  'cookies',
+  'mapa',
+] as const;
 export type Pagina = (typeof PAGINAS)[number];
 
 export const rutas: Record<Pagina, Record<Locale, string>> = {
   inicio: { es: '/', en: '/en/' },
   servicios: { es: '/servicios/', en: '/en/services/' },
+  soluciones: { es: '/soluciones/', en: '/en/solutions/' },
+  portafolio: { es: '/portafolio/', en: '/en/work/' },
   clientes: { es: '/clientes/', en: '/en/clients/' },
   nosotros: { es: '/nosotros/', en: '/en/about/' },
+  comoTrabajamos: { es: '/nosotros/como-trabajamos/', en: '/en/about/how-we-work/' },
+  trabaja: { es: '/nosotros/trabaja-con-nosotros/', en: '/en/about/work-with-us/' },
+  faq: { es: '/preguntas-frecuentes/', en: '/en/faq/' },
+  blog: { es: '/blog/', en: '/en/blog/' },
   contacto: { es: '/contacto/', en: '/en/contact/' },
+  terminos: { es: '/terminos-y-condiciones/', en: '/en/terms/' },
+  cookies: { es: '/cookies/', en: '/en/cookies/' },
+  mapa: { es: '/mapa-del-sitio/', en: '/en/sitemap/' },
 };
 
 /** Política de tratamiento de datos (fuera del menú, enlazada en el pie y el cotizador). */
@@ -30,7 +54,21 @@ export const ui = {
     htmlLang: 'es-CO',
     ogLocale: 'es_CO',
     skip: 'Saltar al contenido',
-    nav: { servicios: 'Servicios', clientes: 'Clientes', nosotros: 'Nosotros', contacto: 'Contacto' },
+    nav: {
+      servicios: 'Servicios',
+      soluciones: 'Soluciones',
+      portafolio: 'Portafolio',
+      clientes: 'Clientes',
+      nosotros: 'Nosotros',
+      comoTrabajamos: 'Cómo trabajamos',
+      trabaja: 'Trabaja con nosotros',
+      faq: 'Preguntas frecuentes',
+      blog: 'Blog',
+      contacto: 'Contacto',
+      terminos: 'Términos y condiciones',
+      cookies: 'Cookies',
+      mapa: 'Mapa del sitio',
+    },
     navQuote: 'Cotizar',
     menuLabel: 'Principal',
     menuBoton: 'Menú',
@@ -398,7 +436,21 @@ export const ui = {
     htmlLang: 'en',
     ogLocale: 'en_US',
     skip: 'Skip to content',
-    nav: { servicios: 'Services', clientes: 'Clients', nosotros: 'About', contacto: 'Contact' },
+    nav: {
+      servicios: 'Services',
+      soluciones: 'Solutions',
+      portafolio: 'Work',
+      clientes: 'Clients',
+      nosotros: 'About',
+      comoTrabajamos: 'How we work',
+      trabaja: 'Work with us',
+      faq: 'FAQ',
+      blog: 'Blog',
+      contacto: 'Contact',
+      terminos: 'Terms and conditions',
+      cookies: 'Cookies',
+      mapa: 'Sitemap',
+    },
     navQuote: 'Get a quote',
     menuLabel: 'Main',
     menuBoton: 'Menu',
