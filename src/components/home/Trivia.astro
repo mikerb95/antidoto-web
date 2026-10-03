@@ -32,7 +32,6 @@ const textos = {
   </ol>
   <p class="instruccion" hidden data-instruccion>{tr.instruccion}</p>
   <div class="fila pie"><span>{tr.conectados}</span><strong data-puesto>{tr.posicion.replace('{p}', String(PUESTO_INICIAL))}</strong></div>
-  <figcaption class="ilustrativo">{tr.ilustrativo}</figcaption>
 
   <div class="final" hidden tabindex="-1" aria-labelledby="trivia-final-t" role="group" data-final>
     <p class="f-titulo" id="trivia-final-t" data-f-titulo></p>
@@ -188,7 +187,6 @@ const textos = {
   .pie strong { display: inline-block; color: var(--color-ink); font-weight: 600; }
   .pie strong:global(.cambio) { animation: puesto var(--t-slow) var(--ease-out); color: var(--color-deep); }
   @keyframes puesto { from { transform: translateY(8px); opacity: 0; } }
-  .ilustrativo { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-slate); }
 
   /* Resultado: el líquido llena la tarjeta y deja la invitación a cotizar. */
   .final { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 32px; background: var(--color-antidote); color: var(--color-ink); }
