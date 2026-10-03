@@ -1,6 +1,6 @@
 ---
 // Home rediseñada (antidoto-home-diseno/home.html): base clara con secciones oscuras.
-// La nav y el pie son los del layout; aquí van las diez secciones del cuerpo, en orden.
+// La nav y el pie son los del layout; aquí van las secciones del cuerpo, en orden.
 import Base from '../../layouts/Base.astro';
 import Hero from '../home/Hero.astro';
 import ClientesCifras from '../home/ClientesCifras.astro';
@@ -11,6 +11,7 @@ import Actividades from '../home/Actividades.astro';
 import ParaQuien from '../home/ParaQuien.astro';
 import Equipo from '../home/Equipo.astro';
 import Faq from '../home/Faq.astro';
+import Novedades from '../home/Novedades.astro';
 import Cierre from '../home/Cierre.astro';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { organizationSchema } from '../../data/schema';
@@ -32,6 +33,7 @@ const [title, description] = t(locale).seo.inicio;
   <ParaQuien locale={locale} />
   <Equipo locale={locale} />
   <Faq locale={locale} />
+  <Novedades locale={locale} />
   <Cierre locale={locale} />
 </Base>
 

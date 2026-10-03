@@ -79,6 +79,8 @@ export interface Respuesta {
   necesidad: string | null;
   /** El modelo pidió mostrar el enlace al cotizador; trae el servicio si lo sabe. */
   contacto: { servicio: Clave | null } | null;
+  /** Servicio del que se habla, si el modelo lo indicó en alguna herramienta. */
+  servicio: Clave | null;
   uso: Uso;
   /** Por qué se devolvió el texto de respaldo en vez de la respuesta del modelo. */
   respaldo: 'guardia' | 'negativa' | 'vueltas' | null;
@@ -120,12 +122,13 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
   let whatsapp: string | null = null;
   let necesidad: string | null = null;
   let contacto: Respuesta['contacto'] = null;
+  let servicio: Clave | null = null;
   let reintentoGuardia = false;
   // Texto escrito junto a una llamada a herramienta. El modelo suele dar la respuesta completa
   // en el mismo mensaje en que pide preparar WhatsApp, y después cierra sin decir nada más: si
   // ese texto se descartara, se perdería justo la respuesta.
   let previo: string[] = [];
-  const cerrar = (texto: string, respaldo: Respuesta['respaldo']): Respuesta => ({ texto, whatsapp, necesidad, contacto, uso, respaldo });
+  const cerrar = (texto: string, respaldo: Respuesta['respaldo']): Respuesta => ({ texto, whatsapp, necesidad, contacto, servicio, uso, respaldo });
 
   for (let vuelta = 0; vuelta < MAX_LLAMADAS; vuelta++) {
     const r = await deps.llamarModelo(mensajes);
@@ -143,6 +146,7 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
           const s = ejecutar(u, e.locale);
           if (s.whatsapp) ({ whatsapp, necesidad } = s.whatsapp);
           if (s.contacto) contacto = s.contacto;
+          if (s.servicio) servicio = s.servicio;
           return { type: 'tool_result', tool_use_id: u.id, content: s.contenido, ...(s.error ? { is_error: true } : {}) };
         }),
       });
@@ -175,6 +179,7 @@ interface Salida {
   error: boolean;
   whatsapp?: { whatsapp: string; necesidad: string | null };
   contacto?: { servicio: Clave | null };
+  servicio?: Clave;
 }
 
 function ejecutar(u: Extract<Bloque, { type: 'tool_use' }>, locale: Locale): Salida {
@@ -188,6 +193,7 @@ function ejecutar(u: Extract<Bloque, { type: 'tool_use' }>, locale: Locale): Sal
       contenido: 'Listo: el botón "Enviar a Antídoto por WhatsApp" ya está visible para el visitante.',
       error: false,
       whatsapp: { whatsapp, necesidad },
+      servicio: p.servicio,
     };
   }
   if (u.name === 'pedir_contacto') {
@@ -197,6 +203,7 @@ function ejecutar(u: Extract<Bloque, { type: 'tool_use' }>, locale: Locale): Sal
       contenido: 'Listo: el enlace al cotizador ya está visible para el visitante debajo de tu respuesta.',
       error: false,
       contacto: { servicio: p.servicio ?? null },
+      servicio: p.servicio,
     };
   }
   return { contenido: `Herramienta desconocida: ${u.name}`, error: true };

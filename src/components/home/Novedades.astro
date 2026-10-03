@@ -1,0 +1,101 @@
+---
+// Registro a novedades por correo (email marketing con Resend, ver api/README.md). Doble
+// confirmación: la persona queda activa cuando confirma desde su correo. Los intereses son las
+// claves de los servicios, y la bandeja segmenta las campañas con ellos. Como el pie, solo existe
+// si el build trae PUBLIC_API_URL y se muestra cuando el script la conecta (src/lib/novedades.ts,
+// iniciado desde Footer.astro).
+import { t, rutaPolitica, type Locale } from '../../i18n/ui';
+import { NOVEDADES, NOVEDADES_VERSION } from '../../data/consentimiento';
+import { obtenerServicios } from '../../data/servicios';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const h = s.inicio.novedades;
+const servicios = await obtenerServicios();
+const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+---
+{api && (
+  <section class="novedades" aria-labelledby="novedades-inicio-t" hidden data-novedades-caja>
+    <div class="interior">
+      <div class="caja" data-entra>
+        <div class="texto">
+          <h2 id="novedades-inicio-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
+          <p class="lead">{h.lead}</p>
+          <p class="pendiente frecuencia">{h.frecuencia}</p>
+        </div>
+        <form data-novedades data-api={api} data-version={NOVEDADES_VERSION} novalidate aria-labelledby="novedades-inicio-t">
+          <fieldset>
+            <legend>{h.intereses}</legend>
+            <div class="chips">
+              {servicios.map((sv) => (
+                <label class="chip">
+                  <input type="checkbox" name="intereses" value={sv.id} />
+                  <span>{sv[locale].title}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div class="fila">
+            <label class="sr" for="novedades-inicio-email">{h.correo}</label>
+            <input id="novedades-inicio-email" type="email" name="email" autocomplete="email" required placeholder={h.correo} />
+            <button class="boton boton-tinta boton-grande" type="submit" data-magnetico>{h.boton}</button>
+          </div>
+          <label class="trampa" aria-hidden="true">Web<input type="text" name="web" tabindex="-1" autocomplete="off" /></label>
+          <p class="legal">{NOVEDADES[locale]} <a href={rutaPolitica[locale]}>{s.footerPolitica}</a></p>
+          <p class="estado" role="status" data-estado></p>
+        </form>
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .novedades { background: var(--color-paper); }
+  .novedades[hidden] { display: none; }
+  .interior { max-width: 1120px; margin: 0 auto; padding: 24px 24px 88px; }
+  @media (max-width: 600px) { .interior { padding-inline: 16px; padding-bottom: 64px; } }
+  .caja {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 40px; align-items: center;
+    padding: clamp(28px, 5vw, 56px); border-radius: 28px; background: var(--color-mist); border: 1px solid var(--color-line-soft);
+  }
+  @media (max-width: 860px) { .caja { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
+  .texto { display: flex; flex-direction: column; gap: 16px; }
+  .lead { margin: 0; color: var(--color-slate); font-size: 17px; max-width: 34em; }
+  .frecuencia { align-self: flex-start; padding: 10px 16px; border-radius: 12px; font-size: 13.5px; }
+
+  form { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+  legend { padding: 0; margin-bottom: 10px; font-weight: 600; font-size: 15px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; display: inline-flex; }
+  .chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .chip span {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px;
+    border: 1.5px solid var(--color-line-soft); background: var(--color-paper); font-size: 14.5px; font-weight: 500;
+    transition: background-color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
+  }
+  /* Marca de elección: un punto que se llena de cian, como el nivel del frasco. */
+  .chip span::before { content: ''; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--color-slate); flex: none; }
+  .chip:hover span { border-color: var(--color-slate); }
+  .chip input:checked + span { background: color-mix(in srgb, var(--color-antidote) 22%, var(--color-paper)); border-color: var(--color-ink); }
+  .chip input:checked + span::before { background: var(--color-antidote); border-color: var(--color-ink); }
+  .chip input:focus-visible + span { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+
+  .fila { display: flex; gap: 10px; min-width: 0; }
+  @media (max-width: 520px) { .fila { flex-direction: column; } }
+  .fila input {
+    flex: 1; min-width: 0; min-height: 54px; padding: 0 16px; border-radius: 12px;
+    border: 1.5px solid var(--color-line-soft); background: var(--color-paper); color: var(--color-ink); font: 400 16px var(--font-sans);
+  }
+  .fila input:hover { border-color: var(--color-slate); }
+  .fila input[aria-invalid='true'] { border-color: var(--color-ink); }
+  .legal { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--color-slate); }
+  .legal a { color: inherit; }
+  .estado { margin: 0; font-weight: 600; }
+  .estado:empty { display: none; }
+  .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+</style>
