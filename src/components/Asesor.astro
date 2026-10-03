@@ -1,0 +1,372 @@
+---
+// Chat con IA: resuelve dudas de los servicios y deja listo el mensaje de WhatsApp para el
+// equipo, que es quien confirma todo. Solo existe si el build trae PUBLIC_API_URL; la API decide
+// si responde (clave y tope de gasto del día) y, si no, el chat ofrece solo WhatsApp.
+// Lógica pura en src/lib/asesor.ts; la API en api/src/asesor/.
+import { t, rutas, type Locale, type Pagina } from '../i18n/ui';
+import { SITE, waLink } from '../data/site';
+import { obtenerServicios, servicioPath } from '../data/servicios';
+
+interface Props {
+  locale: Locale;
+  pagina: Pagina | null;
+}
+const { locale, pagina } = Astro.props;
+const a = t(locale).asesor;
+const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+// Ruta de cada página de servicio -> su clave, para que "¿cuánto para 30?" se entienda.
+const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [servicioPath(s, locale), s.id]));
+---
+{api && (
+  <div
+    class="asesor"
+    hidden
+    data-asesor
+    data-api={api}
+    data-pagina={pagina ?? ''}
+    data-servicios={JSON.stringify(servicios)}
+    data-wa={SITE.whatsapp}
+    data-cotizador={rutas.contacto[locale]}
+  >
+    <button class="asesor-abrir" type="button" aria-expanded="false" aria-controls="asesor-panel" data-abrir>
+      <span class="punto" aria-hidden="true"></span>{a.abrir}
+    </button>
+
+    <section class="asesor-panel" id="asesor-panel" role="dialog" aria-labelledby="asesor-titulo" hidden data-panel>
+      <header class="cab">
+        <div>
+          <p class="titulo" id="asesor-titulo"><span class="punto" aria-hidden="true"></span>{a.titulo}</p>
+          <p class="sub">{a.subtitulo}</p>
+        </div>
+        <button class="icono" type="button" data-reiniciar aria-label={a.reiniciar} title={a.reiniciar}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+        <button class="icono" type="button" data-cerrar aria-label={a.cerrar} title={a.cerrar}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+        </button>
+      </header>
+
+      <!-- data-lenis-prevent: sin él, Lenis se queda con la rueda y el chat no hace scroll. -->
+      <ol class="mensajes" data-mensajes data-lenis-prevent aria-live="polite">
+        <li class="msg asesor-msg"><span class="quien">{a.ia}</span><p>{a.saludo}</p></li>
+      </ol>
+
+      <div class="sugerencias" data-sugerencias>
+        {a.sugerencias.map((s) => <button type="button" class="sugerencia">{s}</button>)}
+      </div>
+
+      <form class="entrada" data-form>
+        <label class="oculto" for="asesor-campo">{a.campo}</label>
+        <textarea id="asesor-campo" name="pregunta" rows="1" maxlength="500" placeholder={a.placeholder} required data-campo></textarea>
+        <button class="enviar" type="submit" aria-label={a.enviar} title={a.enviar} data-enviar>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+      </form>
+
+      <p class="pie">
+        <span>{a.aviso}</span>
+        <a href={waLink(t(locale).waDefault)} target="_blank" rel="noopener">{a.soloWhatsapp}</a>
+      </p>
+    </section>
+  </div>
+)}
+
+<script>
+  import { ui } from '../i18n/ui';
+  import {
+    CLAVE_ALMACEN,
+    MAX_PREGUNTAS,
+    cuerpoPregunta,
+    enlaceCotizador,
+    enlaceWhatsapp,
+    leerHistorial,
+    paginaDe,
+    preguntasHechas,
+    textoPlano,
+    type Mensaje,
+  } from '../lib/asesor';
+
+  const raiz = document.querySelector<HTMLElement>('[data-asesor]');
+  if (raiz) {
+    const locale = document.documentElement.lang.startsWith('es') ? 'es' : 'en';
+    const a = ui[locale].asesor;
+    const d = raiz.dataset;
+    const pagina = paginaDe(location.pathname, d.pagina, JSON.parse(d.servicios || '{}'));
+    const abrir = raiz.querySelector<HTMLButtonElement>('[data-abrir]')!;
+    const panel = raiz.querySelector<HTMLElement>('[data-panel]')!;
+    const lista = raiz.querySelector<HTMLOListElement>('[data-mensajes]')!;
+    const sugerencias = raiz.querySelector<HTMLElement>('[data-sugerencias]')!;
+    const form = raiz.querySelector<HTMLFormElement>('[data-form]')!;
+    const campo = raiz.querySelector<HTMLTextAreaElement>('[data-campo]')!;
+    const enviar = raiz.querySelector<HTMLButtonElement>('[data-enviar]')!;
+
+    // sessionStorage puede no existir o lanzar (modo privado, datos bloqueados): el chat sigue
+    // funcionando, solo que no recuerda la conversación al cambiar de página.
+    const leer = () => {
+      try {
+        return leerHistorial(sessionStorage.getItem(CLAVE_ALMACEN));
+      } catch {
+        return [];
+      }
+    };
+    const guardar = () => {
+      try {
+        sessionStorage.setItem(CLAVE_ALMACEN, JSON.stringify(historial));
+      } catch {}
+    };
+
+    let historial: Mensaje[] = leer();
+    let disponible: Promise<boolean> | null = null;
+    let ocupado = false;
+
+    const consultar = () =>
+      (disponible ??= fetch(`${d.api}/v1/asesor`)
+        .then((r) => (r.ok ? r.json() : { disponible: false }))
+        .then((j: { disponible?: boolean }) => j.disponible === true)
+        .catch(() => false));
+
+    const bajar = () => (lista.scrollTop = lista.scrollHeight);
+
+    // Todo lo que viene del modelo se pinta con textContent: es dato, no HTML.
+    function pintar(m: Mensaje) {
+      const li = document.createElement('li');
+      li.className = `msg ${m.rol === 'usuario' ? 'usuario-msg' : 'asesor-msg'}`;
+      const quien = document.createElement('span');
+      quien.className = 'quien';
+      quien.textContent = m.rol === 'usuario' ? a.tu : a.ia;
+      const p = document.createElement('p');
+      p.textContent = m.rol === 'asesor' ? textoPlano(m.texto) : m.texto;
+      li.append(quien, p);
+      if (m.whatsapp) li.append(boton(enlaceWhatsapp(d.wa!, m.whatsapp), a.whatsapp, true));
+      if (m.contacto) li.append(boton(enlaceCotizador(d.cotizador!, m.contacto.servicio), a.contacto, false));
+      lista.append(li);
+      return li;
+    }
+
+    function boton(href: string, texto: string, externo: boolean) {
+      const el = document.createElement('a');
+      el.className = `accion${externo ? ' accion-wa' : ''}`;
+      el.href = href;
+      el.textContent = texto;
+      if (externo) {
+        el.target = '_blank';
+        el.rel = 'noopener';
+      }
+      return el;
+    }
+
+    /** Aviso del sistema (no disponible, error, límite): no entra al historial. */
+    function aviso(texto: string) {
+      const li = pintar({ rol: 'asesor', texto });
+      li.classList.add('aviso-msg');
+      li.append(boton(enlaceWhatsapp(d.wa!, ui[locale].waDefault), a.soloWhatsapp, true));
+      bajar();
+    }
+
+    function bloquear(si: boolean) {
+      ocupado = si;
+      campo.disabled = si;
+      enviar.disabled = si;
+    }
+
+    async function preguntar(texto: string) {
+      texto = texto.trim().slice(0, 500);
+      if (!texto || ocupado) return;
+      if (preguntasHechas(historial) >= MAX_PREGUNTAS) return aviso(a.limite);
+      sugerencias.hidden = true;
+      const pregunta: Mensaje = { rol: 'usuario', texto };
+      pintar(pregunta);
+      campo.value = '';
+      ajustar();
+      const escribiendo = document.createElement('li');
+      escribiendo.className = 'msg asesor-msg escribiendo';
+      escribiendo.innerHTML = '<span class="puntos" aria-hidden="true"><i></i><i></i><i></i></span>';
+      escribiendo.prepend(Object.assign(document.createElement('span'), { className: 'oculto', textContent: a.escribiendo }));
+      lista.append(escribiendo);
+      bajar();
+      bloquear(true);
+      try {
+        if (!(await consultar())) throw new Error('no_disponible');
+        const r = await fetch(`${d.api}/v1/asesor`, {
+          method: 'POST',
+          // text/plain: sin preflight de CORS en cada pregunta.
+          headers: { 'content-type': 'text/plain;charset=UTF-8' },
+          body: JSON.stringify(cuerpoPregunta(locale, pagina, [...historial, pregunta])),
+        });
+        const j = (await r.json().catch(() => ({}))) as {
+          ok?: boolean;
+          error?: string;
+          texto?: string;
+          whatsapp?: string | null;
+          contacto?: { servicio: string | null } | null;
+        };
+        if (!r.ok || !j.ok || !j.texto) throw new Error(j.error ?? String(r.status));
+        const respuesta: Mensaje = { rol: 'asesor', texto: j.texto, whatsapp: j.whatsapp ?? null, contacto: j.contacto ?? null };
+        historial = [...historial, pregunta, respuesta];
+        guardar();
+        escribiendo.remove();
+        pintar(respuesta);
+      } catch (e) {
+        escribiendo.remove();
+        // La pregunta sin respuesta se queda en pantalla pero no en el historial.
+        const motivo = e instanceof Error ? e.message : '';
+        if (motivo === 'no_disponible') {
+          disponible = Promise.resolve(false);
+          aviso(a.noDisponible);
+        } else aviso(motivo === 'limite' ? a.limite : a.error);
+      } finally {
+        bloquear(false);
+        bajar();
+        campo.focus({ preventScroll: true });
+      }
+    }
+
+    function ajustar() {
+      campo.style.height = 'auto';
+      campo.style.height = `${Math.min(campo.scrollHeight, 120)}px`;
+    }
+
+    function mostrar(si: boolean) {
+      panel.hidden = !si;
+      abrir.setAttribute('aria-expanded', String(si));
+      raiz!.classList.toggle('abierto', si);
+      if (si) {
+        consultar().then((ok) => {
+          if (!ok && !raiz!.dataset.avisado) {
+            raiz!.dataset.avisado = '1';
+            aviso(a.noDisponible);
+          }
+        });
+        bajar();
+        campo.focus({ preventScroll: true });
+      } else abrir.focus({ preventScroll: true });
+    }
+
+    historial.forEach(pintar);
+    if (historial.length) sugerencias.hidden = true;
+    raiz.hidden = false;
+
+    abrir.addEventListener('click', () => mostrar(panel.hidden));
+    raiz.querySelector('[data-cerrar]')!.addEventListener('click', () => mostrar(false));
+    raiz.querySelector('[data-reiniciar]')!.addEventListener('click', () => {
+      if (ocupado) return;
+      historial = [];
+      guardar();
+      lista.querySelectorAll('li:not(:first-child)').forEach((li) => li.remove());
+      sugerencias.hidden = false;
+      campo.focus();
+    });
+    panel.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') mostrar(false);
+    });
+    sugerencias.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (b) preguntar(b.textContent ?? '');
+    });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      preguntar(campo.value);
+    });
+    // Enter envía; Mayús + Enter hace salto de línea.
+    campo.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    campo.addEventListener('input', ajustar);
+  }
+</script>
+
+<style>
+  .asesor { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 40; font-family: var(--font-sans); }
+  /* En las páginas internas, la barra de WhatsApp ocupa el borde inferior en móvil. */
+  @media (max-width: 760px) {
+    :global(body:has(.barra-wa)) .asesor { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  }
+
+  .punto { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--color-antidote); flex: none; }
+
+  .asesor-abrir {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 18px;
+    border: 1.5px solid rgb(59 200 243 / 0.5); border-radius: 12px; cursor: pointer;
+    background: var(--color-ink); color: var(--color-paper); font: 600 15px/1 var(--font-sans);
+    box-shadow: 0 10px 30px rgb(10 17 21 / 0.28);
+    transition: transform var(--t-fast) var(--ease-out);
+  }
+  .asesor-abrir:hover { transform: translateY(-2px); }
+  .abierto .asesor-abrir { display: none; }
+
+  .asesor-panel {
+    display: flex; flex-direction: column; width: min(400px, calc(100vw - 32px)); height: min(620px, calc(100dvh - 32px));
+    background: var(--color-paper); color: var(--color-ink); border: 1px solid var(--color-line-soft); border-radius: 16px;
+    box-shadow: 0 24px 60px rgb(10 17 21 / 0.3); overflow: hidden;
+  }
+  .asesor-panel[hidden] { display: none; }
+  @media (max-width: 560px) {
+    .asesor:has(.asesor-panel:not([hidden])) { inset: auto 8px calc(8px + env(safe-area-inset-bottom, 0px)) 8px; }
+    .asesor-panel { width: 100%; height: min(640px, calc(100dvh - 16px)); }
+  }
+
+  .cab { display: flex; align-items: center; gap: 4px; padding: 12px 8px 12px 18px; border-bottom: 1px solid var(--color-line-soft); background: var(--color-mist); }
+  .cab > div { flex: 1; min-width: 0; }
+  .titulo { display: flex; align-items: center; gap: 8px; margin: 0; font: 600 16px/1.3 var(--font-display); }
+  .sub { margin: 2px 0 0; font-size: 13px; color: var(--color-slate); }
+  .icono {
+    display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 10px;
+    background: none; color: var(--color-slate); cursor: pointer;
+  }
+  .icono:hover { background: rgb(15 24 29 / 0.06); color: var(--color-ink); }
+  .icono svg { width: 20px; height: 20px; }
+
+  .mensajes { flex: 1; overflow-y: auto; overscroll-behavior: contain; list-style: none; margin: 0; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .mensajes :global(.msg) { max-width: 88%; display: flex; flex-direction: column; gap: 4px; }
+  .mensajes :global(.quien) { font-size: 12px; font-weight: 600; color: var(--color-slate); }
+  .mensajes :global(.msg p) { margin: 0; padding: 10px 14px; border-radius: 14px; font-size: 15px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+  .mensajes :global(.asesor-msg p) { background: var(--color-mist); border-top-left-radius: 4px; }
+  .mensajes :global(.usuario-msg) { align-self: flex-end; align-items: flex-end; }
+  .mensajes :global(.usuario-msg p) { background: var(--color-ink); color: var(--color-paper); border-top-right-radius: 4px; }
+  .mensajes :global(.aviso-msg p) { background: rgb(255 122 89 / 0.12); }
+
+  .mensajes :global(.accion) {
+    align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; margin-top: 4px; padding: 0 16px;
+    border-radius: 10px; border: 1.5px solid var(--color-ink); color: var(--color-ink);
+    font-weight: 600; font-size: 14px; text-decoration: none;
+  }
+  .mensajes :global(.accion-wa) { background: var(--color-antidote); border-color: var(--color-antidote); }
+  .mensajes :global(.accion:hover) { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }
+
+  .mensajes :global(.escribiendo .puntos) { display: inline-flex; gap: 5px; padding: 14px 16px; border-radius: 14px; border-top-left-radius: 4px; background: var(--color-mist); align-self: flex-start; }
+  .mensajes :global(.escribiendo i) { width: 7px; height: 7px; border-radius: 50%; background: var(--color-slate); animation: asesor-punto 1s var(--ease-in-out) infinite; }
+  .mensajes :global(.escribiendo i:nth-child(2)) { animation-delay: 0.15s; }
+  .mensajes :global(.escribiendo i:nth-child(3)) { animation-delay: 0.3s; }
+  @keyframes asesor-punto { 50% { opacity: 0.3; transform: translateY(-3px); } }
+
+  .sugerencias { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 18px 12px; }
+  .sugerencias[hidden] { display: none; }
+  .sugerencia {
+    min-height: 44px; padding: 8px 14px; border: 1px solid var(--color-line-input); border-radius: 10px;
+    background: var(--color-paper); color: var(--color-ink); font: 500 14px/1.3 var(--font-sans); text-align: left; cursor: pointer;
+  }
+  .sugerencia:hover { border-color: var(--color-antidote); background: var(--color-mist); }
+
+  .entrada { display: flex; align-items: flex-end; gap: 8px; padding: 12px 12px 8px 18px; border-top: 1px solid var(--color-line-soft); }
+  textarea {
+    flex: 1; min-height: 44px; max-height: 120px; padding: 11px 14px; resize: none;
+    border: 1.5px solid var(--color-line-input); border-radius: 12px; background: var(--color-paper); color: var(--color-ink);
+    font: 400 16px/1.35 var(--font-sans);
+  }
+  textarea:focus { outline: none; border-color: var(--color-deep); }
+  .enviar {
+    display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px;
+    background: var(--color-antidote); color: var(--color-ink); cursor: pointer;
+  }
+  .enviar:disabled { opacity: 0.5; cursor: progress; }
+  .enviar svg { width: 20px; height: 20px; }
+
+  .pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; margin: 0; padding: 0 18px 10px; font-size: 12px; color: var(--color-slate); }
+  .pie a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
+
+  .asesor :focus-visible { outline: 3px solid var(--color-deep); outline-offset: 2px; }
+  .oculto { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+</style>

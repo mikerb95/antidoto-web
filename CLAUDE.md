@@ -76,6 +76,7 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 
 ## Pendiente
 
+- Indexación (buscadores y asistentes de IA): lista detallada en `pendientes.md`.
 - Contenido del cliente: textos finales, traducción revisada al inglés, fotos de diseño de productos y audiovisual, foto de la fundadora, logos de clientes en SVG y autorización para mostrarlos.
 - Páginas: portafolio, FAQ. La política de tratamiento de datos existe como borrador: faltan razón social, NIT, domicilio y la revisión de un abogado. La foto de la fundadora falta (hoy va un monograma marcado "Foto pendiente").
 - Confirmar la sede: el sitio dice "Colombia" y no una ciudad porque el cliente no la ha confirmado.
