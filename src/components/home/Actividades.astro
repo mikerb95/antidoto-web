@@ -1,6 +1,8 @@
 ---
-// Biblioteca de actividades: texto a la izquierda y una pantalla de trivia de ejemplo.
-// La trivia es una ilustración (no responde a clics): la real sale de la biblioteca.
+// Biblioteca de actividades: texto a la izquierda y una trivia de ejemplo que se puede jugar.
+// Sin JS es una pantalla quieta con la respuesta marcada; el script la vuelve jugable (reloj,
+// respuestas, ranking). Es ilustrativa y lo dice: la actividad real sale de la biblioteca.
+import { PUESTO_INICIAL, CORRECTA } from '../../lib/trivia';
 import { t, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -10,7 +12,7 @@ const { locale } = Astro.props;
 const s = t(locale);
 const h = s.inicio.actividades;
 const tr = h.trivia;
-const ELEGIDA = 1;
+const textos = { posicion: tr.posicion, instruccion: tr.instruccion, acierto: tr.acierto, fallo: tr.fallo, tiempo: tr.tiempoFuera };
 ---
 <section id="actividades" class="actividades" aria-labelledby="actividades-t">
   <div class="wrap interior">
@@ -26,29 +28,122 @@ const ELEGIDA = 1;
           </li>
         ))}
       </ul>
-      <a class="boton boton-cian boton-grande" href="#cotizar">
+      <a class="boton boton-cian boton-grande" href="#trivia" data-magnetico>
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
         {s.inicio.probar}
       </a>
     </div>
 
     <div class="pantalla-wrap">
-      <figure class="pantalla" aria-label={tr.label}>
-        <div class="fila"><span>{tr.progreso}</span><span class="tiempo">{tr.tiempo}</span></div>
-        <div class="barra" aria-hidden="true"><span></span></div>
-        <p class="pregunta">{tr.pregunta}</p>
+      <figure class="pantalla" id="trivia" aria-labelledby="trivia-pregunta" data-trivia data-textos={JSON.stringify(textos)}>
+        <div class="fila"><span>{tr.progreso}</span><span class="tiempo" data-reloj>{tr.tiempo}</span></div>
+        <div class="barra" aria-hidden="true"><span data-barra></span></div>
+        <p class="pregunta" id="trivia-pregunta">{tr.pregunta}</p>
         <ol class="opciones">
           {tr.opciones.map((o, i) => (
-            <li class:list={{ elegida: i === ELEGIDA }}>
-              {o}{i === ELEGIDA && <span class="sr"> ({tr.elegida})</span>}
+            <li class:list={{ elegida: i === CORRECTA }} data-opcion>
+              {o}{i === CORRECTA && <span class="sr" data-sr> ({tr.elegida})</span>}
             </li>
           ))}
         </ol>
-        <div class="fila pie"><span>{tr.conectados}</span><strong>{tr.posicion}</strong></div>
+        <p class="resultado" aria-live="polite" data-resultado></p>
+        <button type="button" class="boton boton-tinta otra" hidden data-otra>{tr.otraVez}</button>
+        <div class="fila pie"><span>{tr.conectados}</span><strong data-puesto>{tr.posicion.replace('{p}', String(PUESTO_INICIAL))}</strong></div>
+        <figcaption class="ilustrativo">{tr.ilustrativo}</figcaption>
       </figure>
     </div>
   </div>
 </section>
+
+<script>
+  import { CORRECTA, DURACION, elegir, inicial, reloj, tic, type Estado } from '../../lib/trivia';
+
+  // Trivia jugable. No es movimiento decorativo: corre también con movimiento reducido (las
+  // transiciones se apagan en CSS). El reloj solo avanza con la pantalla a la vista y la pestaña
+  // visible, y arranca la primera vez que se ve.
+  const fig = document.querySelector<HTMLElement>('[data-trivia]');
+  if (fig) {
+    try {
+      const txt = JSON.parse(fig.dataset.textos ?? '{}') as Record<'posicion' | 'instruccion' | 'acierto' | 'fallo' | 'tiempo', string>;
+      const relojEl = fig.querySelector<HTMLElement>('[data-reloj]')!;
+      const barra = fig.querySelector<HTMLElement>('[data-barra]')!;
+      const resultado = fig.querySelector<HTMLElement>('[data-resultado]')!;
+      const otra = fig.querySelector<HTMLButtonElement>('[data-otra]')!;
+      const puesto = fig.querySelector<HTMLElement>('[data-puesto]')!;
+
+      // Cada opción pasa a ser un botón real.
+      const botones = [...fig.querySelectorAll<HTMLLIElement>('[data-opcion]')].map((li, i) => {
+        li.querySelector('[data-sr]')?.remove();
+        li.classList.remove('elegida');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'opcion';
+        b.textContent = li.textContent?.trim() ?? '';
+        li.textContent = '';
+        li.appendChild(b);
+        b.addEventListener('click', () => pintar(elegir(estado, i)));
+        return b;
+      });
+
+      let estado: Estado = inicial();
+      let visible = false;
+      let reloj_: number | undefined;
+
+      function pintar(nuevo: Estado) {
+        const antes = estado.puesto;
+        estado = nuevo;
+        const terminado = estado.fase !== 'jugando';
+        relojEl.textContent = reloj(estado.restante);
+        barra.style.transform = `scaleX(${estado.restante / DURACION})`;
+        fig!.dataset.fase = estado.fase;
+        botones.forEach((b, i) => {
+          b.disabled = terminado;
+          b.classList.toggle('correcta', terminado && i === CORRECTA);
+          b.classList.toggle('incorrecta', terminado && i === estado.elegida && i !== CORRECTA);
+        });
+        resultado.textContent =
+          estado.fase === 'acierto' ? txt.acierto.replace('{p}', String(estado.puesto))
+          : estado.fase === 'fallo' ? txt.fallo
+          : estado.fase === 'tiempo' ? txt.tiempo
+          : txt.instruccion;
+        puesto.textContent = txt.posicion.replace('{p}', String(estado.puesto));
+        if (estado.puesto !== antes) {
+          puesto.classList.remove('cambio');
+          void puesto.offsetWidth;
+          puesto.classList.add('cambio', estado.puesto < antes ? 'sube' : 'baja');
+          puesto.classList.toggle('sube', estado.puesto < antes);
+          puesto.classList.toggle('baja', estado.puesto > antes);
+        }
+        otra.hidden = !terminado;
+        actualizarReloj();
+      }
+
+      function actualizarReloj() {
+        const correr = visible && !document.hidden && estado.fase === 'jugando';
+        if (correr && reloj_ === undefined) reloj_ = window.setInterval(() => pintar(tic(estado)), 1000);
+        if (!correr && reloj_ !== undefined) {
+          clearInterval(reloj_);
+          reloj_ = undefined;
+        }
+      }
+
+      otra.addEventListener('click', () => {
+        pintar(inicial());
+        botones[0].focus();
+      });
+      new IntersectionObserver(([e]) => {
+        visible = e.isIntersecting;
+        actualizarReloj();
+      }, { threshold: 0.5 }).observe(fig);
+      document.addEventListener('visibilitychange', actualizarReloj);
+
+      fig.classList.add('jugable');
+      pintar(estado);
+    } catch (err) {
+      console.warn('[trivia] queda como imagen quieta', err);
+    }
+  }
+</script>
 
 <style>
   .actividades { background: var(--color-ink); color: var(--color-paper); }
@@ -63,16 +158,38 @@ const ELEGIDA = 1;
   .actividades :focus-visible { outline-color: var(--color-antidote); }
 
   .pantalla-wrap { flex: 1 1 380px; min-width: 0; display: flex; justify-content: center; }
-  .pantalla { margin: 0; width: 100%; max-width: 472px; border-radius: 28px; background: var(--color-paper); color: var(--color-ink); padding: 26px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 30px 80px rgb(0 0 0 / 0.45); }
+  .pantalla { margin: 0; width: 100%; max-width: 472px; border-radius: 28px; background: var(--color-paper); color: var(--color-ink); padding: 26px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 30px 80px rgb(0 0 0 / 0.45); scroll-margin-top: 24px; }
+  .pantalla :focus-visible { outline-color: var(--color-deep); }
   .fila { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; }
-  .tiempo { padding: 4px 10px; border-radius: 999px; background: var(--color-ink); color: var(--color-paper); }
+  .tiempo { padding: 4px 10px; border-radius: 999px; background: var(--color-ink); color: var(--color-paper); font-variant-numeric: tabular-nums; }
+  .pantalla[data-fase='jugando'] .tiempo { background: var(--color-deep); }
   .barra { height: 8px; border-radius: 999px; background: var(--color-line-soft); overflow: hidden; }
-  .barra span { display: block; width: 62%; height: 100%; background: var(--color-antidote); }
+  .barra span { display: block; width: 62%; height: 100%; background: var(--color-antidote); transform-origin: left; }
+  .jugable .barra span { width: 100%; transition: transform 1s linear; }
   .pregunta { margin: 0; font: 400 23px/1.25 var(--font-display); }
   .opciones { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
   .opciones li { display: flex; align-items: center; min-height: 50px; padding: 0 16px; border-radius: 12px; border: 1.5px solid var(--color-line-input); background: var(--color-paper); font-size: 15px; font-weight: 500; line-height: 1.3; }
   .opciones .elegida { border-color: var(--color-ink); background: var(--color-antidote); font-weight: 600; }
+  /* Jugable: el <li> queda de contenedor y el botón toma su aspecto. */
+  .jugable .opciones li { display: block; min-height: 0; padding: 0; border: 0; background: none; }
+  .opciones :global(.opcion) { position: relative; isolation: isolate; overflow: hidden; width: 100%; min-height: 50px; padding: 8px 16px; border-radius: 12px; border: 1.5px solid var(--color-line-input); background: var(--color-paper); color: var(--color-ink); font: 500 15px/1.3 var(--font-sans); text-align: left; cursor: pointer; transition: border-color var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out); }
+  .opciones :global(.opcion:hover:not(:disabled)) { border-color: var(--color-ink); transform: translateY(-1px); }
+  .opciones :global(.opcion:disabled) { cursor: default; }
+  /* La correcta recibe la dosis: el cian sube desde abajo. */
+  .opciones :global(.opcion)::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--color-antidote); clip-path: inset(100% 0 0 0); transition: clip-path var(--t-slow) var(--ease-in-out); }
+  .opciones :global(.opcion.correcta) { border-color: var(--color-ink); font-weight: 600; }
+  .opciones :global(.opcion.correcta)::before { clip-path: inset(0 0 0 0); }
+  .opciones :global(.opcion.correcta)::after { content: ' ✓'; }
+  .opciones :global(.opcion.incorrecta) { border-color: var(--color-reto); text-decoration: line-through; text-decoration-color: var(--color-reto); }
+  .resultado { margin: 0; font-size: 15px; font-weight: 600; min-height: 1.3em; }
+  .resultado:empty { display: none; }
+  .pantalla[data-fase='jugando'] .resultado { font-weight: 400; color: var(--color-slate); }
+  .otra { align-self: flex-start; }
   .pie { color: var(--color-slate); font-weight: 400; }
-  .pie strong { color: var(--color-ink); font-weight: 600; }
+  .pie strong { display: inline-block; color: var(--color-ink); font-weight: 600; }
+  .pie strong:global(.cambio) { animation: puesto var(--t-slow) var(--ease-out); }
+  @keyframes puesto { from { transform: translateY(8px); opacity: 0; } }
+  .pie strong:global(.sube) { color: var(--color-deep); }
+  .ilustrativo { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-slate); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>
