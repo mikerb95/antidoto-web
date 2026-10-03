@@ -193,3 +193,36 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
   .cifras { grid-template-columns: 1fr 1fr; }
   .cifra .valor { font-size: 24px; }
 }
+
+/* Novedades: automáticos, plantillas, A/B, programación, importación y crecimiento de la lista */
+.c-programada { --c: #C7B8FF; }
+.bloques { margin-top: 16px; }
+.mini { list-style: none; margin: 12px 0 0; padding: 0; display: grid; }
+.mini li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 4px 0; border-top: 1px solid var(--linea); font-size: 14px; }
+.mini a { color: var(--texto); font-weight: 600; text-decoration: none; }
+.mini a:hover { color: var(--cian); }
+.tarjeta > .suave { margin: -6px 0 0; font-size: 13.5px; }
+.casilla { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; }
+.casilla input { width: 18px; height: 18px; min-height: 0; accent-color: var(--cian); }
+.ab { padding: 14px; border-radius: 10px; background: var(--tinta); }
+.nota-ab { grid-column: 1 / -1; margin: 0; font-size: 13px; }
+.programar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; padding-top: 14px; border-top: 1px solid var(--linea); }
+.resultados-acciones { align-items: center; margin-bottom: 16px; }
+.ab-resultado { margin-bottom: 12px; }
+.tabla-datos { margin-top: 8px; font-size: 14px; }
+.tabla-datos td, .tabla-datos th { padding: 8px 10px; }
+.tabla-datos tr.ganadora td { color: var(--cian); font-weight: 600; }
+.importar { display: grid; gap: 10px; max-width: 900px; }
+.importar code { font-size: 12.5px; color: var(--brillo); }
+.subtitulo { margin: 32px 0 12px; font-size: 20px; }
+.rejilla-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 12px; }
+.serie h2 { margin-bottom: 12px; }
+.serie h2 .suave { font-weight: 400; font-size: 13px; }
+/* Barras semanales: una serie, la base en el piso y las puntas redondeadas arriba. */
+.columnas { display: flex; align-items: flex-end; gap: 2px; height: 96px; border-bottom: 1px solid var(--linea); }
+.col { flex: 1; height: 100%; display: flex; align-items: flex-end; cursor: default; }
+.col-nivel { display: block; width: 100%; height: 100%; border-radius: 4px 4px 0 0; background: var(--cian); transform-origin: bottom; transform: scaleY(var(--v, 0)); }
+.col-nivel.cero { transform: none; height: 1px; background: var(--linea); border-radius: 0; }
+.col:hover .col-nivel { background: var(--brillo); }
+.col-ejes { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; }
+@media (max-width: 1000px) { .rejilla-3, .programar { grid-template-columns: 1fr; } }
