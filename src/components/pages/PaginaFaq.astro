@@ -1,0 +1,66 @@
+---
+// Preguntas frecuentes de todo el sitio, agrupadas por tema con un índice de anclas. Cada
+// línea de servicio muestra además las de su tema en su propia página.
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import ListaFaq from '../ListaFaq.astro';
+import BloqueCta from '../BloqueCta.astro';
+import { preguntas, TEMAS_FAQ } from '../../data/faq';
+import { obtenerServicios, servicioPath } from '../../data/servicios';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { grafo, migasSchema, faqSchema } from '../../data/schema';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const [title, description] = s.seo.faq;
+const servicios = await obtenerServicios();
+const grupos = TEMAS_FAQ.map((tema) => ({ tema, nombre: p.faq.temas[tema], items: preguntas(locale, { tema }), linea: servicios.find((sv) => sv.id === tema) })).filter(
+  (g) => g.items.length > 0,
+);
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.faq, rutas.faq[locale]],
+];
+const jsonLd = grafo(faqSchema(grupos.flatMap((g) => g.items)), migasSchema(migas));
+const [otraT, otraD] = p.faq.otra;
+---
+<Base locale={locale} pagina="faq" title={title} description={description} alternates={rutas.faq} jsonLd={jsonLd} tema="claro">
+  <CabeceraPagina locale={locale} migas={migas} titulo={p.faq.titulo} lead={p.faq.lead}>
+    <nav class="temas" aria-label={p.faq.indice}>
+      {grupos.map((g) => <a href={`#tema-${g.tema}`}>{g.nombre}</a>)}
+    </nav>
+  </CabeceraPagina>
+
+  <div class="bloque">
+    <div class="wrap grupos">
+      {grupos.map((g) => (
+        <section class="grupo" id={`tema-${g.tema}`} aria-labelledby={`tema-${g.tema}-t`}>
+          <div class="g-cab">
+            <h2 id={`tema-${g.tema}-t`}>{g.nombre}</h2>
+            {g.linea && <a href={servicioPath(g.linea, locale)}>{g.linea[locale].title} →</a>}
+          </div>
+          <ListaFaq items={g.items} />
+        </section>
+      ))}
+    </div>
+  </div>
+
+  <BloqueCta locale={locale} titulo={otraT} lead={otraD} />
+</Base>
+
+<style>
+  .temas { display: flex; flex-wrap: wrap; gap: 8px; }
+  .temas a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; background: var(--color-paper); border: 1px solid var(--color-line-input); color: var(--color-ink); text-decoration: none; font-weight: 500; font-size: 15px; }
+  .temas a:hover { border-color: var(--color-deep); color: var(--color-deep); }
+  .grupos { display: flex; flex-direction: column; gap: 56px; max-width: 920px; }
+  .grupo { scroll-margin-top: 24px; display: grid; gap: 18px; }
+  .g-cab { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+  h2 { margin: 0; font-size: clamp(26px, 1.6vw + 16px, 36px); display: flex; align-items: center; gap: 12px; }
+  h2::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--color-antidote); flex: none; }
+  .g-cab a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
+</style>

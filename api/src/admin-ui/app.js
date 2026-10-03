@@ -745,12 +745,67 @@ async function abrirCampana(id) {
   }
 }
 
+/** Fecha y hora local para un <input type="datetime-local">. */
+const paraInput = (ms) => {
+  const d = new Date(ms);
+  const dos = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())}T${dos(d.getHours())}:${dos(d.getMinutes())}`;
+};
+
+const botonDuplicar = (c) =>
+  h(
+    'button',
+    {
+      class: 'btn btn-borde',
+      type: 'button',
+      onclick: async () => {
+        const r = await api(`/admin/api/campanas/${c.id}/duplicar`, { method: 'POST' });
+        avisar('Copia creada como borrador');
+        location.hash = `#campana-${r.campana.id}`;
+      },
+    },
+    'Duplicar',
+  );
+
 function pintarEditor(caja, c, audiencia) {
   const intereses = new Set(c?.intereses || []);
+  const ab = !!c?.asuntoB;
+  const campoB = h(
+    'div',
+    { class: 'fila-campos ab', hidden: !ab },
+    h('label', { class: 'campo' }, 'Asunto B', h('input', { name: 'asuntoB', maxlength: 150, value: c?.asuntoB || '' })),
+    h(
+      'div',
+      { class: 'fila-campos' },
+      h('label', { class: 'campo' }, 'Muestra (%)', h('input', { name: 'abMuestra', type: 'number', min: 10, max: 100, step: 5, value: c?.abMuestra ?? 20 })),
+      h('label', { class: 'campo' }, 'Decidir a las (horas)', h('input', { name: 'abHoras', type: 'number', min: 1, max: 72, value: c?.abHoras ?? 4 })),
+    ),
+    h('p', { class: 'suave nota-ab' }, 'La muestra se parte en dos mitades: una recibe el asunto A y otra el B. Pasadas las horas, el resto recibe el que tuvo más clics (o más aperturas si nadie hizo clic). Con muestra de 100 % es un reparto mitad y mitad.'),
+  );
+  const casillaAb = h('input', { type: 'checkbox', name: 'conAb', checked: ab });
+  casillaAb.addEventListener('change', () => {
+    campoB.hidden = !casillaAb.checked;
+    if (casillaAb.checked) campoB.querySelector('input').focus();
+  });
+
+  // Campaña nueva: puede partir de una plantilla.
+  const desdePlantilla =
+    !c && plantillasCache.length
+      ? h(
+          'label',
+          { class: 'campo' },
+          'Empezar desde una plantilla',
+          h('select', { name: 'plantilla' }, h('option', { value: '' }, 'En blanco'), ...plantillasCache.map((p) => h('option', { value: p.id }, `${p.nombre} (${IDIOMAS[p.locale]})`))),
+        )
+      : null;
+
   const form = h(
     'form',
     { class: 'editor' },
+    desdePlantilla,
     h('label', { class: 'campo' }, 'Asunto', h('input', { name: 'asunto', required: true, maxlength: 150, value: c?.asunto || '' })),
+    h('label', { class: 'casilla' }, casillaAb, 'Probar dos asuntos (A/B)'),
+    campoB,
     h('label', { class: 'campo' }, 'Texto de vista previa (opcional)', h('input', { name: 'preheader', maxlength: 200, value: c?.preheader || '' })),
     h(
       'div',
@@ -764,12 +819,57 @@ function pintarEditor(caja, c, audiencia) {
       ),
     ),
     h('label', { class: 'campo' }, 'Mensaje', h('textarea', { name: 'cuerpo', rows: 16, required: true }, c?.cuerpo || '')),
+    h('label', { class: 'casilla' }, h('input', { type: 'checkbox', name: 'publica', checked: !!c?.publica }), 'Publicar en el archivo de novedades del sitio cuando salga'),
     h('details', { class: 'ayuda' }, h('summary', {}, 'Cómo dar formato'), h('ul', {}, ...AYUDA_FORMATO.map((a) => h('li', {}, a)))),
-    h('div', { class: 'acciones' }, h('button', { class: 'btn', type: 'submit' }, c ? 'Guardar cambios' : 'Crear borrador')),
+    h(
+      'div',
+      { class: 'acciones' },
+      h('button', { class: 'btn', type: 'submit' }, c ? 'Guardar cambios' : 'Crear borrador'),
+      c
+        ? h(
+            'button',
+            {
+              class: 'btn btn-borde',
+              type: 'button',
+              onclick: async () => {
+                const nombre = prompt('Nombre de la plantilla', c.asunto);
+                if (!nombre) return;
+                try {
+                  await api('/admin/api/plantillas', { method: 'POST', body: JSON.stringify({ nombre, ...leer() }) });
+                  avisar('Plantilla guardada');
+                } catch {
+                  avisar('Revisa el asunto y el mensaje.');
+                }
+              },
+            },
+            'Guardar como plantilla',
+          )
+        : null,
+      c ? botonDuplicar(c) : null,
+    ),
   );
+  form.querySelector('[name="plantilla"]')?.addEventListener('change', (e) => {
+    const p = plantillasCache.find((x) => x.id === e.target.value);
+    if (!p) return;
+    form.elements.asunto.value = p.asunto;
+    form.elements.preheader.value = p.preheader || '';
+    form.elements.cuerpo.value = p.cuerpo;
+    form.elements.locale.value = p.locale;
+  });
   const leer = () => {
     const f = new FormData(form);
-    return { asunto: f.get('asunto'), preheader: f.get('preheader'), locale: f.get('locale'), intereses: f.getAll('intereses'), cuerpo: f.get('cuerpo') };
+    const conAb = f.get('conAb') === 'on';
+    return {
+      asunto: f.get('asunto'),
+      preheader: f.get('preheader'),
+      locale: f.get('locale'),
+      intereses: f.getAll('intereses'),
+      cuerpo: f.get('cuerpo'),
+      publica: f.get('publica') === 'on',
+      asuntoB: conAb ? f.get('asuntoB') : null,
+      abMuestra: f.get('abMuestra'),
+      abHoras: f.get('abHoras'),
+    };
   };
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -785,6 +885,7 @@ function pintarEditor(caja, c, audiencia) {
     }
   });
 
+  const cuando = h('input', { type: 'datetime-local', name: 'fecha', min: paraInput(Date.now() + 10 * 60_000), value: paraInput(Date.now() + 24 * 3_600_000) });
   const lateral = c
     ? h(
         'div',
@@ -803,7 +904,7 @@ function pintarEditor(caja, c, audiencia) {
               onclick: async () => {
                 try {
                   const r = await api(`/admin/api/campanas/${c.id}/prueba`, { method: 'POST' });
-                  avisar(`Prueba enviada a ${r.para}`);
+                  avisar(`Prueba enviada a ${r.para}${c.asuntoB ? ' (las dos variantes)' : ''}`);
                 } catch {
                   avisar('No se pudo enviar la prueba. ¿Está configurado Resend?');
                 }
@@ -831,7 +932,31 @@ function pintarEditor(caja, c, audiencia) {
                 }
               },
             },
-            'Enviar',
+            'Enviar ahora',
+          ),
+        ),
+        h(
+          'div',
+          { class: 'programar' },
+          h('label', { class: 'campo' }, 'O programar el envío', cuando),
+          h(
+            'button',
+            {
+              class: 'btn btn-borde',
+              type: 'button',
+              disabled: !audiencia,
+              onclick: async () => {
+                const fecha = new Date(cuando.value).getTime();
+                try {
+                  await api(`/admin/api/campanas/${c.id}/programar`, { method: 'POST', body: JSON.stringify({ fecha }) });
+                  avisar('Campaña programada');
+                  abrirCampana(c.id);
+                } catch (err) {
+                  avisar(err.status === 503 ? 'Falta configurar Resend para enviar.' : 'Elige una fecha al menos 5 minutos en el futuro.');
+                }
+              },
+            },
+            'Programar',
           ),
         ),
         h(
@@ -848,19 +973,97 @@ function pintarEditor(caja, c, audiencia) {
           'Borrar borrador',
         ),
       )
-    : h('div', { class: 'lateral' }, h('p', { class: 'suave' }, 'Guarda el borrador para ver la vista previa, enviarte una prueba y ver a cuántos contactos les llega.'));
+    : h('div', { class: 'lateral' }, h('p', { class: 'suave' }, 'Guarda el borrador para ver la vista previa, enviarte una prueba, programarla y ver a cuántos contactos les llega.'));
 
   caja.replaceChildren(h('div', { class: 'campana-editor' }, form, lateral));
 }
 
-function pintarResultados(caja, { campana: c, stats }) {
+function pintarProgramada(caja, { campana: c, audiencia }) {
+  caja.replaceChildren(
+    h(
+      'div',
+      { class: 'campana-editor' },
+      h(
+        'div',
+        { class: 'editor' },
+        h('p', { class: 'etq' }, 'Programada'),
+        h('p', { class: 'audiencia' }, `Sale el ${fecha(c.programada, true)} a ${audiencia} ${audiencia === 1 ? 'contacto activo' : 'contactos activos'} (se cuentan de nuevo al salir).`),
+        c.asuntoB ? h('p', { class: 'suave' }, `Prueba A/B: "${c.asunto}" contra "${c.asuntoB}", con el ${c.abMuestra} % de la audiencia y decisión a las ${c.abHoras} horas.`) : null,
+        h('p', { class: 'suave' }, 'Para cambiarla, primero quítale la programación.'),
+        h(
+          'div',
+          { class: 'acciones' },
+          h(
+            'button',
+            {
+              class: 'btn',
+              type: 'button',
+              onclick: async () => {
+                await api(`/admin/api/campanas/${c.id}/desprogramar`, { method: 'POST' });
+                avisar('Volvió a borrador');
+                abrirCampana(c.id);
+              },
+            },
+            'Quitar programación',
+          ),
+          botonDuplicar(c),
+        ),
+      ),
+      h('div', { class: 'lateral' }, h('p', { class: 'etq' }, 'Vista previa'), h('iframe', { class: 'vista-previa', title: 'Vista previa del correo', src: `/admin/api/campanas/${c.id}/vista?v=${c.actualizada}` })),
+    ),
+  );
+}
+
+function pintarResultados(caja, { campana: c, stats, variantes }) {
   const st = stats || {};
+  const v = (k) => (variantes || []).find((x) => x.variante === k) || { enviados: 0, abiertos: 0, clics: 0 };
+  const pruebaAb = c.asuntoB
+    ? h(
+        'div',
+        { class: 'tarjeta ab-resultado' },
+        h('h2', {}, 'Prueba A/B de asunto'),
+        h(
+          'p',
+          { class: 'suave' },
+          c.abGanador
+            ? `Ganó la variante ${c.abGanador.toUpperCase()}: el resto de la audiencia la recibió.`
+            : `Se decide el ${fecha(c.abDecision, true)}. Hasta entonces, el resto de la audiencia espera.`,
+        ),
+        h(
+          'table',
+          { class: 'tabla-datos' },
+          h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Variante'), h('th', { scope: 'col' }, 'Asunto'), h('th', { scope: 'col' }, 'Enviados'), h('th', { scope: 'col' }, 'Abiertos'), h('th', { scope: 'col' }, 'Clics'))),
+          h(
+            'tbody',
+            {},
+            ...['a', 'b'].map((k) =>
+              h(
+                'tr',
+                { class: c.abGanador === k ? 'ganadora' : '' },
+                h('td', {}, k.toUpperCase(), c.abGanador === k ? ' (ganadora)' : ''),
+                h('td', {}, k === 'a' ? c.asunto : c.asuntoB),
+                h('td', { class: 'num' }, v(k).enviados),
+                h('td', { class: 'num' }, pct(v(k).abiertos, v(k).enviados)),
+                h('td', { class: 'num' }, pct(v(k).clics, v(k).enviados)),
+              ),
+            ),
+          ),
+        ),
+      )
+    : null;
   const cifra = (etq, valor, nota) => h('div', { class: 'cifra' }, h('p', { class: 'etq' }, etq), h('p', { class: 'valor' }, valor), nota ? h('p', { class: 'suave' }, nota) : null);
   caja.replaceChildren(
     h(
       'p',
       { class: 'suave' },
       `${ESTADOS_CAMPANA[c.estado]} · ${IDIOMAS[c.locale]} · iniciada el ${fecha(c.iniciada, true)}${c.terminada ? `, terminó el ${fecha(c.terminada, true)}` : ''} · por ${c.autor}`,
+    ),
+    h(
+      'div',
+      { class: 'acciones resultados-acciones' },
+      botonDuplicar(c),
+      h('a', { class: 'btn-texto', href: `/v1/novedades/${c.id}`, target: '_blank', rel: 'noopener' }, 'Versión web'),
+      c.publica ? h('span', { class: 'suave' }, 'Aparece en el archivo de novedades del sitio.') : null,
     ),
     h(
       'div',
@@ -898,6 +1101,7 @@ function pintarResultados(caja, { campana: c, stats }) {
           )
         : h('div', { class: 'cifra' }, h('p', { class: 'etq' }, 'Abiertos y clics'), h('p', { class: 'suave' }, 'Muchos programas de correo bloquean el conteo de aperturas: tómalo como referencia.')),
     ),
+    pruebaAb,
     h('p', { class: 'etq' }, 'Correo enviado'),
     h('iframe', { class: 'vista-previa', title: 'Correo enviado', src: `/admin/api/campanas/${c.id}/vista` }),
   );
@@ -906,7 +1110,7 @@ function pintarResultados(caja, { campana: c, stats }) {
 // Contactos ----------------------------------------------------------------
 
 const ESTADOS_CONTACTO = { activo: 'Activo', pendiente: 'Sin confirmar', baja: 'De baja', rebotado: 'Rebotado' };
-const ORIGENES = { pie: 'Pie del sitio', cotizador: 'Cotizador', admin: 'Invitación del equipo' };
+const ORIGENES = { pie: 'Pie del sitio', inicio: 'Sección de la home', archivo: 'Página de novedades', cotizador: 'Cotizador', admin: 'Invitación del equipo', importado: 'Importación' };
 const MOTIVOS = { enlace: 'enlace de baja', queja: 'lo marcó como spam', rebote: 'rebote', admin: 'el equipo', supresion: 'supresión de datos' };
 const filtroC = { estado: '', q: '', pagina: 0 };
 
@@ -1019,6 +1223,9 @@ function pintarContacto({ contacto: c, consentimientos, envios }) {
       dato('Intereses', c.intereses.map((i) => SERVICIOS[i]).join(', ')),
       dato('Desde', fecha(c.creado, true)),
       dato('Confirmó', c.confirmado ? fecha(c.confirmado, true) : null),
+      dato('En pausa hasta', c.pausaHasta && c.pausaHasta > Date.now() ? fecha(c.pausaHasta) : null),
+      dato('Recordatorio', c.recordatorio ? fecha(c.recordatorio, true) : null),
+      dato('Bienvenida', c.bienvenida ? fecha(c.bienvenida, true) : null),
       dato('Baja', c.baja ? `${fecha(c.baja, true)} (${MOTIVOS[c.motivoBaja] || c.motivoBaja})` : null),
     ),
     h(
@@ -1050,6 +1257,102 @@ function pintarContacto({ contacto: c, consentimientos, envios }) {
     ),
   );
 }
+
+// Importación ----------------------------------------------------------------
+
+/** CSV con comillas, separador coma o punto y coma (Excel en español usa punto y coma). */
+function leerCsv(texto) {
+  const limpio = texto.replace(/^\uFEFF/, '');
+  const primera = limpio.split(/\r?\n/, 1)[0] || '';
+  const sep = (primera.match(/;/g) || []).length > (primera.match(/,/g) || []).length ? ';' : ',';
+  const filas = [];
+  let fila = [];
+  let campo = '';
+  let comillas = false;
+  for (let i = 0; i < limpio.length; i++) {
+    const ch = limpio[i];
+    if (comillas) {
+      if (ch === '"' && limpio[i + 1] === '"') {
+        campo += '"';
+        i++;
+      } else if (ch === '"') comillas = false;
+      else campo += ch;
+    } else if (ch === '"') comillas = true;
+    else if (ch === sep) {
+      fila.push(campo);
+      campo = '';
+    } else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && limpio[i + 1] === '\n') i++;
+      fila.push(campo);
+      filas.push(fila);
+      fila = [];
+      campo = '';
+    } else campo += ch;
+  }
+  if (campo || fila.length) {
+    fila.push(campo);
+    filas.push(fila);
+  }
+  return filas.filter((f) => f.some((x) => x.trim()));
+}
+
+const COLUMNAS = { email: 'email', correo: 'email', 'correo electrónico': 'email', 'e-mail': 'email', nombre: 'nombre', name: 'nombre', empresa: 'empresa', organización: 'empresa', organizacion: 'empresa', company: 'empresa', idioma: 'locale', locale: 'locale', language: 'locale', intereses: 'intereses', interests: 'intereses' };
+const SERVICIO_POR_NOMBRE = Object.fromEntries(Object.entries(SERVICIOS).flatMap(([k, t]) => [[k, k], [t.toLowerCase(), k]]));
+
+function contactosDeCsv(texto) {
+  const filas = leerCsv(texto);
+  if (!filas.length) return [];
+  const cabeza = filas[0].map((x) => COLUMNAS[x.trim().toLowerCase()]);
+  // Sin encabezado reconocible: la primera columna es el correo.
+  const conCabeza = cabeza.includes('email');
+  const mapa = conCabeza ? cabeza : ['email', 'nombre', 'empresa', 'locale', 'intereses'];
+  return (conCabeza ? filas.slice(1) : filas).map((f) => {
+    const o = {};
+    mapa.forEach((k, i) => k && (o[k] = (f[i] || '').trim()));
+    o.locale = /^en/i.test(o.locale || '') ? 'en' : 'es';
+    o.intereses = (o.intereses || '').split(/[|,]/).map((x) => SERVICIO_POR_NOMBRE[x.trim().toLowerCase()]).filter(Boolean);
+    return o;
+  });
+}
+
+let paraImportar = [];
+$('#abrir-importar').addEventListener('click', () => {
+  const f = $('#form-importar');
+  f.hidden = !f.hidden;
+  if (!f.hidden) f.querySelector('input').focus();
+});
+$('#form-importar').elements.archivo.addEventListener('change', async (e) => {
+  const archivo = e.target.files[0];
+  const resumen = $('#importar-resumen');
+  const boton = $('#form-importar').querySelector('button[type="submit"]');
+  paraImportar = archivo ? contactosDeCsv(await archivo.text()) : [];
+  const conCorreo = paraImportar.filter((c) => /@/.test(c.email || '')).length;
+  resumen.textContent = archivo ? `${paraImportar.length} filas, ${conCorreo} con correo. Revisa antes de importar: a cada persona nueva le llega una invitación.` : '';
+  resumen.hidden = !archivo;
+  boton.disabled = !conCorreo;
+});
+$('#form-importar').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const resumen = $('#importar-resumen');
+  if (!confirm(`Se invitará a las personas nuevas de ${paraImportar.length} filas. ¿Continuar?`)) return;
+  const total = { creados: 0, existentes: 0, invalidos: 0 };
+  try {
+    for (let i = 0; i < paraImportar.length; i += 1000) {
+      const r = await api('/admin/api/contactos/importar', { method: 'POST', body: JSON.stringify({ filas: paraImportar.slice(i, i + 1000) }) });
+      total.creados += r.creados;
+      total.existentes += r.existentes;
+      total.invalidos += r.invalidos;
+    }
+    resumen.textContent = `Listo: ${cuenta(total.creados, 'invitación en cola', 'invitaciones en cola')} (salen por lotes en los próximos minutos), ${total.existentes} ya estaban y ${total.invalidos} sin correo válido.`;
+    e.target.reset();
+    paraImportar = [];
+    e.target.querySelector('button[type="submit"]').disabled = true;
+    cargarContactos();
+  } catch {
+    resumen.textContent = 'No se pudo importar. Revisa el archivo.';
+  }
+  resumen.hidden = false;
+});
 
 $('#abrir-invitar').addEventListener('click', () => {
   const f = $('#form-invitar');
