@@ -1,0 +1,10 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Solucion from '../../components/pages/Solucion.astro';
+import { SOLUCIONES } from '../../data/soluciones';
+
+export const getStaticPaths = (() => SOLUCIONES.map((solucion) => ({ params: { slug: solucion.slug.es }, props: { solucion } }))) satisfies GetStaticPaths;
+
+const { solucion } = Astro.props;
+---
+<Solucion locale="es" solucion={solucion} />

@@ -1,0 +1,136 @@
+---
+// Página de una solución por área: los retos de esa área con su respuesta (de los dolores de la
+// home), las ofertas recomendadas, los clientes del sector si los hay y un espacio para el caso.
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import TarjetaIndice from '../TarjetaIndice.astro';
+import BloqueCta from '../BloqueCta.astro';
+import { obtenerServicios } from '../../data/servicios';
+import { obtenerOfertas, obtenerCasos, ofertaPath, casoPath } from '../../data/contenido';
+import { SOLUCIONES, solucionPath, type Solucion } from '../../data/soluciones';
+import { CLIENTES } from '../../data/clientes';
+import { grafo, migasSchema } from '../../data/schema';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+
+interface Props {
+  locale: Locale;
+  solucion: Solucion;
+}
+const { locale, solucion } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const [titulo, lead] = s.inicio.paraQuien.perfiles[solucion.perfil];
+const retos = solucion.retos.map((i) => s.inicio.dolores.items[i]);
+const servicios = await obtenerServicios();
+const todas = await obtenerOfertas();
+const ofertas = solucion.ofertas.map((c) => todas.find((o) => o.id === c)).filter((o) => o !== undefined);
+const clientes = solucion.sectorClientes ? CLIENTES.filter((c) => c.sector === solucion.sectorClientes).map((c) => c.nombre) : [];
+const casos = (await obtenerCasos()).filter((c) => c.es.solucion === solucion.clave);
+const otras = SOLUCIONES.filter((x) => x.clave !== solucion.clave);
+const ruta = solucionPath(solucion, locale);
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.soluciones, rutas.soluciones[locale]],
+  [titulo, ruta],
+];
+---
+<Base
+  locale={locale}
+  pagina="soluciones"
+  title={`${titulo} | Antídoto`}
+  description={lead}
+  alternates={{ es: solucionPath(solucion, 'es'), en: solucionPath(solucion, 'en') }}
+  jsonLd={grafo(migasSchema(migas))}
+  tema="claro"
+  scroll="suave"
+>
+  <CabeceraPagina locale={locale} migas={migas} kicker={s.nav.soluciones} titulo={titulo} lead={lead}>
+    <a class="boton boton-cian boton-grande" href={rutas.contacto[locale]} data-magnetico>{p.cta.cotizador}</a>
+  </CabeceraPagina>
+
+  <section class="bloque" aria-labelledby="retos-t">
+    <div class="wrap">
+      <div class="cab-izq">
+        <h2 id="retos-t">{p.soluciones.retos[0]}<span class="resaltado">{p.soluciones.retos[1]}</span></h2>
+      </div>
+      {retos.length > 0 ? (
+        <ul class="retos" data-entra>
+          {retos.map(([reto, respuesta]) => (
+            <li>
+              <p class="r"><span class="et">{p.soluciones.reto}</span>{reto}</p>
+              <p class="s"><span class="et">{p.soluciones.solucion}</span>{respuesta}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="pendiente">{p.soluciones.educacionPendiente}</p>
+      )}
+    </div>
+  </section>
+
+  {ofertas.length > 0 && (
+    <section class="bloque bloque-mist" aria-labelledby="ofertas-t">
+      <div class="wrap">
+        <div class="cab-izq">
+          <h2 id="ofertas-t">{p.soluciones.ofertas[0]}<span class="resaltado">{p.soluciones.ofertas[1]}</span></h2>
+        </div>
+        <ul class="rejilla-tarjetas" data-entra>
+          {ofertas.map((o) => {
+            const linea = servicios.find((sv) => sv.id === o.linea)!;
+            return <li><TarjetaIndice href={ofertaPath(linea, o, locale)} etiqueta={linea[locale].title} titulo={o[locale].title} texto={o[locale].lead} cta={p.linea.verOferta} /></li>;
+          })}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <section class="bloque" aria-label={p.portafolio.titulo.join('')}>
+    <div class="wrap prueba">
+      {clientes.length > 0 && (
+        <div class="clientes">
+          <p class="et">{p.soluciones.clientes}</p>
+          <p class="nombres">{clientes.join(' · ')}</p>
+        </div>
+      )}
+      {casos.length > 0 ? (
+        <ul class="rejilla-tarjetas">
+          {casos.map((c) => <li><TarjetaIndice href={casoPath(c, locale)} titulo={c[locale].title} texto={c[locale].lead} imagen={c.image} alt={c[locale].alt} cta={p.leerMas} /></li>)}
+        </ul>
+      ) : (
+        <p class="pendiente">{p.soluciones.casoPendiente}</p>
+      )}
+    </div>
+  </section>
+
+  <section class="bloque" aria-labelledby="otras-t">
+    <div class="wrap">
+      <div class="cab-izq"><h2 id="otras-t">{p.todasSoluciones}</h2></div>
+      <ul class="rejilla-tarjetas">
+        {otras.map((o) => {
+          const [ot, od] = s.inicio.paraQuien.perfiles[o.perfil];
+          return <li><TarjetaIndice href={solucionPath(o, locale)} titulo={ot} texto={od} cta={s.inicio.paraQuien.verSoluciones} /></li>;
+        })}
+      </ul>
+    </div>
+  </section>
+
+  <BloqueCta locale={locale} />
+</Base>
+
+<style>
+  .retos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 16px; }
+  .retos li { display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; border: 1px solid var(--color-line-soft); background: var(--color-paper); }
+  .retos p { margin: 0; padding: 18px 22px; display: flex; flex-direction: column; gap: 6px; }
+  .r { color: var(--color-slate); background: var(--color-mist); text-decoration: line-through; text-decoration-color: rgb(255 122 89 / 0.6); text-decoration-thickness: 2px; }
+  .r .et { text-decoration: none; display: inline-block; }
+  .s { font: 400 20px/1.25 var(--font-display); color: var(--color-ink); position: relative; }
+  .s::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: linear-gradient(90deg, var(--color-mid), var(--color-antidote)); }
+  .et { font: 600 12px/1.3 var(--font-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-slate); }
+  .s .et { color: var(--color-deep); }
+  .prueba { display: flex; flex-direction: column; gap: 20px; }
+  .clientes { padding: 22px 26px; border-radius: 20px; background: var(--color-ink); color: var(--color-paper); display: flex; flex-direction: column; gap: 6px; }
+  .clientes .et { color: var(--color-glow); }
+  .nombres { margin: 0; font: 400 22px/1.3 var(--font-display); }
+  .prueba .pendiente { padding: 32px; }
+</style>

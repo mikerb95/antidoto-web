@@ -1,0 +1,60 @@
+---
+// Índice de soluciones por área (las cuatro entradas de "Elige por dónde entras") y la franja
+// de aliados, que lleva a Trabaja con nosotros.
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import TarjetaIndice from '../TarjetaIndice.astro';
+import BloqueCta from '../BloqueCta.astro';
+import { SOLUCIONES, solucionPath } from '../../data/soluciones';
+import { grafo, listaSchema, migasSchema } from '../../data/schema';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const h = s.inicio.paraQuien;
+const [title, description] = s.seo.soluciones;
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.soluciones, rutas.soluciones[locale]],
+];
+const jsonLd = grafo(
+  listaSchema(title, rutas.soluciones[locale], SOLUCIONES.map((sol) => [h.perfiles[sol.perfil][0], solucionPath(sol, locale)])),
+  migasSchema(migas),
+);
+const [aliadosT, aliadosD, aliadosCta] = h.aliados;
+---
+<Base locale={locale} pagina="soluciones" title={title} description={description} alternates={rutas.soluciones} jsonLd={jsonLd} tema="claro" scroll="suave">
+  <CabeceraPagina locale={locale} migas={migas} titulo={p.soluciones.titulo} lead={p.soluciones.lead} />
+
+  <section class="bloque" aria-label={s.nav.soluciones}>
+    <div class="wrap">
+      <ul class="rejilla-tarjetas dos-col" data-entra>
+        {SOLUCIONES.map((sol) => (
+          <li><TarjetaIndice nivel={2} href={solucionPath(sol, locale)} titulo={h.perfiles[sol.perfil][0]} texto={h.perfiles[sol.perfil][1]} cta={h.verSoluciones} /></li>
+        ))}
+      </ul>
+      <a class="aliados" href={rutas.trabaja[locale]}>
+        <span class="a-txt"><span class="a-t">{aliadosT}</span><span class="a-d">{aliadosD}</span></span>
+        <span class="a-cta">{aliadosCta}</span>
+      </a>
+    </div>
+  </section>
+
+  <BloqueCta locale={locale} />
+</Base>
+
+<style>
+  .dos-col { grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); }
+  .aliados { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 24px 28px; border-radius: 22px; background: var(--color-mist); border: 1px solid var(--color-line-soft); color: var(--color-ink); text-decoration: none; }
+  .a-txt { display: flex; flex-direction: column; gap: 4px; }
+  .a-t { font: 400 22px/1.2 var(--font-display); }
+  .a-d { color: var(--color-slate); font-size: 15px; }
+  .a-cta { color: var(--color-deep); font-weight: 600; }
+  .a-cta::after { content: '→'; margin-left: 0.35em; display: inline-block; transition: transform var(--t-base) var(--ease-out); }
+  .aliados:hover .a-cta::after { transform: translateX(4px); }
+</style>
