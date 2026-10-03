@@ -16,6 +16,12 @@ const a = t(locale).asesor;
 const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 // Ruta de cada página de servicio -> su clave, para que "¿cuánto para 30?" se entienda.
 const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [servicioPath(s, locale), s.id]));
+
+// Logo de WhatsApp (globo y teléfono) y las dos chispas de la IA.
+const WA_TELEFONO = 'M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z';
+const WA_GLOBO = 'M12.04 2C6.6 2 2.18 6.42 2.18 11.86c0 1.74.46 3.44 1.32 4.94L2 22l5.36-1.4a9.83 9.83 0 0 0 4.68 1.19h.01c5.43 0 9.85-4.42 9.85-9.86 0-2.63-1.02-5.11-2.88-6.97A9.79 9.79 0 0 0 12.04 2Zm0 17.94h-.01a8.2 8.2 0 0 1-4.17-1.14l-.3-.18-3.1.81.83-3.02-.2-.31a8.13 8.13 0 0 1-1.25-4.34c0-4.52 3.68-8.2 8.2-8.2a8.14 8.14 0 0 1 5.79 2.4 8.14 8.14 0 0 1 2.4 5.8c0 4.52-3.68 8.18-8.19 8.18Z';
+const CHISPA_GRANDE = 'M10.5 5.5C11.1 9.4 13.6 12.4 18 13 13.6 13.6 11.1 16.6 10.5 20.5 9.9 16.6 7.4 13.6 3 13 7.4 12.4 9.9 9.4 10.5 5.5Z';
+const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.5 18.2 7 17.7 5.8 15.5 5.5 17.7 5.2 18.2 4 18.5 2.5Z';
 ---
 {api && (
   <div
@@ -28,9 +34,28 @@ const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [serv
     data-wa={SITE.whatsapp}
     data-cotizador={rutas.contacto[locale]}
   >
-    <button class="asesor-abrir" type="button" aria-expanded="false" aria-controls="asesor-panel" data-abrir>
-      <span class="punto" aria-hidden="true"></span>{a.abrir}
+    <!-- Burbuja doble, como la de codebymike.net (pedido de Mike, 03/10/2026): el verde y el logo
+         dicen WhatsApp; el círculo de tinta con la chispa cian dice que adentro hay un asistente con
+         IA. Abre un menú con las dos opciones, WhatsApp primero. -->
+    <button class="fab" type="button" aria-label={a.menu} aria-expanded="false" aria-controls="asesor-menu" data-fab>
+      <svg class="fab-wa" viewBox="0 0 24 24" aria-hidden="true"><path d={WA_GLOBO} /><path d={WA_TELEFONO} /></svg>
+      <span class="fab-etiqueta">{a.etiqueta}</span>
+      <span class="fab-raya" aria-hidden="true"></span>
+      <span class="fab-ia" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path class="chispa-grande" d={CHISPA_GRANDE} /><path class="chispa-chica" d={CHISPA_CHICA} /></svg>
+      </span>
     </button>
+
+    <div class="menu" id="asesor-menu" hidden data-menu>
+      <a class="opcion opcion-wa" href={waLink(t(locale).waDefault)} target="_blank" rel="noopener" data-opcion-wa>
+        <span class="opcion-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d={WA_GLOBO} /><path d={WA_TELEFONO} /></svg></span>
+        <span class="opcion-texto"><span class="opcion-t">{a.opcionWhatsapp}</span><span class="opcion-n">{a.opcionWhatsappNota}</span></span>
+      </a>
+      <button class="opcion opcion-ia" type="button" aria-controls="asesor-panel" data-opcion-ia>
+        <span class="opcion-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d={CHISPA_GRANDE} /><path d={CHISPA_CHICA} /></svg></span>
+        <span class="opcion-texto"><span class="opcion-t">{a.opcionIa}</span><span class="opcion-n" data-nota-ia>{a.opcionIaNota}</span></span>
+      </button>
+    </div>
 
     <section class="asesor-panel" id="asesor-panel" role="dialog" aria-labelledby="asesor-titulo" hidden data-panel>
       <header class="cab">
@@ -92,7 +117,10 @@ const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [serv
     const a = ui[locale].asesor;
     const d = raiz.dataset;
     const pagina = paginaDe(location.pathname, d.pagina, JSON.parse(d.servicios || '{}'));
-    const abrir = raiz.querySelector<HTMLButtonElement>('[data-abrir]')!;
+    const fab = raiz.querySelector<HTMLButtonElement>('[data-fab]')!;
+    const menu = raiz.querySelector<HTMLElement>('[data-menu]')!;
+    const opcionIa = raiz.querySelector<HTMLButtonElement>('[data-opcion-ia]')!;
+    const notaIa = raiz.querySelector<HTMLElement>('[data-nota-ia]')!;
     const panel = raiz.querySelector<HTMLElement>('[data-panel]')!;
     const lista = raiz.querySelector<HTMLOListElement>('[data-mensajes]')!;
     const sugerencias = raiz.querySelector<HTMLElement>('[data-sugerencias]')!;
@@ -228,10 +256,22 @@ const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [serv
       campo.style.height = `${Math.min(campo.scrollHeight, 120)}px`;
     }
 
+    function desplegar(si: boolean) {
+      menu.hidden = !si;
+      fab.setAttribute('aria-expanded', String(si));
+      if (!si) return;
+      // La opción de IA se apaga si la API no responde o no tiene presupuesto hoy.
+      consultar().then((ok) => {
+        opcionIa.disabled = !ok;
+        notaIa.textContent = ok ? a.opcionIaNota : a.opcionIaNoDisponible;
+      });
+      menu.querySelector<HTMLElement>('.opcion')?.focus({ preventScroll: true });
+    }
+
     function mostrar(si: boolean) {
       panel.hidden = !si;
-      abrir.setAttribute('aria-expanded', String(si));
       raiz!.classList.toggle('abierto', si);
+      if (si) desplegar(false);
       if (si) {
         consultar().then((ok) => {
           if (!ok && !raiz!.dataset.avisado) {
@@ -241,14 +281,29 @@ const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [serv
         });
         bajar();
         campo.focus({ preventScroll: true });
-      } else abrir.focus({ preventScroll: true });
+      } else fab.focus({ preventScroll: true });
     }
 
     historial.forEach(pintar);
     if (historial.length) sugerencias.hidden = true;
     raiz.hidden = false;
 
-    abrir.addEventListener('click', () => mostrar(true));
+    fab.addEventListener('click', () => {
+      if (!panel.hidden) mostrar(false);
+      else desplegar(menu.hidden);
+    });
+    opcionIa.addEventListener('click', () => mostrar(true));
+    raiz.querySelector('[data-opcion-wa]')!.addEventListener('click', () => desplegar(false));
+    menu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        desplegar(false);
+        fab.focus();
+      }
+    });
+    // Un clic fuera cierra el menú.
+    document.addEventListener('click', (e) => {
+      if (!menu.hidden && !raiz.contains(e.target as Node)) desplegar(false);
+    });
     raiz.querySelector('[data-cerrar]')!.addEventListener('click', () => mostrar(false));
     raiz.querySelector('[data-reiniciar]')!.addEventListener('click', () => {
       if (ocupado) return;
@@ -281,33 +336,101 @@ const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [serv
 </script>
 
 <style>
-  .asesor { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 40; font-family: var(--font-sans); }
+  /* El botón queda abajo a la derecha; el menú y el chat cuelgan encima de él. */
+  .asesor {
+    --fondo: calc(16px + env(safe-area-inset-bottom, 0px));
+    position: fixed; right: 16px; bottom: var(--fondo); z-index: 40;
+    display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 12px;
+    font-family: var(--font-sans);
+  }
   /* En las páginas internas, la barra de WhatsApp ocupa el borde inferior en móvil. */
   @media (max-width: 760px) {
-    :global(body:has(.barra-wa)) .asesor { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+    :global(body:has(.barra-wa)) .asesor { --fondo: calc(84px + env(safe-area-inset-bottom, 0px)); }
   }
 
   .punto { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--color-antidote); flex: none; }
 
-  .asesor-abrir {
-    display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 18px;
-    border: 1.5px solid rgb(59 200 243 / 0.5); border-radius: 12px; cursor: pointer;
-    background: var(--color-ink); color: var(--color-paper); font: 600 15px/1 var(--font-sans);
-    box-shadow: 0 10px 30px rgb(10 17 21 / 0.28);
-    transition: transform var(--t-fast) var(--ease-out);
+  /* Burbuja doble: píldora verde de WhatsApp con el círculo de la IA a la derecha. La etiqueta
+     se asoma al pasar el cursor (solo en pantallas anchas). */
+  .fab {
+    display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 6px 0 12px;
+    border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--color-whatsapp); color: var(--color-whatsapp-tinta);
+    box-shadow: 0 8px 28px rgb(37 211 102 / 0.35);
+    transition: filter var(--t-fast) ease;
   }
-  .asesor-abrir:hover { transform: translateY(-2px); }
-  .abierto .asesor-abrir { display: none; }
+  .fab:hover { filter: brightness(1.08); }
+  .fab:focus-visible { outline: 3px solid var(--color-whatsapp); outline-offset: 3px; }
+  .fab-wa { width: 24px; height: 24px; flex: none; fill: currentColor; }
+  .fab-etiqueta {
+    max-width: 0; margin-left: -8px; overflow: hidden; opacity: 0; white-space: nowrap;
+    font-size: 13px; font-weight: 600;
+    transition: max-width var(--t-slow) var(--ease-out), opacity var(--t-base) ease, margin var(--t-base) ease;
+  }
+  @media (min-width: 640px) {
+    .fab:hover .fab-etiqueta, .fab:focus-visible .fab-etiqueta { max-width: 10rem; margin-left: 0; opacity: 1; }
+  }
+  .fab-raya { width: 1px; height: 22px; background: rgb(6 46 22 / 0.3); }
+  .fab-ia {
+    display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 50%;
+    background: var(--color-ink); color: var(--color-antidote); box-shadow: inset 0 0 0 1px rgb(59 200 243 / 0.35);
+  }
+  .fab-ia svg { width: 19px; height: 19px; fill: currentColor; overflow: visible; }
+  /* La chispa grande late y la chica titila después, como un destello. Tres veces y se queda
+     quieta: la regla del sitio no admite bucles largos sin pausa. */
+  .chispa-grande { transform-origin: 10.5px 13px; animation: chispa-grande 7s ease-in-out 1.5s 3; }
+  .chispa-chica { transform-origin: 18.5px 5.5px; animation: chispa-chica 7s ease-in-out 1.5s 3; }
+  @keyframes chispa-grande {
+    0%, 80%, 100% { transform: scale(1); }
+    87% { transform: scale(1.2) rotate(8deg); }
+  }
+  @keyframes chispa-chica {
+    0%, 84%, 100% { transform: scale(1); opacity: 1; }
+    88% { transform: scale(0.3); opacity: 0.3; }
+    93% { transform: scale(1.35); opacity: 1; }
+  }
+
+  .menu {
+    width: min(20rem, calc(100vw - 32px)); padding: 6px; border-radius: 16px; transform-origin: bottom right;
+    background: var(--color-paper); border: 1px solid var(--color-line-soft); box-shadow: 0 18px 50px -12px rgb(10 17 21 / 0.45);
+  }
+  .menu[hidden] { display: none; }
+  .menu:not([hidden]) { animation: menu-desplegar 0.42s var(--ease-out); }
+  .menu:not([hidden]) .opcion { animation: opcion-entrar 0.5s var(--ease-out) both; }
+  .menu:not([hidden]) .opcion:nth-child(2) { animation-delay: 0.08s; }
+  @keyframes menu-desplegar { from { opacity: 0; transform: translateY(14px) scale(0.6); } }
+  @keyframes opcion-entrar { from { opacity: 0; transform: translateY(10px); } }
+  .opcion {
+    display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 12px;
+    border: 0; border-radius: 12px; background: none; color: var(--color-ink); text-align: left; text-decoration: none;
+    font: inherit; cursor: pointer;
+  }
+  .opcion + .opcion { margin-top: 4px; }
+  .opcion-wa { background: rgb(37 211 102 / 0.12); }
+  .opcion-wa:hover { background: rgb(37 211 102 / 0.22); }
+  .opcion-ia:hover:not(:disabled) { background: var(--color-mist); }
+  .opcion:disabled { opacity: 0.6; cursor: default; }
+  .opcion-icono { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 50%; }
+  .opcion-icono svg { width: 18px; height: 18px; fill: currentColor; }
+  .opcion-wa .opcion-icono { background: var(--color-whatsapp); color: var(--color-whatsapp-tinta); }
+  .opcion-ia .opcion-icono { background: var(--color-ink); color: var(--color-antidote); }
+  .opcion-texto { display: flex; flex-direction: column; min-width: 0; }
+  .opcion-t { font-size: 14px; font-weight: 600; }
+  .opcion-n { font-size: 12px; color: var(--color-slate); }
 
   .asesor-panel {
-    display: flex; flex-direction: column; width: min(400px, calc(100vw - 32px)); height: min(620px, calc(100dvh - 32px));
+    display: flex; flex-direction: column; width: min(400px, calc(100vw - 32px)); height: min(620px, calc(100dvh - var(--fondo) - 76px));
     background: var(--color-paper); color: var(--color-ink); border: 1px solid var(--color-line-soft); border-radius: 16px;
-    box-shadow: 0 24px 60px rgb(10 17 21 / 0.3); overflow: hidden;
+    box-shadow: 0 24px 60px rgb(10 17 21 / 0.3); overflow: hidden; transform-origin: bottom right;
   }
   .asesor-panel[hidden] { display: none; }
+  .asesor-panel:not([hidden]) { animation: menu-desplegar 0.36s var(--ease-out); }
   @media (max-width: 560px) {
-    .asesor:has(.asesor-panel:not([hidden])) { inset: auto 8px calc(8px + env(safe-area-inset-bottom, 0px)) 8px; }
-    .asesor-panel { width: 100%; height: min(640px, calc(100dvh - 16px)); }
+    .asesor-panel { width: calc(100vw - 16px); margin-right: -8px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chispa-grande, .chispa-chica, .menu:not([hidden]), .menu:not([hidden]) .opcion, .asesor-panel:not([hidden]) { animation: none; }
+    .fab-etiqueta { transition: none; }
   }
 
   .cab { display: flex; align-items: center; gap: 4px; padding: 12px 8px 12px 18px; border-bottom: 1px solid var(--color-line-soft); background: var(--color-mist); }

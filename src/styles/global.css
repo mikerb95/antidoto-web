@@ -24,6 +24,9 @@
   --color-bone-line: #d9d6ce;
   --color-bone-muted: #4a5a60;
   --color-reto: #ff7a59;
+  /* Verde de WhatsApp (marca de terceros): solo en el botón flotante de contacto. */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-tinta: #062e16;
 
   /* Base clara del home (antidoto-home-diseno): papel, bruma y textos sobre blanco. */
   --color-paper: #ffffff;
