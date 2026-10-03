@@ -1,10 +1,10 @@
 ---
 import type { GetStaticPaths } from 'astro';
 import Servicio from '../../../components/pages/Servicio.astro';
-import { SERVICIOS } from '../../../data/servicios';
+import { obtenerServicios } from '../../../data/servicios';
 
-export const getStaticPaths = (() =>
-  SERVICIOS.map((servicio) => ({ params: { slug: servicio.en.slug }, props: { servicio } }))) satisfies GetStaticPaths;
+export const getStaticPaths = (async () =>
+  (await obtenerServicios()).map((servicio) => ({ params: { slug: servicio.en.slug }, props: { servicio } }))) satisfies GetStaticPaths;
 
 const { servicio } = Astro.props;
 ---

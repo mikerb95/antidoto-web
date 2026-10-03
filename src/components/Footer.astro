@@ -3,13 +3,14 @@ import Logo from './Logo.astro';
 import { t, rutas, rutaPolitica, type Locale } from '../i18n/ui';
 import { NOVEDADES, NOVEDADES_VERSION } from '../data/consentimiento';
 import { SITE, waLink } from '../data/site';
-import { SERVICIOS, servicioPath } from '../data/servicios';
+import { obtenerServicios, servicioPath } from '../data/servicios';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const s = t(locale);
+const SERVICIOS = await obtenerServicios();
 const year = new Date().getFullYear();
 // La suscripción solo aparece si el build trae la API (ver api/README.md).
 const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');

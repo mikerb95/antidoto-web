@@ -4,7 +4,7 @@
 // que sube como líquido; la barra lateral es el nivel del frasco. En móvil no hay nada
 // fijo: cada paso lleva su propia escena y su firma se anima al entrar en pantalla.
 import Escena from './Escena.astro';
-import { SERVICIOS, servicioPath } from '../data/servicios';
+import { obtenerServicios, servicioPath } from '../data/servicios';
 import { t, type Locale } from '../i18n/ui';
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
 }
 const { locale } = Astro.props;
 const s = t(locale);
+const SERVICIOS = await obtenerServicios();
 ---
 <section class="servicios" id="servicios" aria-label={s.servicesTitle}>
   <div class="wrap">

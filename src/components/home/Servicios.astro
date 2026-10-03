@@ -6,7 +6,7 @@ import taller from '../../assets/fotos/taller.jpg';
 import grabacion from '../../assets/fotos/grabacion.jpg';
 import catering from '../../assets/fotos/catering-buffet.jpg';
 import figura from '../../assets/fotos/figura-piezas.jpg';
-import { SERVICIOS } from '../../data/servicios';
+import { obtenerServicios } from '../../data/servicios';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -20,7 +20,7 @@ const AFICHES = {
   catering: [catering, '62% center'],
   diseno: [figura, 'center'],
 } as const;
-const tarjetas = SERVICIOS.map((sv) => {
+const tarjetas = (await obtenerServicios()).map((sv) => {
   const id = sv.id as keyof typeof AFICHES;
   return { id, titulo: sv[locale].title, texto: h.items[id], afiche: AFICHES[id] };
 });

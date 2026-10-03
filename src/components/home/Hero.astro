@@ -3,7 +3,7 @@
 // palabra resaltada, dos llamadas, la fundadora y el espacio reservado para el reel.
 import { Image } from 'astro:assets';
 import foto from '../../assets/fotos/formacion-bandera.jpg';
-import { SERVICIOS } from '../../data/servicios';
+import { obtenerServicios } from '../../data/servicios';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 const h = s.inicio;
-const alt = SERVICIOS.find((sv) => sv.id === 'formaciones')![locale].alt;
+const alt = (await obtenerServicios()).find((sv) => sv.id === 'formaciones')![locale].alt;
 ---
 <section id="inicio" class="hero" aria-labelledby="hero-t">
   <Image class="foto" src={foto} alt={alt} widths={[640, 960, 1280]} sizes="100vw" loading="eager" fetchpriority="high" />

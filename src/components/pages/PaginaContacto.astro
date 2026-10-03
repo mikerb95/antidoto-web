@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Encabezado from '../Encabezado.astro';
 import WhatsappIcon from '../WhatsappIcon.astro';
-import { SERVICIOS } from '../../data/servicios';
+import { obtenerServicios } from '../../data/servicios';
 import { t, rutas, rutaPolitica, type Locale } from '../../i18n/ui';
 import { SITE, waLink } from '../../data/site';
 import { CONSENTIMIENTO, CONSENTIMIENTO_VERSION, NOVEDADES, NOVEDADES_VERSION } from '../../data/consentimiento';
@@ -12,6 +12,7 @@ interface Props {
 }
 const { locale } = Astro.props;
 const s = t(locale);
+const SERVICIOS = await obtenerServicios();
 const c = s.cot;
 const [title, description] = s.seo.contacto;
 // Con la API configurada en el build, el cotizador suma un paso de contacto y guarda el lead

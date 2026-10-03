@@ -1,4 +1,4 @@
-// Textos de interfaz por idioma. El contenido de servicios vive en src/data/servicios.ts.
+// Textos de interfaz por idioma. El contenido de servicios vive en src/content/servicios/.
 // Regla: todo texto nuevo va en los dos idiomas y sin guiones largos ni semilargos.
 
 export const LOCALES = ['es', 'en'] as const;

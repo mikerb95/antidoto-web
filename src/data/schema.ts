@@ -1,8 +1,8 @@
 // Datos estructurados de la organización (auditoria/01-auditoria-tecnica.md §1).
 import { SITE } from './site';
-import { SERVICIOS } from './servicios';
+import type { Servicio } from '../lib/servicios';
 
-export function organizationSchema() {
+export function organizationSchema(servicios: Servicio[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
@@ -23,7 +23,7 @@ export function organizationSchema() {
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
       name: 'Servicios',
-      itemListElement: SERVICIOS.map((s) => ({
+      itemListElement: servicios.map((s) => ({
         '@type': 'Offer',
         itemOffered: { '@type': 'Service', name: s.es.title, url: `${SITE.url}/servicios/${s.es.slug}/` },
       })),

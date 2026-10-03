@@ -4,7 +4,7 @@ import Encabezado from '../Encabezado.astro';
 import Escena from '../Escena.astro';
 import ContactoCta from '../ContactoCta.astro';
 import WhatsappIcon from '../WhatsappIcon.astro';
-import { SERVICIOS, servicioPath, type Servicio } from '../../data/servicios';
+import { obtenerServicios, servicioPath, type Servicio } from '../../data/servicios';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { waLink } from '../../data/site';
 
@@ -14,6 +14,7 @@ interface Props {
 }
 const { locale, servicio } = Astro.props;
 const s = t(locale);
+const SERVICIOS = await obtenerServicios();
 const txt = servicio[locale];
 const msg = s.waService(txt.title);
 const n = SERVICIOS.indexOf(servicio) + 1;

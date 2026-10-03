@@ -14,6 +14,7 @@ import Faq from '../home/Faq.astro';
 import Cierre from '../home/Cierre.astro';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { organizationSchema } from '../../data/schema';
+import { obtenerServicios } from '../../data/servicios';
 
 interface Props {
   locale: Locale;
@@ -21,7 +22,7 @@ interface Props {
 const { locale } = Astro.props;
 const [title, description] = t(locale).seo.inicio;
 ---
-<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema()} tema="claro">
+<Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema(await obtenerServicios())} tema="claro">
   <Hero locale={locale} />
   <ClientesCifras locale={locale} />
   <Dolores locale={locale} />

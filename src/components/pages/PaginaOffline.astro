@@ -6,13 +6,14 @@ import Base from '../../layouts/Base.astro';
 import Encabezado from '../Encabezado.astro';
 import { t, rutas, rutaOffline, PAGINAS, LOCALES, type Locale } from '../../i18n/ui';
 import { SITE, waLink } from '../../data/site';
-import { SERVICIOS, servicioPath } from '../../data/servicios';
+import { obtenerServicios, servicioPath } from '../../data/servicios';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const s = t(locale);
+const SERVICIOS = await obtenerServicios();
 
 // Nombre legible de cada ruta del sitio, para la lista de páginas guardadas.
 const nombres: Record<string, string> = {};
