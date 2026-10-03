@@ -43,7 +43,7 @@ export function leerHistorial(crudo: string | null): Mensaje[] {
       const { rol, texto, whatsapp, contacto } = m as Record<string, unknown>;
       if (rol !== (i % 2 === 0 ? 'usuario' : 'asesor') || typeof texto !== 'string' || !texto) return [];
       mensajes.push({
-        rol,
+        rol: rol as Mensaje['rol'],
         texto,
         whatsapp: typeof whatsapp === 'string' ? whatsapp : null,
         contacto: contacto && typeof contacto === 'object' ? { servicio: String((contacto as { servicio?: unknown }).servicio ?? '') || null } : null,

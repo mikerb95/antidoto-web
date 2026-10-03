@@ -248,7 +248,7 @@ const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [serv
     if (historial.length) sugerencias.hidden = true;
     raiz.hidden = false;
 
-    abrir.addEventListener('click', () => mostrar(panel.hidden));
+    abrir.addEventListener('click', () => mostrar(true));
     raiz.querySelector('[data-cerrar]')!.addEventListener('click', () => mostrar(false));
     raiz.querySelector('[data-reiniciar]')!.addEventListener('click', () => {
       if (ocupado) return;
