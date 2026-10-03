@@ -30,7 +30,7 @@ herramientas:
 aliado:
   nombre: "codebymike"
   url: "https://codebymike.net"
-  texto: "Antídoto offers this line in partnership with codebymike, who designs and teaches the training."
+  texto: "Antídoto offers this line in partnership with codebymike, who designs and teaches the training. Antídoto brings the experiential method, the logistics and the relationship with your company."
 alt: "Room set up for a workshop, with the welcome screen, the whiteboard and the boxes of materials"
 ---
 
@@ -44,7 +44,3 @@ Most people have already tried an AI assistant, but few use it well at work. Thi
 2. **Tailored program.** We build the exercises with documents, processes and cases similar to your team's, never with generic examples.
 3. **Hands-on workshop.** Each person works on their own computer, in a room or by video call, with support throughout the session.
 4. **Responsible use.** We close with clear criteria: what information is never shared, how to check AI output and when not to use it.
-
-## In partnership with codebymike
-
-Antídoto offers this line in partnership with [codebymike](https://codebymike.net), who designs and teaches the training. Antídoto brings the experiential method, the logistics and the relationship with your company.

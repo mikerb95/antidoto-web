@@ -30,7 +30,7 @@ herramientas:
 aliado:
   nombre: "codebymike"
   url: "https://codebymike.net"
-  texto: "Antídoto ofrece esta línea en alianza con codebymike, que diseña y dicta las capacitaciones."
+  texto: "Antídoto ofrece esta línea en alianza con codebymike, que diseña y dicta las capacitaciones. Antídoto pone la metodología vivencial, la logística y la relación con tu empresa."
 alt: "Sala lista para un taller, con la pantalla de bienvenida, el tablero y las cajas de material"
 ---
 
@@ -44,7 +44,3 @@ La mayoría de las personas ya probó un asistente de IA, pero pocas lo usan bie
 2. **Programa a la medida.** Armamos los ejercicios con documentos, procesos y casos parecidos a los de tu área, nunca con ejemplos genéricos.
 3. **Taller práctico.** Cada persona trabaja en su computador, en sala o por videollamada, con acompañamiento durante toda la sesión.
 4. **Uso responsable.** Cerramos con criterios claros: qué información no se comparte, cómo revisar lo que entrega la IA y cuándo no usarla.
-
-## En alianza con codebymike
-
-Antídoto ofrece esta línea en alianza con [codebymike](https://codebymike.net), que diseña y dicta las capacitaciones. Antídoto pone la metodología vivencial, la logística y la relación con tu empresa.
