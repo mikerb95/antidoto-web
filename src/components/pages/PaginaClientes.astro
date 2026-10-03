@@ -1,29 +1,50 @@
 ---
+// Clientes: todas las marcas y su reparto por sector. Las marcas se muestran mientras el
+// cliente confirma la autorización de cada una (ver src/data/clientes.ts).
+import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
-import Encabezado from '../Encabezado.astro';
-import Clientes from '../Clientes.astro';
-import ContactoCta from '../ContactoCta.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import BloqueCta from '../BloqueCta.astro';
 import { CLIENTES, SECTORES } from '../../data/clientes';
 import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { grafo, migasSchema } from '../../data/schema';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const s = t(locale);
+const p = tp(locale);
 const [title, description] = s.seo.clientes;
 const sectores = SECTORES.map((sec) => ({ sec, nombre: s.sectors[sec], marcas: CLIENTES.filter((c) => c.sector === sec).map((c) => c.nombre) }));
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.clientes, rutas.clientes[locale]],
+];
 ---
-<Base locale={locale} pagina="clientes" title={title} description={description} alternates={rutas.clientes} scroll="suave">
-  <div class="arriba"><Clientes locale={locale} num="01" nivel={1} /></div>
+<Base locale={locale} pagina="clientes" title={title} description={description} alternates={rutas.clientes} jsonLd={grafo(migasSchema(migas))} tema="claro" scroll="suave">
+  <CabeceraPagina locale={locale} migas={migas} titulo={s.clientsTitle} lead={s.clientsLead}>
+    <p class="total" slot="pie"><strong>{CLIENTES.length}</strong> {s.marcas(CLIENTES.length).replace(/^\d+\s/, '')}</p>
+  </CabeceraPagina>
 
-  <section class="seccion" aria-labelledby="sectores-title">
+  <section class="bloque" aria-label={s.nav.clientes}>
     <div class="wrap">
-      <Encabezado num="02" kicker={s.sectorsKicker} titulo={s.sectorsTitle} lead={s.sectorsLead} id="sectores-title" />
-      <ul class="sectores">
-        {sectores.map(({ sec, nombre, marcas }, i) => (
-          <li class:list={['panel', { destacado: sec === 'sst' || sec === 'ingenieria' }]}>
-            <div class="top"><span class="mono mono-acento">0{i + 1}</span><span class="mono">{s.marcas(marcas.length)}</span></div>
+      <ul class="logos" data-entra>
+        {CLIENTES.map((c) => <li><Image src={c.logo} alt={c.nombre} height={68} loading="lazy" /></li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="bloque bloque-mist" aria-labelledby="sectores-title">
+    <div class="wrap">
+      <div class="cab-izq">
+        <h2 id="sectores-title">{s.sectorsTitle}</h2>
+        <p>{s.sectorsLead}</p>
+      </div>
+      <ul class="sectores" data-entra>
+        {sectores.map(({ sec, nombre, marcas }) => (
+          <li class:list={{ destacado: sec === 'sst' || sec === 'ingenieria' }}>
             <p class="cifra">{marcas.length}</p>
             <h3>{nombre}</h3>
             <p class="lista">{marcas.join(' · ')}</p>
@@ -34,21 +55,27 @@ const sectores = SECTORES.map((sec) => ({ sec, nombre: s.sectors[sec], marcas: C
     </div>
   </section>
 
-  <ContactoCta locale={locale} num="03" />
+  <BloqueCta locale={locale} />
 </Base>
 
 <style>
-  .arriba { margin-top: -96px; padding-top: 96px; background: var(--color-bone); }
-  .arriba :global(.clientes) { padding-top: 48px; }
-  .sectores { list-style: none; margin: 32px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-  .sectores li { padding: 18px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
-  .destacado { border-color: rgb(59 200 243 / 0.35) !important; background: linear-gradient(180deg, rgb(59 200 243 / 0.12), rgb(59 200 243 / 0.02)) !important; }
-  .top { display: flex; justify-content: space-between; }
-  .top .mono { margin: 0; }
-  .cifra { margin: 8px 0 0; font: 400 56px/1 var(--font-accent); color: var(--color-fg); }
-  h3 { margin: 0; font-size: 20px; line-height: 1.15; }
-  .lista { margin: 0; font-size: 13px; color: var(--color-fg-muted); }
-  .barra { margin-top: auto; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--color-antidote) var(--p), rgb(128 220 255 / 0.12) var(--p)); }
+  .total { margin: 8px 0 0; display: flex; align-items: baseline; gap: 10px; color: var(--color-slate); font-weight: 500; }
+  .total strong { font: 400 56px/1 var(--font-accent); color: var(--color-deep); }
+  .logos { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; list-style: none; margin: 0; padding: 0; background: var(--color-line-soft); border: 1px solid var(--color-line-soft); border-radius: 20px; overflow: hidden; }
+  .logos li { background: var(--color-paper); display: grid; place-items: center; padding: 26px 14px; min-height: 108px; transition: background var(--t-base) var(--ease-out); }
+  .logos li:hover { background: var(--color-mist); }
+  /* Los logos llegan en blanco; brightness(0) los pasa a tinta sobre el fondo claro. */
+  .logos img { max-height: 36px; max-width: 100%; width: auto; height: auto; filter: brightness(0); opacity: 0.75; transition: opacity var(--t-base) var(--ease-out); }
+  .logos li:hover img { opacity: 1; }
+  .sectores { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  .sectores li { padding: 22px; display: flex; flex-direction: column; gap: 8px; border-radius: 20px; background: var(--color-paper); border: 1px solid var(--color-line-soft); }
+  .destacado { box-shadow: 0 10px 30px rgb(12 92 125 / 0.1); }
+  .destacado h3::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--color-antidote); vertical-align: middle; }
+  .cifra { margin: 0; font: 400 52px/1 var(--font-accent); color: var(--color-deep); }
+  h3 { margin: 0; font-size: 20px; line-height: 1.2; }
+  .lista { margin: 0; font-size: 14px; color: var(--color-slate); }
+  .barra { margin-top: auto; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--color-antidote) var(--p), var(--color-line-soft) var(--p)); }
   @media (max-width: 1020px) { .sectores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 480px) { .sectores { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) { .logos { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 480px) { .sectores { grid-template-columns: 1fr; } .logos li { padding: 18px 8px; min-height: 80px; } .logos img { max-height: 26px; } }
 </style>
