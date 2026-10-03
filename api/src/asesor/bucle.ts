@@ -7,7 +7,7 @@
 //
 // El modelo se inyecta (`Dependencias`) para probar el bucle sin red.
 // Módulo PURO.
-import type { Locale } from '../../../src/i18n/ui';
+import { ui, type Locale } from '../../../src/i18n/ui';
 import { CIFRAS_PUBLICAS, type Clave } from './conocimiento';
 import { sumarUso, USO_CERO, type Uso, type UsageApi } from './costo';
 import { verificarCifras } from './guardia';
@@ -190,7 +190,7 @@ function ejecutar(u: Extract<Bloque, { type: 'tool_use' }>, locale: Locale): Sal
     // El resumen sobrevive en el mensaje solo si pasó la limpieza; si no, al aviso tampoco va.
     const necesidad = whatsapp.includes(p.necesidad.trim()) ? p.necesidad.trim() : null;
     return {
-      contenido: 'Listo: el botón "Enviar a Antídoto por WhatsApp" ya está visible para el visitante.',
+      contenido: `Listo: el botón "${ui[locale].asesor.whatsapp}" ya está visible para el visitante.`,
       error: false,
       whatsapp: { whatsapp, necesidad },
       servicio: p.servicio,

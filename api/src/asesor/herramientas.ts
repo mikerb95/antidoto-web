@@ -92,7 +92,7 @@ export function definiciones() {
     {
       name: 'preparar_whatsapp',
       description:
-        'Prepara el botón "Enviar a Antídoto por WhatsApp", que abre WhatsApp con un resumen ya escrito. Úsala cuando la ' +
+        'Prepara el botón para enviar el mensaje a Antídoto por WhatsApp, que abre WhatsApp con un resumen ya escrito. Úsala cuando la ' +
         'persona quiera avanzar, pida una cotización o pida hablar con alguien. El mensaje lo envía la persona, así que ' +
         'escribe en PRIMERA persona, como si ella le escribiera al equipo ("Necesito una formación para 40 personas de mi ' +
         'área de SST en marzo...", nunca "Quiere..."). "necesidad": qué necesita, en una o dos frases y en su idioma, con ' +
