@@ -1,11 +1,21 @@
 ---
-// Hero "Juega primero": un solo foco por lado. A la izquierda, el titular con su resaltado, una
-// línea de apoyo y un solo botón; a la derecha, la trivia jugable, que prueba lo que el titular
-// promete. Abajo, una franja cian con la fundadora cuyo borde es oleaje que sigue al cursor (y
-// al scroll en táctil): responde a la persona, no es un bucle. La franja deja asomar la sección
-// siguiente para que la primera pantalla no parezca completa (NN/g, ilusión de completitud).
+// Hero "Juega primero" a pantalla completa. Detrás de todo corre la escena: el video del
+// cliente cuando exista (VIDEO, abajo) y mientras tanto una secuencia de fotos reales que se
+// acercan despacio y se relevan con la ola de líquido. Encima, un degradado que oscurece solo la
+// zona del texto (NN/g: contraste donde va el texto, no un velo sobre todo). A la izquierda el
+// titular con un solo botón; a la derecha la trivia jugable. Abajo, la franja cian con la
+// fundadora y oleaje que sigue al cursor; deja asomar la sección siguiente.
+//
+// La escena es un bucle: tiene pausa y se detiene fuera de pantalla (src/lib/motion/inicio.ts).
+// Sin JS o con movimiento reducido queda la primera foto quieta. Solo la primera foto carga con
+// la página; las demás y el video se piden después de `load`.
+import { Image, getImage } from 'astro:assets';
 import Olas from './Olas.astro';
 import Trivia from './Trivia.astro';
+import bandera from '../../assets/fotos/formacion-bandera.jpg';
+import grabacion from '../../assets/fotos/grabacion.jpg';
+import catering from '../../assets/fotos/catering-buffet.jpg';
+import grupo from '../../assets/fotos/grupo-aire-libre.jpg';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -14,8 +24,48 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 const h = s.inicio;
+
+/**
+ * Clip del hero. Cuando el cliente lo entregue (horizontal, 1080p, 15 a 25 s, sin texto ni
+ * audio), codifícalo a MP4 H.264 de 720p y ~1 MB (y opcionalmente WebM AV1), déjalo en
+ * public/video/ y pon aquí sus rutas. Mientras sea null, la escena son las fotos.
+ */
+const VIDEO: { mp4: string; webm?: string } | null = null;
+
+// Encuadre de cada foto en la pantalla ancha.
+const FOTOS = [
+  { src: bandera, pos: 'center 30%' },
+  { src: grabacion, pos: 'center 35%' },
+  { src: catering, pos: '60% center' },
+  { src: grupo, pos: 'center 55%' },
+];
+const ANCHOS = [640, 960, 1280];
+const resto = await Promise.all(
+  FOTOS.slice(1).map(async (f) => {
+    const img = await getImage({ src: f.src, widths: ANCHOS, sizes: '100vw', format: 'webp', quality: 72 });
+    return { srcset: img.srcSet.attribute, src: img.src, pos: f.pos };
+  }),
+);
 ---
 <section id="inicio" class="hero" aria-labelledby="hero-t" data-hero>
+  <div class="escena" aria-hidden="true" data-escena-hero>
+    <div class="toma" style={`--pos: ${FOTOS[0].pos}`}>
+      <Image src={FOTOS[0].src} alt="" widths={ANCHOS} sizes="100vw" format="webp" quality={72} loading="eager" fetchpriority="high" />
+    </div>
+    {resto.map((f) => (
+      <div class="toma diferida" style={`--pos: ${f.pos}`}>
+        <img alt="" data-srcset={f.srcset} data-src={f.src} sizes="100vw" decoding="async" />
+      </div>
+    ))}
+    {VIDEO && (
+      <video class="video" muted loop playsinline preload="none" data-video>
+        {VIDEO.webm && <source data-src={VIDEO.webm} type="video/webm" />}
+        <source data-src={VIDEO.mp4} type="video/mp4" />
+      </video>
+    )}
+  </div>
+  <div class="velo" aria-hidden="true"></div>
+
   <div class="wrap rejilla">
     <div class="texto">
       <p class="insignia" data-hero-entra>
@@ -37,6 +87,11 @@ const h = s.inicio;
     </div>
   </div>
 
+  <button class="pausa" type="button" hidden aria-pressed="false" aria-label={s.pause} title={s.pause} data-escena-pausa data-pausar={s.pause} data-reanudar={s.resume}>
+    <svg class="i-pausa" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="6" width="3.2" height="12" rx="1"></rect><rect x="13.8" y="6" width="3.2" height="12" rx="1"></rect></svg>
+    <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"></path></svg>
+  </button>
+
   <div class="franja" data-hero-franja>
     <Olas alto={56} altoMovil={32} fondo="mid" />
     <div class="wrap franja-in">
@@ -53,23 +108,42 @@ const h = s.inicio;
 </section>
 
 <style>
-  .hero { position: relative; background: var(--color-paper); overflow: hidden; }
-  .rejilla { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 56px; padding-block: 56px 88px; }
-  .texto { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
+  .hero { position: relative; isolation: isolate; overflow: hidden; background: var(--color-ink); color: var(--color-paper); }
 
-  .insignia { margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; background: var(--color-mist); border: 1px solid var(--color-line-soft); font-size: 14px; font-weight: 500; }
-  .insignia svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--color-deep); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* Escena: tomas apiladas; las diferidas no se ven hasta que el script las carga. */
+  .escena { position: absolute; inset: 0; z-index: -2; }
+  .toma { position: absolute; inset: 0; overflow: hidden; }
+  .toma :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: var(--pos); display: block; }
+  .diferida { visibility: hidden; }
+  .video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity var(--t-slow) var(--ease-out); }
+  .video:global(.listo) { opacity: 1; }
+  /* Contraste donde va el texto: oscuro a la izquierda, más abierto a la derecha, y un piso hacia la franja. */
+  .velo { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(15 24 29 / 0.9) 0%, rgb(15 24 29 / 0.72) 42%, rgb(15 24 29 / 0.3) 75%, rgb(15 24 29 / 0.2) 100%), linear-gradient(0deg, rgb(15 24 29 / 0.55) 0%, rgb(15 24 29 / 0) 30%); }
+
+  .rejilla { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 56px; padding-block: 72px 104px; min-height: min(720px, calc(100svh - 170px)); }
+  .texto { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
+  .insignia { margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; background: rgb(255 255 255 / 0.12); border: 1px solid rgb(255 255 255 / 0.28); font-size: 14px; font-weight: 500; }
+  .insignia svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--color-glow); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   /* Interlínea holgada: el resaltado tiene caja y no debe tocar la línea de arriba. */
-  h1 { margin: 0; font-size: clamp(36px, 4.4vw, 64px); line-height: 1.14; color: var(--color-ink); }
-  h1 .resaltado { padding: 0 0.22em; }
-  .lead { margin: 0; max-width: 34em; color: var(--color-slate); font-size: 19px; }
+  h1 { margin: 0; font-size: clamp(36px, 4.4vw, 64px); line-height: 1.14; color: var(--color-paper); text-shadow: 0 2px 24px rgb(15 24 29 / 0.35); }
+  h1 .resaltado { padding: 0 0.22em; text-shadow: none; }
+  .lead { margin: 0; max-width: 34em; color: var(--color-fg-soft); font-size: 19px; }
   .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
-  .pruebalo { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--color-deep); }
+  .pruebalo { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--color-glow); }
   /* La flecha apunta a la trivia: a la derecha en escritorio, abajo cuando la rejilla se apila. */
   .pruebalo::after { content: '→'; display: inline-block; animation: senalar 1.6s var(--ease-in-out) 3; }
   @keyframes senalar { 50% { transform: translateX(5px); } }
+  .hero :focus-visible { outline-color: var(--color-antidote); }
 
   .juego { display: flex; justify-content: center; }
+
+  .pausa { position: absolute; right: 16px; bottom: 96px; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(15 24 29 / 0.35); color: var(--color-paper); opacity: 0.75; cursor: pointer; transition: opacity var(--t-fast) var(--ease-out); }
+  .pausa[hidden] { display: none; }
+  .pausa:hover, .pausa:focus-visible { opacity: 1; }
+  .pausa svg { width: 18px; height: 18px; fill: currentColor; }
+  .pausa .i-play, .pausa[aria-pressed='true'] .i-pausa { display: none; }
+  .pausa[aria-pressed='true'] .i-play { display: block; }
+  @media (prefers-reduced-motion: reduce) { .pausa { display: none; } }
 
   .franja { position: relative; background: var(--color-antidote); color: var(--color-ink); }
   .franja-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-block: 14px 18px; }
@@ -84,10 +158,12 @@ const h = s.inicio;
   .franja :focus-visible { outline-color: var(--color-ink); }
 
   @media (max-width: 900px) {
-    .rejilla { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 28px 64px; }
+    .rejilla { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 32px 96px; min-height: 0; }
     .texto { gap: 16px; }
     .lead { font-size: 17px; }
+    .velo { background: linear-gradient(180deg, rgb(15 24 29 / 0.82) 0%, rgb(15 24 29 / 0.7) 50%, rgb(15 24 29 / 0.55) 100%); }
     .pruebalo::after { content: '↓'; animation-name: senalar-abajo; }
     @keyframes senalar-abajo { 50% { transform: translateY(4px); } }
+    .pausa { top: 12px; bottom: auto; }
   }
 </style>
