@@ -1,6 +1,7 @@
 ---
-// Barra de navegación del diseño claro (antidoto-home-diseno): logo, enlaces a las secciones
-// de la home, selector de idioma y botón Cotizar. Va en todas las páginas y no es fija.
+// Barra de navegación del diseño claro: logo, enlaces a las secciones de la home, selector de
+// idioma y botón Cotizar. No es fija. En pantallas angostas los enlaces y el idioma van en un
+// panel que abre el botón Menú (sin JS el panel queda abierto como lista, que también sirve).
 // Tiene view-transition-name propio: es igual en todas las páginas y no se funde al navegar.
 import Logo from './Logo.astro';
 import { t, rutas, otroIdioma, type Locale } from '../i18n/ui';
@@ -21,35 +22,82 @@ const enlaces = [
   [`${home}#nosotros`, s.nav.nosotros],
 ];
 ---
-<header class="nav">
+<header class="nav" data-nav>
   <div class="barra wrap">
     <a href={home} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
-    <nav aria-label={s.menuLabel} class="links">
-      {enlaces.map(([href, label]) => <a href={href}>{label}</a>)}
-      <a class="idioma" href={alternateHref} hreflang={otro} lang={otro} aria-label={s.switchLangLabel}>
-        <span class="actual">{locale.toUpperCase()}</span><span aria-hidden="true">/</span><span>{otro.toUpperCase()}</span>
-      </a>
+    <div class="derecha">
+      <nav aria-label={s.menuLabel} class="links" id="nav-links" data-links>
+        {enlaces.map(([href, label]) => <a href={href}>{label}</a>)}
+        <a class="idioma" href={alternateHref} hreflang={otro} lang={otro} aria-label={s.switchLangLabel}>
+          <span class="actual">{locale.toUpperCase()}</span><span aria-hidden="true">/</span><span>{otro.toUpperCase()}</span>
+        </a>
+      </nav>
       <a class="boton boton-cian cotizar" href={rutas.contacto[locale]}>{s.navQuote}</a>
-    </nav>
+      <button class="menu" type="button" aria-expanded="false" aria-controls="nav-links" hidden data-menu>
+        <span class="rayas" aria-hidden="true"><i></i><i></i></span>{s.menuBoton}
+      </button>
+    </div>
   </div>
 </header>
 
+<script>
+  // Menú en pantallas angostas: el script oculta el panel y muestra el botón. Esc lo cierra y
+  // devuelve el foco al botón; un enlace del panel también lo cierra.
+  const nav = document.querySelector<HTMLElement>('[data-nav]');
+  const boton = nav?.querySelector<HTMLButtonElement>('[data-menu]');
+  const panel = nav?.querySelector<HTMLElement>('[data-links]');
+  if (nav && boton && panel) {
+    nav.classList.add('con-menu');
+    boton.hidden = false;
+    const abrir = (si: boolean) => {
+      boton.setAttribute('aria-expanded', String(si));
+      nav.classList.toggle('abierto', si);
+    };
+    boton.addEventListener('click', () => abrir(boton.getAttribute('aria-expanded') !== 'true'));
+    panel.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) abrir(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && nav.classList.contains('abierto')) {
+        abrir(false);
+        boton.focus();
+      }
+    });
+  }
+</script>
+
 <style>
   .nav { position: relative; z-index: 40; background: var(--color-paper); border-bottom: 1px solid var(--color-line-soft); padding-top: env(safe-area-inset-top, 0px); view-transition-name: nav; }
-  .barra { padding-block: 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+  .barra { padding-block: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .home { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-antidote); }
   .home :global(.logo) { display: block; height: 34px; width: auto; }
+  .derecha { display: flex; align-items: center; gap: 28px; }
 
   .links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; }
-  .links a:not(.boton) { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink); text-decoration: none; font-weight: 500; font-size: 16px; }
-  .links a:not(.boton):hover { color: var(--color-deep); }
+  .links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink); text-decoration: none; font-weight: 500; font-size: 16px; }
+  .links a:hover { color: var(--color-deep); }
   .idioma { gap: 6px; font-size: 14px !important; font-weight: 600 !important; letter-spacing: 0.06em; color: var(--color-slate) !important; }
   .idioma .actual { color: var(--color-deep); }
   .cotizar { font-size: 16px; padding: 0 22px; }
-  .links :focus-visible { outline-color: var(--color-deep); }
+  .nav :focus-visible { outline-color: var(--color-deep); }
 
-  @media (max-width: 600px) {
-    .links { gap: 0 18px; }
-    .links a:not(.boton) { font-size: 15px; }
+  .menu { display: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--color-line-input); background: var(--color-paper); color: var(--color-ink); font: 600 15px/1 var(--font-sans); cursor: pointer; }
+  .rayas { position: relative; width: 18px; height: 10px; display: block; }
+  .rayas i { position: absolute; left: 0; right: 0; height: 2px; border-radius: 2px; background: currentColor; transition: transform var(--t-base) var(--ease-out); }
+  .rayas i:first-child { top: 0; }
+  .rayas i:last-child { bottom: 0; right: 5px; background: var(--color-mid); }
+  .nav:global(.abierto) .rayas i:first-child { transform: translateY(4px) rotate(45deg); }
+  .nav:global(.abierto) .rayas i:last-child { transform: translateY(-4px) rotate(-45deg); right: 0; }
+
+  @media (max-width: 900px) {
+    .derecha { gap: 10px; }
+    .cotizar { padding: 0 16px; font-size: 15px; }
+    .nav:global(.con-menu) .menu { display: inline-flex; }
+    /* Panel desplegable bajo la barra: se abre con clip-path, como el líquido que baja. */
+    .nav:global(.con-menu) .links { position: absolute; left: 0; right: 0; top: 100%; flex-direction: column; align-items: stretch; gap: 0; padding: 8px 16px 16px; background: var(--color-paper); border-bottom: 1px solid var(--color-line-soft); box-shadow: 0 20px 40px rgb(15 24 29 / 0.1); clip-path: inset(0 0 100% 0); visibility: hidden; transition: clip-path var(--t-base) var(--ease-out), visibility 0s linear var(--t-base); }
+    .nav:global(.con-menu.abierto) .links { clip-path: inset(0 0 -40px 0); visibility: visible; transition: clip-path var(--t-base) var(--ease-out), visibility 0s; }
+    .nav:global(.con-menu) .links a { font-size: 18px; min-height: 52px; border-bottom: 1px solid var(--color-line-soft); }
+    .nav:global(.con-menu) .links a:last-child { border-bottom: 0; }
   }
+  @media (max-width: 360px) { .home :global(.logo) { height: 28px; } }
 </style>

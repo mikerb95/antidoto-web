@@ -1,9 +1,11 @@
 ---
-// Hero: foto a pantalla completa con velo tinta, insignia de la licencia de SST, titular con
-// palabra resaltada, dos llamadas, la fundadora y el espacio reservado para el reel.
-import { Image } from 'astro:assets';
-import foto from '../../assets/fotos/formacion-bandera.jpg';
-import { obtenerServicios } from '../../data/servicios';
+// Hero "Juega primero": un solo foco por lado. A la izquierda, el titular con su resaltado, una
+// línea de apoyo y un solo botón; a la derecha, la trivia jugable, que prueba lo que el titular
+// promete. Abajo, una franja cian con la fundadora cuyo borde es oleaje que sigue al cursor (y
+// al scroll en táctil): responde a la persona, no es un bucle. La franja deja asomar la sección
+// siguiente para que la primera pantalla no parezca completa (NN/g, ilusión de completitud).
+import Olas from './Olas.astro';
+import Trivia from './Trivia.astro';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -12,57 +14,80 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 const h = s.inicio;
-const alt = (await obtenerServicios()).find((sv) => sv.id === 'formaciones')![locale].alt;
 ---
 <section id="inicio" class="hero" aria-labelledby="hero-t" data-hero>
-  <Image class="foto" src={foto} alt={alt} widths={[640, 960, 1280]} sizes="100vw" loading="eager" fetchpriority="high" />
-  <div class="velo" aria-hidden="true"></div>
-  <div class="centro wrap">
-    <p class="insignia" data-hero-entra>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
-      <span>{h.insignia}</span>
-    </p>
-    <h1 id="hero-t">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h1>
-    <p class="lead" data-hero-entra>{h.lead}</p>
-    <div class="ctas" data-hero-entra>
-      <a class="boton boton-cian boton-grande" href={rutas.contacto[locale]} data-magnetico>
-        {h.cotizar}
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
-      </a>
-      <a class="boton boton-borde boton-grande claro" href="#actividades" data-magnetico>
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
-        {h.probar}
-      </a>
+  <div class="wrap rejilla">
+    <div class="texto">
+      <p class="insignia" data-hero-entra>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+        <span>{h.insignia}</span>
+      </p>
+      <h1 id="hero-t">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h1>
+      <p class="lead" data-hero-entra>{h.lead}</p>
+      <div class="acciones" data-hero-entra>
+        <a class="boton boton-cian boton-grande" href={rutas.contacto[locale]} data-magnetico>
+          {h.cotizar}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+        </a>
+        <p class="pruebalo">{h.pruebalo}</p>
+      </div>
+    </div>
+    <div class="juego" data-hero-juego>
+      <Trivia locale={locale} />
     </div>
   </div>
-  <div class="pie wrap" data-hero-entra>
-    <div class="fundadora">
-      <span class="monograma" aria-hidden="true">MP</span>
-      <p><strong>{s.fundadoraNombre}</strong><span>{h.fundadoraResumen}</span></p>
+
+  <div class="franja" data-hero-franja>
+    <Olas alto={56} altoMovil={32} fondo="mid" />
+    <div class="wrap franja-in">
+      <div class="fundadora">
+        <span class="monograma" aria-hidden="true">MP</span>
+        <p><strong>{s.fundadoraNombre}</strong><span>{h.fundadoraResumen}</span></p>
+      </div>
+      <a class="bajar" href="#clientes-cifras">
+        {h.verMas}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M6 13l6 6 6-6"></path></svg>
+      </a>
     </div>
-    <p class="reel">{h.reel}</p>
   </div>
 </section>
 
 <style>
-  .hero { position: relative; min-height: 640px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; background: var(--color-ink); color: var(--color-paper); }
-  .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
-  .velo { position: absolute; inset: 0; background: linear-gradient(180deg, rgb(15 24 29 / 0.62) 0%, rgb(15 24 29 / 0.78) 60%, rgb(15 24 29 / 0.94) 100%); }
-  .centro { position: relative; padding-block: 72px 40px; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
-  .insignia { margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 999px; background: rgb(255 255 255 / 0.12); border: 1px solid rgb(255 255 255 / 0.28); font-size: 14px; font-weight: 500; }
-  .insignia svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--color-glow); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  h1 { margin: 0; max-width: 900px; font-size: clamp(38px, 5.2vw, 68px); line-height: 1.08; color: var(--color-paper); }
-  h1 .resaltado { padding: 0 14px; }
-  .lead { margin: 0; max-width: 680px; color: var(--color-fg-soft); font-size: 19px; }
-  .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
-  .claro { color: var(--color-paper); }
-  .ctas :focus-visible { outline-color: var(--color-antidote); }
+  .hero { position: relative; background: var(--color-paper); overflow: hidden; }
+  .rejilla { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 56px; padding-block: 56px 88px; }
+  .texto { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
 
-  .pie { position: relative; padding-bottom: 36px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
-  .fundadora { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px; background: rgb(15 24 29 / 0.72); border: 1px solid rgb(255 255 255 / 0.18); }
-  .monograma { width: 52px; height: 52px; flex: none; border-radius: 50%; background: var(--color-deep); display: flex; align-items: center; justify-content: center; font: 400 20px/1 var(--font-display); }
-  .fundadora p { margin: 0; display: flex; flex-direction: column; text-align: left; }
-  .fundadora strong { color: var(--color-glow); font-weight: 600; font-size: 16px; }
-  .fundadora span { color: var(--color-fg-soft); font-size: 14px; }
-  .reel { margin: 0; padding: 10px 14px; border-radius: 10px; border: 1px dashed rgb(255 255 255 / 0.6); font-size: 13px; font-weight: 500; }
+  .insignia { margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; background: var(--color-mist); border: 1px solid var(--color-line-soft); font-size: 14px; font-weight: 500; }
+  .insignia svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--color-deep); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* Interlínea holgada: el resaltado tiene caja y no debe tocar la línea de arriba. */
+  h1 { margin: 0; font-size: clamp(36px, 4.4vw, 64px); line-height: 1.14; color: var(--color-ink); }
+  h1 .resaltado { padding: 0 0.22em; }
+  .lead { margin: 0; max-width: 34em; color: var(--color-slate); font-size: 19px; }
+  .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
+  .pruebalo { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--color-deep); }
+  /* La flecha apunta a la trivia: a la derecha en escritorio, abajo cuando la rejilla se apila. */
+  .pruebalo::after { content: '→'; display: inline-block; animation: senalar 1.6s var(--ease-in-out) 3; }
+  @keyframes senalar { 50% { transform: translateX(5px); } }
+
+  .juego { display: flex; justify-content: center; }
+
+  .franja { position: relative; background: var(--color-antidote); color: var(--color-ink); }
+  .franja-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-block: 14px 18px; }
+  .fundadora { display: flex; align-items: center; gap: 14px; }
+  .monograma { width: 46px; height: 46px; flex: none; border-radius: 50%; background: var(--color-ink); color: var(--color-antidote); display: flex; align-items: center; justify-content: center; font: 400 18px/1 var(--font-display); }
+  .fundadora p { margin: 0; display: flex; flex-direction: column; }
+  .fundadora strong { font-weight: 600; font-size: 16px; }
+  .fundadora span { font-size: 14px; }
+  .bajar { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--color-ink); font-weight: 600; font-size: 15px; text-decoration: none; }
+  .bajar svg { width: 18px; height: 18px; animation: bajar 1.6s var(--ease-in-out) 3; }
+  @keyframes bajar { 50% { transform: translateY(4px); } }
+  .franja :focus-visible { outline-color: var(--color-ink); }
+
+  @media (max-width: 900px) {
+    .rejilla { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 28px 64px; }
+    .texto { gap: 16px; }
+    .lead { font-size: 17px; }
+    .pruebalo::after { content: '↓'; animation-name: senalar-abajo; }
+    @keyframes senalar-abajo { 50% { transform: translateY(4px); } }
+  }
 </style>

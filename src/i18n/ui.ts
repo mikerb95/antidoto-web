@@ -33,6 +33,7 @@ export const ui = {
     nav: { servicios: 'Servicios', clientes: 'Clientes', nosotros: 'Nosotros', contacto: 'Contacto' },
     navQuote: 'Cotizar',
     menuLabel: 'Principal',
+    menuBoton: 'Menú',
     homeLabel: 'Antídoto, inicio',
     langLabel: 'Idioma',
     switchLangLabel: 'Ver el sitio en inglés',
@@ -317,7 +318,7 @@ export const ui = {
           titulo: 'Resultados al terminar',
           columna: '% de aciertos',
           equipos: [['Equipo Planta', 92], ['Equipo Logística', 85], ['Equipo Oficina', 78], ['Equipo Ventas', 64]],
-          pie: '42 participantes · 8 preguntas · certificado por persona',
+          pie: '42 participantes · 8 preguntas',
         },
       },
       paraQuien: {
@@ -368,6 +369,7 @@ export const ui = {
     nav: { servicios: 'Services', clientes: 'Clients', nosotros: 'About', contacto: 'Contact' },
     navQuote: 'Get a quote',
     menuLabel: 'Main',
+    menuBoton: 'Menu',
     homeLabel: 'Antídoto, home',
     langLabel: 'Language',
     switchLangLabel: 'Ver el sitio en español',
@@ -649,7 +651,7 @@ export const ui = {
           titulo: 'Results at the end',
           columna: '% correct',
           equipos: [['Plant team', 92], ['Logistics team', 85], ['Office team', 78], ['Sales team', 64]],
-          pie: '42 participants · 8 questions · certificate per person',
+          pie: '42 participants · 8 questions',
         },
       },
       paraQuien: {

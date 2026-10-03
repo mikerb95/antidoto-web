@@ -30,6 +30,7 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
     <div class="intro">
       <h2 id="servicios-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
       <p>{h.lead}</p>
+      <p class="pendiente">{t(locale).inicio.reel}</p>
       <p class="pendiente">{h.testimonio}</p>
       <p class="pendiente">{h.logos}</p>
     </div>

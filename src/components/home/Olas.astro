@@ -1,0 +1,41 @@
+---
+// Oleaje: dos olas SVG superpuestas en el borde superior de una franja cian. El SVG mide el
+// doble de la pantalla y cada ola tiene un periodo que divide 1440: desplazar la mitad deja el
+// dibujo calzado consigo mismo. Quién las mueve lo decide el script (src/lib/motion/inicio.ts):
+// en el cierre corren en bucle con pausa; en el hero siguen al cursor y al scroll.
+interface Props {
+  /** Alto de las olas en escritorio y en móvil, en px. */
+  alto?: number;
+  altoMovil?: number;
+  /** Color de fondo de la ola trasera (la delantera es siempre el cian de la franja). */
+  fondo?: 'glow' | 'mid';
+}
+const { alto = 64, altoMovil = 36, fondo = 'glow' } = Astro.props;
+
+// Cada medio periodo es una curva cuadrática con el control al doble de la amplitud.
+function ola(periodo: number, amplitud: number, base: number, fase = 1) {
+  let d = `M0 ${base}`;
+  for (let x = 0, s = fase; x < 2880; x += periodo / 2, s = -s) {
+    d += ` Q${x + periodo / 4} ${base - 2 * amplitud * s} ${x + periodo / 2} ${base}`;
+  }
+  return `${d} V64 H0 Z`;
+}
+// Ritmos distintos (3 y 2 crestas por pantalla) para que el cruce de capas no se vea mecánico.
+const FRENTE = ola(480, 9, 34);
+const FONDO = ola(720, 11, 28, -1);
+---
+<div class:list={['olas', `fondo-${fondo}`]} aria-hidden="true" style={`--alto: ${alto}px; --alto-movil: ${altoMovil}px`} data-olas>
+  <svg class="ola fondo" viewBox="0 0 2880 64" preserveAspectRatio="none" data-ola="fondo"><path d={FONDO}></path></svg>
+  <svg class="ola frente" viewBox="0 0 2880 64" preserveAspectRatio="none" data-ola="frente"><path d={FRENTE}></path></svg>
+</div>
+
+<style>
+  /* Sobresalen por encima de la franja que las contiene (que debe tener position: relative). */
+  .olas { position: absolute; left: 0; right: 0; bottom: 100%; height: var(--alto); overflow: hidden; pointer-events: none; transform-origin: bottom; }
+  .ola { position: absolute; left: 0; bottom: -1px; width: 200%; height: 100%; }
+  .fondo { opacity: 0.7; }
+  .fondo-glow .fondo path { fill: var(--color-glow); }
+  .fondo-mid .fondo path { fill: var(--color-mid); }
+  .frente path { fill: var(--color-antidote); }
+  @media (max-width: 700px) { .olas { height: var(--alto-movil); } }
+</style>

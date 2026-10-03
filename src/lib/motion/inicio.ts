@@ -9,27 +9,9 @@ import { SplitText } from 'gsap/SplitText';
 import { gsap, ScrollTrigger, pieza, soloVisible } from './core';
 import { ola } from './liquido';
 import { odometro } from './cifras';
+import { llenar } from './llenar';
 
 gsap.registerPlugin(SplitText);
-
-/** Llena `el` de abajo arriba con el borde de ola (anima solo clip-path). */
-function llenar(el: HTMLElement, { duracion = 1, delay = 0, alTerminar }: { duracion?: number; delay?: number; alTerminar?: () => void } = {}) {
-  const estado = { p: 0 };
-  el.style.clipPath = ola(0);
-  return gsap.to(estado, {
-    p: 1,
-    duration: duracion,
-    delay,
-    ease: 'power2.inOut',
-    onUpdate: () => {
-      el.style.clipPath = ola(estado.p, estado.p * Math.PI * 3);
-    },
-    onComplete: () => {
-      el.style.clipPath = '';
-      alTerminar?.();
-    },
-  });
-}
 
 /** Corre `fn` una sola vez cuando `el` asoma. (No `once: true`: ver tropiezos de la skill.) */
 function alAsomar(el: Element, fn: () => void, start = 'top 85%') {
@@ -74,29 +56,94 @@ function dosis(res: HTMLElement, cuando: 'asomar' | number) {
   );
 }
 
-/** Hero: el titular sube palabra a palabra, luego su resaltado recibe la dosis. */
+/**
+ * Hero: el titular sube palabra a palabra y su resaltado recibe la dosis; la trivia entra
+ * llenándose de líquido y la franja de la fundadora sube desde abajo.
+ */
 function hero(seccion: HTMLElement) {
   const h1 = seccion.querySelector<HTMLElement>('h1');
   const res = h1?.querySelector<HTMLElement>('.resaltado');
   const resto = seccion.querySelectorAll<HTMLElement>('[data-hero-entra]');
-  const foto = seccion.querySelector<HTMLElement>('.foto');
+  const juego = seccion.querySelector<HTMLElement>('[data-hero-juego] .pantalla');
+  const franja = seccion.querySelector<HTMLElement>('[data-hero-franja]');
   let split: SplitText | null = null;
   pieza(
     'hero',
     () => {
-      if (foto) gsap.from(foto, { scale: 1.08, duration: 2.2, ease: 'expo.out' });
-      gsap.from(resto, { y: 18, opacity: 0, duration: 0.9, ease: 'expo.out', stagger: 0.08, delay: 0.45, clearProps: 'transform,opacity' });
+      gsap.from(resto, { y: 18, opacity: 0, duration: 0.9, ease: 'expo.out', stagger: 0.08, delay: 0.35, clearProps: 'transform,opacity' });
       if (h1) {
         split = new SplitText(h1, { type: 'words', mask: 'words' });
         gsap.from(split.words, { yPercent: 110, duration: 0.9, ease: 'expo.out', stagger: 0.05, delay: 0.1 });
       }
+      if (juego) {
+        gsap.from(juego, { y: 40, rotation: 2.5, duration: 1.1, ease: 'expo.out', delay: 0.25, clearProps: 'transform' });
+        llenar(juego, { duracion: 1.1, delay: 0.25 });
+      }
+      if (franja) gsap.from(franja, { yPercent: 100, duration: 1, ease: 'expo.out', delay: 0.6, clearProps: 'transform' });
     },
     () => {
       split?.revert();
-      gsap.set([...resto, foto], { clearProps: 'all' });
+      if (juego) juego.style.clipPath = '';
+      gsap.set([...resto, juego, franja], { clearProps: 'all' });
     },
   );
   if (res) dosis(res, 0.85);
+}
+
+/**
+ * Olas del hero: siguen al cursor (la posición mueve las capas en sentidos contrarios y la
+ * velocidad levanta la ola, que se calma sola) y, en táctil, al scroll. No es un bucle: si la
+ * persona no hace nada, el agua queda quieta.
+ */
+function olasVivas(seccion: HTMLElement) {
+  const olas = seccion.querySelector<HTMLElement>('[data-olas]');
+  const frente = seccion.querySelector<SVGElement>('[data-ola="frente"]');
+  const fondo = seccion.querySelector<SVGElement>('[data-ola="fondo"]');
+  if (!olas || !frente || !fondo) return;
+  pieza('olas-vivas', () => {
+    const xFrente = gsap.quickTo(frente, 'xPercent', { duration: 1.6, ease: 'power3.out' });
+    const xFondo = gsap.quickTo(fondo, 'xPercent', { duration: 2.2, ease: 'power3.out' });
+    const alto = gsap.quickTo(olas, 'scaleY', { duration: 0.9, ease: 'power2.out' });
+    gsap.set([frente, fondo], { xPercent: -25 });
+    const mover = (p: number) => {
+      xFrente(-25 - p * 22);
+      xFondo(-25 + p * 16);
+    };
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      let ultimo = 0;
+      let calma: number | undefined;
+      addEventListener(
+        'pointermove',
+        (e) => {
+          mover(e.clientX / innerWidth);
+          const v = Math.min(1, Math.abs(e.clientX - ultimo) / 60);
+          ultimo = e.clientX;
+          alto(1 + v * 0.7);
+          clearTimeout(calma);
+          calma = window.setTimeout(() => alto(1), 140);
+        },
+        { passive: true },
+      );
+    } else {
+      ScrollTrigger.create({ trigger: seccion, start: 'top top', end: 'bottom top', onUpdate: (st) => mover(st.progress * 2) });
+    }
+  });
+}
+
+/** Resultados por equipo: las barras se llenan y los porcentajes ruedan al asomar. */
+function resultados(fig: HTMLElement) {
+  const barras = [...fig.querySelectorAll<HTMLElement>('[data-pct]')];
+  pieza(
+    'resultados',
+    () => {
+      gsap.set(barras, { scaleX: 0 });
+      alAsomar(fig, () =>
+        gsap.to(barras, { scaleX: (i: number) => Number(barras[i].dataset.pct) / 100, duration: 1.4, ease: 'expo.out', stagger: 0.12 }),
+      );
+      odometro(fig);
+    },
+    () => barras.forEach((b) => gsap.set(b, { scaleX: Number(b.dataset.pct) / 100 })),
+  );
 }
 
 /**
@@ -199,7 +246,7 @@ function oleaje(seccion: HTMLElement) {
 
 /**
  * Profundidad ligada al scroll (no es un bucle: responde a la persona). Las fotos `[data-paralaje]`
- * se desplazan dentro de su marco, ampliadas lo justo para no dejar huecos; el hero se aleja al bajar.
+ * se desplazan dentro de su marco, ampliadas lo justo para no dejar huecos.
  */
 function paralaje() {
   document.querySelectorAll<HTMLElement>('[data-paralaje]').forEach((marco) => {
@@ -212,25 +259,16 @@ function paralaje() {
       () => gsap.set(fotos, { clearProps: 'transform' }),
     );
   });
-  const h = document.querySelector<HTMLElement>('[data-hero]');
-  const foto = h?.querySelector<HTMLElement>('.foto');
-  const centro = h?.querySelector<HTMLElement>('.centro');
-  if (h && foto && centro) {
-    pieza(
-      'hero-scroll',
-      () => {
-        const st = { trigger: h, start: 'top top', end: 'bottom top', scrub: true };
-        gsap.to(foto, { yPercent: 18, ease: 'none', scrollTrigger: st });
-        gsap.to(centro, { yPercent: -18, opacity: 0.35, ease: 'none', scrollTrigger: { ...st } });
-      },
-      () => gsap.set([foto, centro], { clearProps: 'transform,opacity' }),
-    );
-  }
 }
 
 export function iniciarInicio() {
   const h = document.querySelector<HTMLElement>('[data-hero]');
-  if (h) hero(h);
+  if (h) {
+    hero(h);
+    olasVivas(h);
+  }
+  const r = document.querySelector<HTMLElement>('[data-resultados]');
+  if (r) resultados(r);
   document.querySelectorAll<HTMLElement>('main section:not([data-hero]) .resaltado').forEach((r) => dosis(r, 'asomar'));
   dolores();
   const p = document.querySelector<HTMLElement>('[data-pasos]');
