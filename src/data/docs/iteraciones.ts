@@ -97,6 +97,7 @@ export const TARJETAS: Tarjeta[] = [
   // I4
   { id: 'K-17', titulo: 'PWA con modo sin conexión', detalle: 'Service worker generado en cada build, precache de las páginas offline y caché por tipo de recurso.', columna: 'hecho', iteracion: 'I4', historias: ['HU-19'] },
   { id: 'K-18', titulo: 'Suscripción con doble confirmación', detalle: 'Formulario del pie y segunda casilla del cotizador, con texto de autorización propio.', columna: 'hecho', iteracion: 'I4', historias: ['HU-08', 'HU-09'] },
+  { id: 'K-40', titulo: 'Registro a novedades en la home', detalle: 'Sección con correo e intereses por servicio; lógica común con el pie en src/lib/novedades.ts. Falta que el cliente confirme la frecuencia de envío.', columna: 'hecho', iteracion: 'I4', historias: ['HU-29'] },
   { id: 'K-19', titulo: 'Campañas por lotes y webhook de Resend', detalle: 'Lotes de 100, reclamo atómico, reintentos, métricas por campaña y baja de un clic (RFC 8058).', columna: 'hecho', iteracion: 'I4', historias: ['HU-20', 'HU-21'] },
   { id: 'K-20', titulo: 'Supresión y anonimización de datos', detalle: 'Borra lo personal, revoca la autorización y conserva solo lo necesario para las métricas.', columna: 'hecho', iteracion: 'I4', historias: ['HU-10', 'HU-22'] },
   // I5

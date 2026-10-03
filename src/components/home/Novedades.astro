@@ -93,7 +93,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
   .fila input:hover { border-color: var(--color-slate); }
   .fila input[aria-invalid='true'] { border-color: var(--color-ink); }
   .legal { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--color-slate); }
-  .legal a { color: inherit; }
+  .legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
   .estado { margin: 0; font-weight: 600; }
   .estado:empty { display: none; }
   .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
