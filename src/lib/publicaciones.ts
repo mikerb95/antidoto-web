@@ -50,3 +50,31 @@ export function casoPath(c: { es: { slug: string }; en: { slug: string } }, loca
 export function articuloPath(a: { es: { slug: string }; en: { slug: string } }, locale: Locale): string {
   return `${blogBase[locale]}${a[locale].slug}/`;
 }
+
+export function categoriaPath(categoria: string, locale: Locale): string {
+  return `${blogBase[locale]}${locale === 'es' ? 'categoria' : 'category'}/${categoria}/`;
+}
+
+const escapar = (s: string) => s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[c]!);
+
+/** RSS 2.0 de una lista de artículos. Las rutas son relativas al sitio. */
+export function rssXml(
+  items: Array<{ titulo: string; resumen: string; ruta: string; fecha: Date }>,
+  canal: { titulo: string; descripcion: string; ruta: string; idioma: string },
+  sitio = 'https://antidotocolombia.com',
+): string {
+  const url = (r: string) => new URL(r, sitio).href;
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<rss version="2.0"><channel>',
+    `<title>${escapar(canal.titulo)}</title>`,
+    `<link>${url(canal.ruta)}</link>`,
+    `<description>${escapar(canal.descripcion)}</description>`,
+    `<language>${canal.idioma}</language>`,
+    ...items.map(
+      (i) =>
+        `<item><title>${escapar(i.titulo)}</title><link>${url(i.ruta)}</link><guid>${url(i.ruta)}</guid><pubDate>${i.fecha.toUTCString()}</pubDate><description>${escapar(i.resumen)}</description></item>`,
+    ),
+    '</channel></rss>',
+  ].join('\n');
+}

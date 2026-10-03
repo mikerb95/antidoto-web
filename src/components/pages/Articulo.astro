@@ -1,0 +1,95 @@
+---
+// Artículo del blog: cabecera con autor y fecha, cuerpo en Markdown, servicios relacionados y
+// otros artículos.
+import { getEntry, render } from 'astro:content';
+import { Image, getImage } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import TarjetaIndice from '../TarjetaIndice.astro';
+import BloqueCta from '../BloqueCta.astro';
+import { obtenerServicios, servicioPath } from '../../data/servicios';
+import { obtenerArticulos, articuloPath, type Articulo } from '../../data/contenido';
+import { categoriaPath } from '../../lib/publicaciones';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { grafo, migasSchema, publicacionSchema } from '../../data/schema';
+
+interface Props {
+  locale: Locale;
+  articulo: Articulo;
+}
+const { locale, articulo } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const txt = articulo[locale];
+const relacionados = (await obtenerServicios()).filter((sv) => txt.lineas.includes(sv.id));
+const otros = (await obtenerArticulos()).filter((a) => a.id !== articulo.id).slice(0, 3);
+const entrada = txt.entrada ? await getEntry('blog', txt.entrada) : undefined;
+const { Content } = entrada ? await render(entrada) : { Content: undefined };
+const ruta = articuloPath(articulo, locale);
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.blog, rutas.blog[locale]],
+  [txt.title, ruta],
+];
+const foto = await getImage({ src: articulo.image, width: 1200, format: 'jpeg' });
+const jsonLd = grafo(
+  publicacionSchema('BlogPosting', { titulo: txt.title, descripcion: txt.lead, ruta, fecha: articulo.fecha, imagen: foto.src, autor: txt.autor }, locale),
+  migasSchema(migas),
+);
+---
+<Base
+  locale={locale}
+  pagina="blog"
+  title={`${txt.title} | Antídoto`}
+  description={txt.lead}
+  alternates={{ es: articuloPath(articulo, 'es'), en: articuloPath(articulo, 'en') }}
+  jsonLd={jsonLd}
+  tema="claro"
+>
+  <CabeceraPagina locale={locale} migas={migas} titulo={txt.title} lead={txt.lead}>
+    <p class="meta" slot="pie">
+      <a href={categoriaPath(txt.categoria, locale)}>{p.blog.categorias[txt.categoria]}</a>
+      <span>{p.blog.por} {txt.autor}</span>
+      <time datetime={articulo.fecha.toISOString().slice(0, 10)}>{p.blog.fecha(articulo.fecha)}</time>
+    </p>
+  </CabeceraPagina>
+
+  <article class="bloque">
+    <div class="wrap lectura">
+      <Image class="portada" src={articulo.image} alt={txt.alt} widths={[640, 960, 1280]} sizes="(max-width: 900px) 100vw, 860px" />
+      {Content && <div class="prosa"><Content /></div>}
+    </div>
+  </article>
+
+  {relacionados.length > 0 && (
+    <section class="bloque bloque-mist" aria-labelledby="rel-t">
+      <div class="wrap">
+        <div class="cab-izq"><h2 id="rel-t">{p.blog.relacionados[0]}<span class="resaltado">{p.blog.relacionados[1]}</span></h2></div>
+        <ul class="rejilla-tarjetas">
+          {relacionados.map((sv) => <li><TarjetaIndice href={servicioPath(sv, locale)} titulo={sv[locale].title} texto={sv[locale].lead} cta={p.servicios.verLinea} /></li>)}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  {otros.length > 0 && (
+    <section class="bloque" aria-labelledby="otros-t">
+      <div class="wrap">
+        <div class="cab-izq"><h2 id="otros-t">{p.blog.otros[0]}<span class="resaltado">{p.blog.otros[1]}</span></h2></div>
+        <ul class="rejilla-tarjetas">
+          {otros.map((a) => <li><TarjetaIndice href={articuloPath(a, locale)} titulo={a[locale].title} texto={a[locale].lead} imagen={a.image} alt={a[locale].alt} cta={p.leerMas} /></li>)}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <BloqueCta locale={locale} />
+</Base>
+
+<style>
+  .meta { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; color: var(--color-slate); font-size: 15px; }
+  .meta a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
+  .lectura { max-width: 860px; display: flex; flex-direction: column; gap: 36px; }
+  .portada { width: 100%; height: auto; border-radius: 22px; }
+</style>

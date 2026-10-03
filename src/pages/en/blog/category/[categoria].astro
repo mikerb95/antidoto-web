@@ -1,0 +1,11 @@
+---
+import type { GetStaticPaths } from 'astro';
+import P from '../../../../components/pages/PaginaBlog.astro';
+import { obtenerArticulos } from '../../../../data/contenido';
+
+export const getStaticPaths = (async () =>
+  [...new Set((await obtenerArticulos()).map((a) => a.es.categoria))].map((categoria) => ({ params: { categoria }, props: { categoria } }))) satisfies GetStaticPaths;
+
+const { categoria } = Astro.props;
+---
+<P locale="en" categoria={categoria} />

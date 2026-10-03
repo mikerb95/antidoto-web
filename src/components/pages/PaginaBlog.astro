@@ -1,0 +1,83 @@
+---
+// Índice del blog y de cada categoría. Las categorías sin artículos no tienen página ni chip.
+// Mientras no haya artículos publicados, una caja .pendiente.
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import TarjetaIndice from '../TarjetaIndice.astro';
+import BloqueCta from '../BloqueCta.astro';
+import { obtenerArticulos, articuloPath, type Articulo } from '../../data/contenido';
+import { categoriaPath } from '../../lib/publicaciones';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { grafo, listaSchema, migasSchema } from '../../data/schema';
+
+type Categoria = Articulo['es']['categoria'];
+
+interface Props {
+  locale: Locale;
+  /** Sin categoría: el índice completo. */
+  categoria?: Categoria;
+}
+const { locale, categoria } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const [seoT, seoD] = s.seo.blog;
+const todos = await obtenerArticulos();
+const articulos = categoria ? todos.filter((a) => a.es.categoria === categoria) : todos;
+const categorias = [...new Set(todos.map((a) => a.es.categoria))];
+const nombreCat = categoria ? p.blog.categorias[categoria] : undefined;
+const ruta = categoria ? categoriaPath(categoria, locale) : rutas.blog[locale];
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.blog, rutas.blog[locale]],
+  ...(categoria ? [[nombreCat!, ruta] as [string, string]] : []),
+];
+const title = categoria ? `${nombreCat} | ${seoT}` : seoT;
+const jsonLd = grafo(listaSchema(title, ruta, articulos.map((a) => [a[locale].title, articuloPath(a, locale)])), migasSchema(migas));
+---
+<Base
+  locale={locale}
+  pagina="blog"
+  title={title}
+  description={seoD}
+  alternates={categoria ? { es: categoriaPath(categoria, 'es'), en: categoriaPath(categoria, 'en') } : rutas.blog}
+  jsonLd={jsonLd}
+  tema="claro"
+>
+  <CabeceraPagina locale={locale} migas={migas} kicker={nombreCat} titulo={p.blog.titulo} lead={p.blog.lead}>
+    {categorias.length > 1 && (
+      <nav class="cats" aria-label={s.nav.blog}>
+        <a href={rutas.blog[locale]} aria-current={!categoria ? 'page' : undefined}>{p.blog.todas}</a>
+        {categorias.map((c) => <a href={categoriaPath(c, locale)} aria-current={c === categoria ? 'page' : undefined}>{p.blog.categorias[c]}</a>)}
+      </nav>
+    )}
+  </CabeceraPagina>
+
+  <section class="bloque" aria-label={s.nav.blog}>
+    <div class="wrap">
+      {articulos.length > 0 ? (
+        <ul class="rejilla-tarjetas" data-entra>
+          {articulos.map((a) => (
+            <li>
+              <TarjetaIndice nivel={2} href={articuloPath(a, locale)} titulo={a[locale].title} texto={a[locale].lead} etiqueta={`${p.blog.categorias[a.es.categoria]} · ${p.blog.fecha(a.fecha)}`} imagen={a.image} alt={a[locale].alt} cta={p.leerMas} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="pendiente vacio">{p.blog.vacio}</p>
+      )}
+      {articulos.length > 0 && <a class="rss" href={`${rutas.blog[locale]}rss.xml`}>{p.blog.rss}</a>}
+    </div>
+  </section>
+
+  <BloqueCta locale={locale} />
+</Base>
+
+<style>
+  .cats { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cats a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; background: var(--color-paper); border: 1px solid var(--color-line-input); color: var(--color-ink); text-decoration: none; font-weight: 500; font-size: 15px; }
+  .cats a:hover { border-color: var(--color-deep); color: var(--color-deep); }
+  .cats a[aria-current] { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-paper); }
+  .vacio { min-height: 220px; margin: 0; }
+  .rss { display: inline-flex; align-items: center; min-height: 44px; margin-top: 20px; color: var(--color-deep); font-weight: 600; }
+</style>

@@ -1,5 +1,18 @@
 # Pendientes
 
+## Documentación (/docs/) al 03/10/2026
+
+Revisión pendiente tras actualizar `src/data/docs/`.
+
+- [ ] Páginas `/novedades/` y `/novedades/preferencias/` (y `/en/news/` y `/en/news/preferences/`). La API ya redirige a ellas desde los enlaces de confirmar, baja y preferencias, y hoy llevan a un 404. Cubre RF-46 y HU-32.
+- [ ] Marcar RF-28 y RF-30 como parciales en `requisitos.ts` mientras no existan esas páginas. Hoy la dependencia solo está anotada en RF-46.
+- [ ] Reflejar en el kanban y en los requisitos lo que sigue sin commit: `PaginaPortafolio.astro`, `ia.*.md` y `src/content/ofertas/ia/`. Revisar si `K-34`, RF-11, RF-47 y RF-48 siguen vigentes.
+- [ ] Activar el asesor en producción: secret `ANTHROPIC_API_KEY` y prueba con la API real (preguntas trampa de la receta `chat-ia`). Cubre RF-39 y HU-30.
+- [ ] Medir de nuevo el rendimiento (LCP y JS inicial) con el hero actual, el asesor y las secciones nuevas. Cubre RNF-01 a RNF-03.
+- [ ] Auditoría de accesibilidad formal posterior al rediseño. Cubre RNF-06.
+- [ ] Pasar la CSP de Report-Only a enforcement tras revisar la consola. Cubre RNF-12.
+- [ ] Decidir con el dueño si `/docs/` debe seguir desplegándose con el sitio público o quedarse solo en desarrollo.
+
 ## Indexación: buscadores y asistentes de IA
 
 Revisión del 03/10/2026. El rediseño ya tiene HTML estático, `canonical`, `hreflang`, sitemap, `noindex` donde toca, JSON-LD por idioma y `/llms.txt`. Lo que sigue depende del cliente o del lanzamiento.
