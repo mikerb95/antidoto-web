@@ -112,7 +112,9 @@ function vista() {
     ? 'leads'
     : hash.startsWith('campana-')
       ? 'campana'
-      : hash.startsWith('contacto-')
+      : hash.startsWith('automatico-')
+        ? 'automatico'
+        : hash.startsWith('contacto-')
         ? 'contactos'
         : ['leads', 'metricas', 'equipo', 'campanas', 'contactos'].includes(hash)
           ? hash
@@ -120,7 +122,7 @@ function vista() {
   if (nombre === 'equipo' && yo.rol !== 'admin') return (location.hash = '#leads');
   for (const v of document.querySelectorAll('.vista')) v.hidden = v.id !== `vista-${nombre}`;
   for (const a of document.querySelectorAll('[data-vista]')) {
-    if (a.dataset.vista === nombre || (nombre === 'campana' && a.dataset.vista === 'campanas')) a.setAttribute('aria-current', 'page');
+    if (a.dataset.vista === nombre || ((nombre === 'campana' || nombre === 'automatico') && a.dataset.vista === 'campanas')) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   }
   if (nombre === 'leads') {
@@ -132,6 +134,7 @@ function vista() {
   if (nombre === 'equipo') cargarEquipo();
   if (nombre === 'campanas') cargarCampanas();
   if (nombre === 'campana') abrirCampana(hash.slice('campana-'.length));
+  if (nombre === 'automatico') abrirAutomatico(decodeURIComponent(hash.slice('automatico-'.length)));
   if (nombre === 'contactos') {
     cargarContactos();
     if (hash.startsWith('contacto-')) abrirContacto(hash.slice('contacto-'.length));
@@ -248,7 +251,25 @@ async function abrirLead(id) {
   panel.querySelector('h2').focus();
 }
 
-function pintarDetalle({ lead: l, eventos, consentimientos }) {
+/** Lo que el lead hace con las novedades: dice cuándo vale la pena escribirle. */
+function bloqueSuscripcion(sx) {
+  if (!sx) return h('div', { class: 'consentimiento' }, h('p', { class: 'etq' }, 'Novedades'), h('p', { class: 'suave' }, 'No está suscrito a las novedades.'));
+  const partes = [ESTADOS_CONTACTO[sx.estado]];
+  if (sx.pausaHasta && sx.pausaHasta > Date.now()) partes.push(`en pausa hasta el ${fecha(sx.pausaHasta)}`);
+  if (sx.recibidas) partes.push(`abrió ${sx.abiertas} de ${sx.recibidas} campañas`, cuenta(sx.clics, 'clic', 'clics'));
+  if (sx.ultimoClic) partes.push(`último clic el ${fecha(sx.ultimoClic, true)}`);
+  else if (sx.ultimaApertura) partes.push(`última apertura el ${fecha(sx.ultimaApertura, true)}`);
+  return h(
+    'div',
+    { class: 'consentimiento' },
+    h('p', { class: 'etq' }, 'Novedades'),
+    h('p', { class: 'suave' }, partes.join(' · ')),
+    sx.intereses.length ? h('p', { class: 'suave' }, `Le interesa: ${sx.intereses.map((i) => SERVICIOS[i] || i).join(', ')}`) : null,
+    h('a', { class: 'btn-texto', href: `#contacto-${sx.id}` }, 'Ver contacto'),
+  );
+}
+
+function pintarDetalle({ lead: l, eventos, consentimientos, suscripcion }) {
   const panel = $('#detalle');
   const tel = l.telefono ? l.telefono.replace(/\D/g, '') : '';
   const contacto = l.anonimizado
@@ -338,6 +359,7 @@ function pintarDetalle({ lead: l, eventos, consentimientos }) {
     ),
     l.mensaje ? h('div', { class: 'mensaje' }, h('p', { class: 'etq' }, 'Mensaje'), h('p', {}, l.mensaje)) : null,
     form,
+    l.anonimizado ? null : bloqueSuscripcion(suscripcion),
     h(
       'div',
       { class: 'historial' },
@@ -424,8 +446,79 @@ async function cargarMetricas() {
       barras('Por mes', m.porMes.map((x) => ({ etiqueta: mes(x.clave), n: x.n }))),
     ),
   );
+  try {
+    $('#metricas').append(await cargarMetricasLista());
+  } catch {
+    // Sin las métricas de la lista, las de solicitudes siguen sirviendo.
+  }
 }
 $('#m-dias').addEventListener('change', cargarMetricas);
+
+/**
+ * Una serie semanal como barras verticales (una sola serie: el título la nombra). Cada barra
+ * tiene su tooltip nativo y la tabla con los mismos datos queda en un <details>.
+ */
+function serieSemanal(titulo, semanas, valores) {
+  const max = Math.max(1, ...valores);
+  const etiqueta = (ms) => fecha(ms);
+  const total = valores.reduce((a, b) => a + b, 0);
+  return h(
+    'div',
+    { class: 'tarjeta serie' },
+    h('h2', {}, titulo, h('span', { class: 'suave' }, ` · ${total} en ${semanas.length} semanas`)),
+    h(
+      'div',
+      { class: 'columnas', role: 'img', 'aria-label': `${titulo} por semana: ${valores.map((v, i) => `${etiqueta(semanas[i])}, ${v}`).join('; ')}` },
+      ...valores.map((v, i) =>
+        h('span', { class: 'col', title: `Semana del ${etiqueta(semanas[i])}: ${v}` }, h('span', { class: `col-nivel${v ? '' : ' cero'}`, style: { '--v': String(v / max) } })),
+      ),
+    ),
+    h('div', { class: 'col-ejes suave', 'aria-hidden': 'true' }, h('span', {}, etiqueta(semanas[0])), h('span', {}, `máx. ${max}`), h('span', {}, etiqueta(semanas.at(-1)))),
+    h(
+      'details',
+      { class: 'ayuda' },
+      h('summary', {}, 'Ver tabla'),
+      h('table', { class: 'tabla-datos' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Semana del'), h('th', { scope: 'col' }, titulo))), h('tbody', {}, ...valores.map((v, i) => h('tr', {}, h('td', {}, etiqueta(semanas[i])), h('td', { class: 'num' }, v))))),
+    ),
+  );
+}
+
+const ORIGENES_CORTO = { pie: 'Pie del sitio', inicio: 'Home', archivo: 'Página de novedades', cotizador: 'Cotizador', admin: 'Invitación', importado: 'Importados' };
+
+async function cargarMetricasLista() {
+  const m = await api('/admin/api/marketing?semanas=12');
+  const cifra = (etq, valor, nota) => h('div', { class: 'cifra' }, h('p', { class: 'etq' }, etq), h('p', { class: 'valor' }, valor), nota ? h('p', { class: 'suave' }, nota) : null);
+  const creados = m.origenes.reduce((a, o) => a + o.total, 0);
+  const confirmados = m.origenes.reduce((a, o) => a + o.confirmados, 0);
+  return h(
+    'div',
+    { class: 'lista-novedades' },
+    h('h2', { class: 'subtitulo' }, 'Lista de novedades'),
+    h(
+      'div',
+      { class: 'cifras' },
+      cifra('Activos', m.conteos.activo, m.pausados ? `${m.pausados} en pausa` : 'reciben campañas'),
+      cifra('Sin confirmar', m.conteos.pendiente, 'esperan su correo'),
+      cifra('Confirman', creados ? pct(confirmados, creados) : 'Sin datos', 'del último año'),
+      cifra('Abren', m.campanas.enviados ? pct(m.campanas.abiertos, m.campanas.enviados) : 'Sin envíos', 'campañas de estas semanas'),
+    ),
+    h(
+      'div',
+      { class: 'rejilla rejilla-3' },
+      serieSemanal('Altas', m.semanas, m.altas),
+      serieSemanal('Confirmaciones', m.semanas, m.confirmados),
+      serieSemanal('Bajas', m.semanas, m.bajas),
+    ),
+    h(
+      'div',
+      { class: 'rejilla' },
+      barras(
+        'Confirmación por origen',
+        m.origenes.map((o) => ({ etiqueta: ORIGENES_CORTO[o.origen] || o.origen, n: o.total, extra: `${pct(o.confirmados, o.total)} confirma` })),
+      ),
+    ),
+  );
+}
 
 // Equipo -------------------------------------------------------------------
 
@@ -474,7 +567,7 @@ $('#form-usuario').addEventListener('submit', async (e) => {
 
 // Campañas -----------------------------------------------------------------
 
-const ESTADOS_CAMPANA = { borrador: 'Borrador', enviando: 'Enviando', enviada: 'Enviada', cancelada: 'Cancelada' };
+const ESTADOS_CAMPANA = { borrador: 'Borrador', programada: 'Programada', enviando: 'Enviando', enviada: 'Enviada', cancelada: 'Cancelada' };
 const IDIOMAS = { es: 'Español', en: 'Inglés' };
 const pct = (n, total) => (total ? `${Math.round((n / total) * 100)} %` : '0 %');
 const cuenta = (n, uno, varios) => `${n || 0} ${n === 1 ? uno : varios}`;
@@ -493,11 +586,129 @@ async function cargarCampanas() {
         h('td', { class: 'num' }, st.destinatarios ? `${st.enviados} de ${st.destinatarios}` : ''),
         h('td', { class: 'num' }, st.enviados ? pct(st.abiertos, st.enviados) : ''),
         h('td', { class: 'num' }, st.enviados ? pct(st.clics, st.enviados) : ''),
-        h('td', { class: 'fecha' }, fecha(c.iniciada || c.creada)),
+        h('td', { class: 'fecha' }, fecha(c.iniciada || c.programada || c.creada, c.estado === 'programada')),
       );
     }),
   );
   $('#campanas-vacio').hidden = campanas.length > 0;
+  cargarAutomaticos();
+  cargarPlantillas();
+}
+
+let plantillasCache = [];
+async function cargarPlantillas() {
+  plantillasCache = (await api('/admin/api/plantillas')).plantillas;
+  $('#plantillas').replaceChildren(
+    ...(plantillasCache.length
+      ? plantillasCache.map((p) =>
+          h(
+            'li',
+            {},
+            h('span', {}, h('strong', {}, p.nombre), h('span', { class: 'suave' }, ` · ${IDIOMAS[p.locale]} · ${p.asunto}`)),
+            h(
+              'button',
+              {
+                class: 'btn-texto peligro',
+                type: 'button',
+                onclick: async () => {
+                  if (!confirm(`¿Borrar la plantilla "${p.nombre}"?`)) return;
+                  await api(`/admin/api/plantillas/${p.id}`, { method: 'DELETE' });
+                  cargarPlantillas();
+                },
+              },
+              'Borrar',
+            ),
+          ),
+        )
+      : [h('li', { class: 'suave' }, 'Todavía no hay plantillas.')]),
+  );
+}
+
+const NOMBRES_AUTOMATICOS = { bienvenida: 'Bienvenida' };
+const nombreAutomatico = (a) => `${NOMBRES_AUTOMATICOS[a.clave.split(':')[0]] || a.clave} en ${IDIOMAS[a.locale].toLowerCase()}`;
+
+async function cargarAutomaticos() {
+  const { automaticos } = await api('/admin/api/automaticos');
+  $('#automaticos').replaceChildren(
+    ...automaticos.map((a) =>
+      h(
+        'li',
+        {},
+        h('span', {}, h('a', { href: `#automatico-${encodeURIComponent(a.clave)}` }, nombreAutomatico(a)), h('span', { class: 'suave' }, ` · ${a.activo ? (a.personalizado ? 'Editado' : 'Texto por defecto') : 'Apagado'}`)),
+        h('span', { class: `estado ${a.activo ? 'c-enviada' : 'c-cancelada'}` }, a.activo ? 'Activo' : 'Apagado'),
+      ),
+    ),
+  );
+}
+
+async function abrirAutomatico(clave) {
+  const { automaticos } = await api('/admin/api/automaticos');
+  const a = automaticos.find((x) => x.clave === clave);
+  if (!a) return (location.hash = '#campanas');
+  $('#t-automatico').textContent = nombreAutomatico(a);
+  const ruta = `/admin/api/automaticos/${encodeURIComponent(clave)}`;
+  const form = h(
+    'form',
+    { class: 'editor' },
+    h('label', { class: 'campo' }, 'Asunto', h('input', { name: 'asunto', required: true, maxlength: 150, value: a.asunto })),
+    h('label', { class: 'campo' }, 'Texto de vista previa (opcional)', h('input', { name: 'preheader', maxlength: 200, value: a.preheader || '' })),
+    h('label', { class: 'campo' }, 'Mensaje', h('textarea', { name: 'cuerpo', rows: 16, required: true }, a.cuerpo)),
+    h('label', { class: 'casilla' }, h('input', { type: 'checkbox', name: 'activo', checked: a.activo }), 'Enviar este correo a quien confirme'),
+    h('details', { class: 'ayuda' }, h('summary', {}, 'Cómo dar formato'), h('ul', {}, ...AYUDA_FORMATO.map((x) => h('li', {}, x)), h('li', {}, '{{sitio}} es la dirección del sitio (para enlaces)'))),
+    h('div', { class: 'acciones' }, h('button', { class: 'btn', type: 'submit' }, 'Guardar')),
+  );
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = new FormData(form);
+    try {
+      await api(ruta, { method: 'PUT', body: JSON.stringify({ asunto: f.get('asunto'), preheader: f.get('preheader'), cuerpo: f.get('cuerpo'), activo: f.get('activo') === 'on' }) });
+      avisar('Guardado');
+      abrirAutomatico(clave);
+    } catch {
+      avisar('Revisa el asunto y el mensaje.');
+    }
+  });
+  const lateral = h(
+    'div',
+    { class: 'lateral' },
+    h('p', { class: 'etq' }, 'Vista previa'),
+    h('iframe', { class: 'vista-previa', title: 'Vista previa del correo', src: `${ruta}/vista?v=${Date.now()}` }),
+    h(
+      'div',
+      { class: 'acciones' },
+      h(
+        'button',
+        {
+          class: 'btn btn-borde',
+          type: 'button',
+          onclick: async () => {
+            try {
+              avisar(`Prueba enviada a ${(await api(`${ruta}/prueba`, { method: 'POST' })).para}`);
+            } catch {
+              avisar('No se pudo enviar la prueba. ¿Está configurado Resend?');
+            }
+          },
+        },
+        'Enviarme una prueba',
+      ),
+    ),
+    a.personalizado
+      ? h(
+          'button',
+          {
+            class: 'btn-texto peligro',
+            type: 'button',
+            onclick: async () => {
+              if (!confirm('Se pierde el texto editado y vuelve el de por defecto. ¿Continuar?')) return;
+              await api(ruta, { method: 'DELETE' });
+              abrirAutomatico(clave);
+            },
+          },
+          'Volver al texto por defecto',
+        )
+      : h('p', { class: 'suave' }, 'Es el texto por defecto. Al guardar queda el tuyo.'),
+  );
+  $('#automatico').replaceChildren(h('div', { class: 'campana-editor' }, form, lateral));
 }
 
 const AYUDA_FORMATO = [
@@ -527,6 +738,7 @@ async function abrirCampana(id) {
   }
   $('#t-campana').textContent = datos.campana.asunto;
   if (datos.campana.estado === 'borrador') pintarEditor(caja, datos.campana, datos.audiencia);
+  else if (datos.campana.estado === 'programada') pintarProgramada(caja, datos);
   else {
     pintarResultados(caja, datos);
     if (datos.campana.estado === 'enviando') refresco = setInterval(() => abrirCampana(id), 10000);
