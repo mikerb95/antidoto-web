@@ -132,11 +132,7 @@
   .btn svg { width: 18px; height: 18px; flex: none; }
   .btn-inner { display: inline-flex; align-items: center; gap: 10px; }
   .btn-primary { background: var(--color-antidote); color: var(--color-ink); }
-  .btn-primary::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; background: var(--color-glow);
-    transform: translateY(101%); transition: transform var(--t-base) var(--ease-out);
-  }
-  .btn-primary:hover::before { transform: none; }
+  .btn-primary::before { background: var(--color-glow); }
   .btn-ghost { border-color: rgb(237 242 241 / 0.28); color: var(--color-fg); transition: border-color var(--t-base) var(--ease-out); }
   .btn-ghost:hover { border-color: var(--color-antidote); }
   .btn-sm { min-height: 44px; padding: 0 18px; font-size: 14px; }
@@ -164,12 +160,21 @@
   .boton-cian { background: var(--color-antidote); color: var(--color-ink); }
   .boton-tinta { background: var(--color-ink); color: var(--color-paper); }
   .boton-borde { border-color: currentColor; color: inherit; }
-  /* Hover: una capa más clara sube desde abajo (solo transform). */
-  .boton::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; background: rgb(255 255 255 / 0.22);
-    transform: translateY(101%); transition: transform var(--t-base) var(--ease-out);
+  .boton::before { background: rgb(255 255 255 / 0.22); }
+  /* Hover: una capa más clara sube desde abajo con borde de ola, como el líquido del frasco.
+     La máscara recorta la cresta (periodo de 24 px) y la capa mide un periodo de más: correrla
+     24 px a la izquierda deja la ola calzada consigo misma. `translate` lleva la subida y
+     `transform` el oleaje, que solo corre mientras el puntero está encima. */
+  .boton::before, .btn-primary::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 0; right: -24px; z-index: -1;
+    mask:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 6'%3E%3Cpath d='M0 3Q6 0 12 3T24 3V6H0Z'/%3E%3C/svg%3E") 0 0 / 24px 6px repeat-x,
+      linear-gradient(#000 0 0) 0 5px / 100% calc(100% - 5px) no-repeat;
+    translate: 0 101%; transition: translate var(--t-base) var(--ease-out);
+    animation: boton-ola 1.2s linear infinite paused;
   }
-  .boton:hover::before { transform: none; }
+  .boton:hover::before, .btn-primary:hover::before { translate: none; animation-play-state: running; }
+  @keyframes boton-ola { to { transform: translateX(-24px); } }
 
   /* Dato que falta del cliente: caja punteada visible con el texto entre corchetes. */
   .pendiente {
