@@ -34,9 +34,9 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
       <p class="pendiente">{h.logos}</p>
     </div>
 
-    <div class="lista">
+    <div class="lista" data-entra>
       {tarjetas.map(({ id, titulo, texto, afiche: [foto, posicion] }) => (
-        <article class="tarjeta">
+        <article class="tarjeta" data-odometro>
           <div class="info">
             <h3>{titulo}</h3>
             <p>{texto.resumen}</p>
@@ -53,12 +53,12 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
             )}
             <dl class="cifras">
               {texto.cifras.map(([valor, etiqueta]) => (
-                <div><dt>{etiqueta}</dt><dd>{valor}</dd></div>
+                <div><dt>{etiqueta}</dt><dd data-cifra={/\d/.test(valor) && !valor.includes('[') ? '' : undefined}>{valor}</dd></div>
               ))}
             </dl>
             <a class="boton boton-cian" href={rutas.contacto[locale]}>{texto.cotizar}</a>
           </div>
-          <div class="afiche">
+          <div class="afiche" data-afiche>
             <Image src={foto} alt={texto.alt} widths={[240, 440]} sizes="220px" style={`object-position: ${posicion}`} />
             <span aria-hidden="true">{texto.afiche}</span>
           </div>

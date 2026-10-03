@@ -14,28 +14,28 @@ const s = t(locale);
 const h = s.inicio;
 const alt = (await obtenerServicios()).find((sv) => sv.id === 'formaciones')![locale].alt;
 ---
-<section id="inicio" class="hero" aria-labelledby="hero-t">
+<section id="inicio" class="hero" aria-labelledby="hero-t" data-hero>
   <Image class="foto" src={foto} alt={alt} widths={[640, 960, 1280]} sizes="100vw" loading="eager" fetchpriority="high" />
   <div class="velo" aria-hidden="true"></div>
   <div class="centro wrap">
-    <p class="insignia">
+    <p class="insignia" data-hero-entra>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
       <span>{h.insignia}</span>
     </p>
     <h1 id="hero-t">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h1>
-    <p class="lead">{h.lead}</p>
-    <div class="ctas">
-      <a class="boton boton-cian boton-grande" href={rutas.contacto[locale]}>
+    <p class="lead" data-hero-entra>{h.lead}</p>
+    <div class="ctas" data-hero-entra>
+      <a class="boton boton-cian boton-grande" href={rutas.contacto[locale]} data-magnetico>
         {h.cotizar}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
       </a>
-      <a class="boton boton-borde boton-grande claro" href="#actividades">
+      <a class="boton boton-borde boton-grande claro" href="#actividades" data-magnetico>
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
         {h.probar}
       </a>
     </div>
   </div>
-  <div class="pie wrap">
+  <div class="pie wrap" data-hero-entra>
     <div class="fundadora">
       <span class="monograma" aria-hidden="true">MP</span>
       <p><strong>{s.fundadoraNombre}</strong><span>{h.fundadoraResumen}</span></p>

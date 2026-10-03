@@ -23,15 +23,16 @@ const FOTOS = [
       <h2 id="pasos-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
       <p>{h.lead}</p>
     </div>
-    <ol class="rejilla">
+    <ol class="rejilla" data-pasos data-entra>
       {h.items.map(([titulo, texto, alt], i) => {
         const [foto, posicion] = FOTOS[i];
         return (
-          <li class="paso">
+          <li class="paso lleno">
             <div class="media">
               <Image src={foto} alt={alt} widths={[400, 640, 800]} sizes="(max-width: 720px) 100vw, 380px" style={`object-position: ${posicion}`} />
               <span class="etiqueta">{h.etiqueta(i + 1)}</span>
             </div>
+            <span class="nivel" aria-hidden="true"><span></span></span>
             <div class="cuerpo">
               <h3>{titulo}</h3>
               <p>{texto}</p>
@@ -51,7 +52,14 @@ const FOTOS = [
   .paso { display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; background: var(--color-paper); border: 1px solid var(--color-line-soft); box-shadow: 0 10px 30px rgb(15 24 29 / 0.06); }
   .media { position: relative; height: 180px; }
   .media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .etiqueta { position: absolute; left: 16px; top: 16px; padding: 6px 12px; border-radius: 999px; background: var(--color-ink); color: var(--color-paper); font-size: 13px; font-weight: 600; }
+  .etiqueta { position: absolute; left: 16px; top: 16px; padding: 6px 12px; border-radius: 999px; background: var(--color-ink); color: var(--color-paper); font-size: 13px; font-weight: 600; isolation: isolate; overflow: hidden; transition: color var(--t-base) var(--ease-out); }
+  /* Paso encendido: el líquido llegó a su nivel y la etiqueta se llena de cian. */
+  .etiqueta::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--color-antidote); clip-path: inset(100% 0 0 0); transition: clip-path var(--t-base) var(--ease-out); }
+  .paso:global(.lleno) .etiqueta { color: var(--color-ink); }
+  .paso:global(.lleno) .etiqueta::before { clip-path: inset(0 0 0 0); }
+  /* Nivel del paso: un tubo fino entre la foto y el texto que el scroll llena. */
+  .nivel { display: block; height: 6px; background: var(--color-line-soft); }
+  .nivel span { display: block; height: 100%; background: linear-gradient(90deg, var(--color-mid), var(--color-antidote)); transform-origin: left; }
   .cuerpo { padding: 24px; display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
   h3 { margin: 0; font-size: 24px; line-height: 1.2; }
   .cuerpo p { margin: 0; color: var(--color-slate); font-size: 16px; }

@@ -9,21 +9,25 @@ interface Props {
 const { locale } = Astro.props;
 const h = t(locale).inicio.cierre;
 ---
-<section id="cotizar" class="cierre" aria-labelledby="cta-t">
+<section id="cotizar" class="cierre" aria-labelledby="cta-t" data-cierre>
+  <div class="liquido" aria-hidden="true" data-liquido></div>
   <div class="wrap interior">
     <div class="texto">
       <h2 id="cta-t" class="titulo-seccion">{h.titulo}</h2>
       <p>{h.lead}</p>
     </div>
     <div class="ctas">
-      <a class="boton boton-tinta boton-grande" href={rutas.contacto[locale]}>{h.cotizar}</a>
+      <a class="boton boton-tinta boton-grande" href={rutas.contacto[locale]} data-magnetico>{h.cotizar}</a>
       <a class="boton boton-borde boton-grande" href={`tel:+${SITE.whatsapp}`}>{SITE.phoneDisplay}</a>
     </div>
   </div>
 </section>
 
 <style>
-  .cierre { background: var(--color-antidote); color: var(--color-ink); }
+  .cierre { position: relative; isolation: isolate; background: var(--color-antidote); color: var(--color-ink); }
+  /* Capa de líquido: el script vacía la sección y la llena de abajo arriba al asomar. */
+  .liquido { position: absolute; inset: 0; z-index: -1; background: var(--color-antidote); }
+  .cierre:global(.vaciado) { background: var(--color-paper); }
   .interior { padding-block: 72px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px; }
   .texto { flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
   .titulo-seccion { line-height: 1.12; }

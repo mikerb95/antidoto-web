@@ -11,7 +11,7 @@ const h = t(locale).inicio.faq;
 <section class="faq" aria-labelledby="faq-t">
   <div class="interior">
     <h2 id="faq-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
-    <div class="lista">
+    <div class="lista" data-entra>
       {h.items.map(([pregunta, respuesta], i) => (
         <details open={i === 0}>
           <summary>{pregunta}</summary>

@@ -1,8 +1,9 @@
 ---
 // Dolores del comprador: tarjetas en blanco y negro que al pasar el cursor (o con el foco)
 // toman color con un tinte cian y cambian el texto del dolor por el de la solución.
-// Solo se animan opacidades: encima de la foto a color va la misma foto en gris (el navegador
-// la descarga una vez) y se desvanece.
+// Encima de la foto a color va la misma foto en gris (el navegador la descarga una vez); la dosis
+// la recorta de abajo arriba con clip-path, como el líquido que sube. En táctil, el script pone
+// la clase .dosis cuando la tarjeta cruza el centro de la pantalla (src/lib/motion/inicio.ts).
 import { Image } from 'astro:assets';
 import sala from '../../assets/fotos/sala-taller.jpg';
 import taller from '../../assets/fotos/taller.jpg';
@@ -56,15 +57,15 @@ const FOTOS = [
 
   .dolor { position: relative; display: block; height: 210px; border-radius: 20px; overflow: hidden; text-decoration: none; background: var(--color-ink); isolation: isolate; }
   .dolor img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .dolor .gris { filter: grayscale(1) contrast(1.05); transition: opacity var(--t-base) var(--ease-out); }
+  .dolor .gris { filter: grayscale(1) contrast(1.05); clip-path: inset(0 0 0 0); transition: clip-path var(--t-slow) var(--ease-in-out); }
   .tinte { position: absolute; inset: 0; background: var(--color-antidote); mix-blend-mode: multiply; opacity: 0; transition: opacity var(--t-base) var(--ease-out); }
   .chip { position: absolute; left: 16px; bottom: 16px; max-width: 78%; padding: 10px 14px; border-radius: 12px; background: var(--color-paper); color: var(--color-ink); font-weight: 600; font-size: 16px; line-height: 1.3; isolation: isolate; }
-  .chip::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--color-antidote); opacity: 0; transition: opacity var(--t-base) var(--ease-out); }
+  .chip::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--color-antidote); clip-path: inset(100% 0 0 0); transition: clip-path var(--t-slow) var(--ease-in-out); }
   .sol { display: none; }
 
-  .dolor:hover .pain, .dolor:focus-visible .pain { display: none; }
-  .dolor:hover .sol, .dolor:focus-visible .sol { display: inline; }
-  .dolor:hover .gris, .dolor:focus-visible .gris { opacity: 0; }
-  .dolor:hover .tinte, .dolor:focus-visible .tinte { opacity: 0.38; }
-  .dolor:hover .chip::before, .dolor:focus-visible .chip::before { opacity: 1; }
+  .dolor:hover .pain, .dolor:focus-visible .pain, .dolor:global(.dosis) .pain { display: none; }
+  .dolor:hover .sol, .dolor:focus-visible .sol, .dolor:global(.dosis) .sol { display: inline; }
+  .dolor:hover :global(.gris), .dolor:focus-visible :global(.gris), .dolor:global(.dosis) :global(.gris) { clip-path: inset(0 0 100% 0); }
+  .dolor:hover .tinte, .dolor:focus-visible .tinte, .dolor:global(.dosis) .tinte { opacity: 0.38; }
+  .dolor:hover .chip::before, .dolor:focus-visible .chip::before, .dolor:global(.dosis) .chip::before { clip-path: inset(0 0 0 0); }
 </style>

@@ -142,7 +142,11 @@
   .btn-sm { min-height: 44px; padding: 0 18px; font-size: 14px; }
 
   /* Home claro: palabra resaltada con fondo cian (el cian solo lleva texto tinta). */
-  .resaltado { background: var(--color-antidote); color: var(--color-ink); padding: 0 0.25em; border-radius: 8px; white-space: nowrap; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .resaltado { position: relative; background: var(--color-antidote); color: var(--color-ink); padding: 0 0.25em; border-radius: 8px; white-space: nowrap; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  /* Dosis (src/lib/motion/inicio.ts): mientras el líquido sube, el resaltado queda sin fondo y
+     una copia en tinta sobre cian lo llena. line-height normal: la copia calza con la caja en línea. */
+  .resaltado.dosis-pendiente { background: transparent; color: inherit; }
+  .dosis-lleno { position: absolute; inset: 0; display: block; padding: inherit; border-radius: inherit; background: var(--color-antidote); color: var(--color-ink); line-height: normal; white-space: nowrap; pointer-events: none; }
 
   .titulo-seccion { margin: 0; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.15; text-wrap: wrap; }
   .cab-seccion { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
@@ -197,7 +201,11 @@
     scroll-behavior: auto !important;
   }
   /* Home claro: palabra resaltada con fondo cian (el cian solo lleva texto tinta). */
-  .resaltado { background: var(--color-antidote); color: var(--color-ink); padding: 0 0.25em; border-radius: 8px; white-space: nowrap; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .resaltado { position: relative; background: var(--color-antidote); color: var(--color-ink); padding: 0 0.25em; border-radius: 8px; white-space: nowrap; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  /* Dosis (src/lib/motion/inicio.ts): mientras el líquido sube, el resaltado queda sin fondo y
+     una copia en tinta sobre cian lo llena. line-height normal: la copia calza con la caja en línea. */
+  .resaltado.dosis-pendiente { background: transparent; color: inherit; }
+  .dosis-lleno { position: absolute; inset: 0; display: block; padding: inherit; border-radius: inherit; background: var(--color-antidote); color: var(--color-ink); line-height: normal; white-space: nowrap; pointer-events: none; }
 
   .titulo-seccion { margin: 0; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.15; text-wrap: wrap; }
   .cab-seccion { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }

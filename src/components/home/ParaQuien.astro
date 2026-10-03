@@ -15,7 +15,7 @@ const [aliadosTitulo, aliadosTexto, aliadosCta] = h.aliados;
       <h2 id="perfiles-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
       <p>{h.lead}</p>
     </div>
-    <ul class="perfiles">
+    <ul class="perfiles" data-entra>
       {h.perfiles.map(([titulo, texto]) => (
         <li>
           <a class="perfil" href="#cotizar">

@@ -31,7 +31,7 @@ const resto = CLIENTES.length - logos.length;
 <section class="clientes" aria-label={h.cifrasLabel}>
   <div class="wrap logos-wrap">
     <p class="confian">{h.confian}</p>
-    <div class="logos">
+    <div class="logos" data-entra>
       {logos.map((c) => (
         <Image src={c.logo} alt={c.nombre} style={`height: ${c.alto}px`} />
       ))}
@@ -39,9 +39,9 @@ const resto = CLIENTES.length - logos.length;
     </div>
   </div>
   <div class="wrap franja">
-    <dl class="cifras">
+    <dl class="cifras" data-odometro>
       {h.cifras.map(([valor, etiqueta]) => (
-        <div><dt>{etiqueta}</dt><dd>{valor}</dd></div>
+        <div><dt>{etiqueta}</dt><dd data-cifra>{valor}</dd></div>
       ))}
     </dl>
   </div>
