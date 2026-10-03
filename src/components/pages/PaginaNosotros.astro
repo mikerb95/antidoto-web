@@ -1,68 +1,106 @@
 ---
+// La empresa: fundadora, datos, licencia de SST, equipo, historia (línea de tiempo que se llena
+// con el scroll) y enlaces al resto de la sección Nosotros.
 import Base from '../../layouts/Base.astro';
-import Encabezado from '../Encabezado.astro';
-import Retos from '../Retos.astro';
-import ContactoCta from '../ContactoCta.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import TarjetaIndice from '../TarjetaIndice.astro';
+import BloqueCta from '../BloqueCta.astro';
 import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
 import { SITE } from '../../data/site';
+import { grafo, migasSchema } from '../../data/schema';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const s = t(locale);
+const p = tp(locale);
+const eq = s.inicio.equipo;
 const [title, description] = s.seo.nosotros;
 const datos = locale === 'es'
   ? [['Formación', 'Ingeniería civil'], ['Especialización', 'Gerencia de SST'], ['Fundada', String(SITE.foundingYear)], ['Idiomas', 'Español, portugués e inglés']]
   : [['Degree', 'Civil engineering'], ['Specialization', 'Health and safety management'], ['Founded', String(SITE.foundingYear)], ['Languages', 'Spanish, Portuguese and English']];
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.nosotros, rutas.nosotros[locale]],
+];
+const seguir: Array<[string, string, string]> = [
+  [s.nav.comoTrabajamos, p.descNav.comoTrabajamos, rutas.comoTrabajamos[locale]],
+  [s.nav.clientes, p.descNav.clientes, rutas.clientes[locale]],
+  [s.nav.portafolio, p.descNav.portafolio, rutas.portafolio[locale]],
+  [s.nav.trabaja, p.descNav.trabaja, rutas.trabaja[locale]],
+];
 ---
-<Base locale={locale} pagina="nosotros" title={title} description={description} alternates={rutas.nosotros} scroll="suave">
-  <section class="seccion" aria-labelledby="pagina-title">
-    <div class="wrap">
-      <Encabezado num="01" kicker={s.nosotrosKicker} titulo={s.nosotrosTitle} lead={s.nosotrosLead} id="pagina-title" nivel={1} />
+<Base locale={locale} pagina="nosotros" title={title} description={description} alternates={rutas.nosotros} jsonLd={grafo(migasSchema(migas))} tema="claro" scroll="suave">
+  <CabeceraPagina locale={locale} migas={migas} titulo={p.nosotros.empresa} lead={s.nosotrosLead} />
 
-      <div class="bento">
-        <article class="fundadora panel" aria-labelledby="fundadora-nombre">
-          <div class="retrato" aria-hidden="true">
-            <span class="iniciales">MP</span>
-            <span class="mono pendiente">{s.fotoPendiente}</span>
-          </div>
-          <div class="bio">
-            <p class="mono mono-acento">{s.fundadoraKicker}</p>
-            <h2 id="fundadora-nombre">{s.fundadoraNombre}</h2>
-            <p class="cargo">{s.fundadoraCargo}</p>
-            <p>{s.fundadoraBio}</p>
-          </div>
-        </article>
-        <dl class="datos panel">
-          {datos.map(([k, v]) => <div><dt class="mono">{k}</dt><dd>{v}</dd></div>)}
+  <section class="bloque" aria-labelledby="fundadora-nombre">
+    <div class="wrap bento">
+      <article class="fundadora">
+        <p class="pendiente retrato">{eq.foto}</p>
+        <div class="bio">
+          <p class="et">{s.fundadoraKicker}</p>
+          <h2 id="fundadora-nombre">{s.fundadoraNombre}</h2>
+          <p class="cargo">{s.fundadoraCargo}</p>
+          <p>{s.fundadoraBio}</p>
+          <ul class="credenciales">{eq.credenciales.map((c) => <li>{c}</li>)}</ul>
+          <a class="li" href={SITE.linkedin} target="_blank" rel="noopener">{eq.linkedin} ↗</a>
+        </div>
+      </article>
+      <div class="lado">
+        <dl class="datos">
+          <p class="et">{p.nosotros.datosTitulo}</p>
+          {datos.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
         </dl>
+        <div class="licencia">
+          <p class="lic-t">{eq.licencia}</p>
+          <p class="pendiente">{eq.licenciaDatos}</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="seccion" aria-labelledby="historia-title">
+  <section class="bloque" aria-labelledby="equipo-t">
     <div class="wrap">
-      <Encabezado num="02" kicker={s.historiaKicker} titulo={s.historiaTitle} id="historia-title" />
-      <div class="linea-caja" data-historia>
-      <span class="riel" aria-hidden="true"><span class="lleno" data-riel></span></span>
-      <ol class="linea">
-        {s.historia.map(([anio, titulo, texto], i) => (
-          <li class="hito" data-hito>
-            <span class="nodo" aria-hidden="true"></span>
-            <p class="anio">{anio}</p>
-            <h3>{titulo}</h3>
-            <p class="texto">{texto}</p>
-            <span class="mono estado">{i < s.historia.length - 1 ? '✓' : '●'}</span>
-          </li>
-        ))}
-      </ol>
+      <div class="cab-izq"><h2 id="equipo-t">{p.nosotros.equipo[0]}<span class="resaltado">{p.nosotros.equipo[1]}</span></h2></div>
+      <div class="equipo">
+        <p class="pendiente">{eq.integrante}</p>
+        <p class="pendiente">{eq.integrante}</p>
+        <p class="pendiente">{eq.integrante}</p>
       </div>
     </div>
   </section>
 
-  <Retos locale={locale} num="03" />
-  <ContactoCta locale={locale} num="04" />
+  <section class="bloque bloque-mist" aria-labelledby="historia-title">
+    <div class="wrap">
+      <div class="cab-izq"><h2 id="historia-title">{s.historiaTitle}</h2></div>
+      <div class="linea-caja" data-historia>
+        <span class="riel" aria-hidden="true"><span class="lleno" data-riel></span></span>
+        <ol class="linea">
+          {s.historia.map(([anio, titulo, texto]) => (
+            <li class="hito" data-hito>
+              <span class="nodo" aria-hidden="true"></span>
+              <p class="anio">{anio}</p>
+              <h3>{titulo}</h3>
+              <p class="texto">{texto}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque" aria-labelledby="seguir-t">
+    <div class="wrap">
+      <div class="cab-izq"><h2 id="seguir-t">{p.nosotros.seguir[0]}<span class="resaltado">{p.nosotros.seguir[1]}</span></h2></div>
+      <ul class="rejilla-tarjetas">
+        {seguir.map(([titulo, texto, href]) => <li><TarjetaIndice href={href} titulo={titulo} texto={texto} cta={p.verMas} /></li>)}
+      </ul>
+    </div>
+  </section>
+
+  <BloqueCta locale={locale} />
 </Base>
 
 <script>
@@ -93,49 +131,53 @@ const datos = locale === 'es'
 </script>
 
 <style>
-  .bento { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 12px; margin-top: 36px; }
-  .fundadora { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; padding: 24px; }
-  .retrato { position: relative; aspect-ratio: 1; border-radius: 16px; display: grid; place-items: center; background: radial-gradient(circle at 30% 20%, rgb(59 200 243 / 0.35), rgb(12 92 125 / 0.5) 60%, rgb(10 17 21 / 0.9)); border: 1px solid rgb(128 220 255 / 0.2); overflow: hidden; }
-  .iniciales { font: 400 64px/1 var(--font-display); color: var(--color-fg); }
-  .pendiente { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 9.5px; }
-  .bio .mono { margin: 0 0 8px; }
-  .bio h2 { margin: 0; font-size: clamp(28px, 1.6vw + 16px, 40px); line-height: 1.05; }
-  .cargo { margin: 4px 0 14px; color: var(--color-antidote); font-weight: 500; }
-  .bio p:last-child { margin: 0; color: var(--color-fg-muted); }
-  .datos { margin: 0; padding: 20px 24px; display: grid; align-content: center; }
-  .datos div { padding: 12px 0; border-top: 1px solid var(--color-line); }
-  .datos div:first-child { border-top: 0; }
-  dt { margin: 0 0 2px; }
-  dd { margin: 0; font-size: 16px; }
+  .bento { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; }
+  .fundadora { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; padding: 28px; border-radius: 24px; background: var(--color-paper); border: 1px solid var(--color-line-soft); box-shadow: 0 10px 30px rgb(15 24 29 / 0.05); }
+  .retrato { margin: 0; aspect-ratio: 4 / 5; padding: 16px; }
+  .bio { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .et { margin: 0; font: 600 12px/1.3 var(--font-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-deep); }
+  .bio h2 { margin: 0; font-size: clamp(30px, 1.6vw + 18px, 42px); line-height: 1.05; }
+  .cargo { margin: 0; color: var(--color-deep); font-weight: 600; }
+  .bio > p:not(.et):not(.cargo) { margin: 0; color: var(--color-slate); }
+  .credenciales { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .credenciales li { padding: 6px 12px; border-radius: 999px; background: var(--color-mist); font-size: 14px; font-weight: 500; }
+  .li { align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
+  .lado { display: flex; flex-direction: column; gap: 20px; }
+  .datos { margin: 0; padding: 24px; border-radius: 24px; background: var(--color-ink); color: var(--color-paper); display: grid; }
+  .datos .et { color: var(--color-glow); margin-bottom: 8px; }
+  .datos div { padding: 12px 0; border-top: 1px solid rgb(255 255 255 / 0.14); }
+  dt { font-size: 13px; color: var(--color-fg-soft); }
+  dd { margin: 0; font-size: 17px; }
+  .licencia { padding: 22px; border-radius: 24px; background: var(--color-mist); display: flex; flex-direction: column; gap: 12px; }
+  .lic-t { margin: 0; font: 400 20px/1.2 var(--font-display); }
+  .licencia .pendiente { margin: 0; padding: 14px; }
+  .equipo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 20px; }
+  .equipo .pendiente { margin: 0; min-height: 200px; }
 
-  .linea-caja { position: relative; margin-top: 40px; }
-  .linea { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-  .riel { position: absolute; left: 0; right: 0; top: 7px; height: 2px; background: rgb(128 220 255 / 0.14); }
-  .lleno { position: absolute; inset: 0; background: linear-gradient(90deg, var(--color-mid), var(--color-antidote)); transform-origin: left center; box-shadow: 0 0 12px rgb(59 200 243 / 0.6); }
-  .hito { position: relative; padding-top: 34px; }
-  .nodo { position: absolute; top: 0; left: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--color-ink); border: 2px solid var(--color-antidote); transition: background var(--t-base) var(--ease-out), box-shadow var(--t-base) var(--ease-out); }
-  .anio { margin: 0; font: 400 44px/1 var(--font-accent); color: var(--color-antidote); }
-  .hito h3 { margin: 10px 0 6px; font-size: 20px; line-height: 1.15; }
-  .texto { margin: 0; font-size: 14px; color: var(--color-fg-muted); }
-  .estado { display: block; margin-top: 10px; color: var(--color-antidote); }
-  .hito:global(.is-pendiente) .nodo { background: var(--color-ink); }
-  .hito:global(.is-pendiente) .anio { color: var(--color-fg-muted); }
-  .hito:global(.is-pendiente.is-alcanzado) .nodo { background: var(--color-antidote); box-shadow: 0 0 14px var(--color-antidote); }
-  .hito:global(.is-pendiente.is-alcanzado) .anio { color: var(--color-antidote); }
-  .hito .anio { transition: color var(--t-base) var(--ease-out); }
+  .linea-caja { position: relative; }
+  .linea { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+  .riel { position: absolute; left: 0; right: 0; top: 7px; height: 3px; border-radius: 2px; background: var(--color-line-soft); }
+  .lleno { position: absolute; inset: 0; background: linear-gradient(90deg, var(--color-mid), var(--color-antidote)); transform-origin: left center; }
+  .hito { position: relative; padding-top: 36px; }
+  .nodo { position: absolute; top: 0; left: 0; width: 17px; height: 17px; border-radius: 50%; background: var(--color-antidote); border: 3px solid var(--color-paper); box-shadow: 0 0 0 2px var(--color-antidote); transition: background var(--t-base) var(--ease-out); }
+  .anio { margin: 0; font: 400 44px/1 var(--font-accent); color: var(--color-deep); transition: color var(--t-base) var(--ease-out); }
+  .hito h3 { margin: 10px 0 6px; font-size: 21px; line-height: 1.15; }
+  .texto { margin: 0; font-size: 15px; color: var(--color-slate); }
+  .hito:global(.is-pendiente) .nodo { background: var(--color-paper); }
+  .hito:global(.is-pendiente) .anio { color: var(--color-dash); }
+  .hito:global(.is-pendiente.is-alcanzado) .nodo { background: var(--color-antidote); }
+  .hito:global(.is-pendiente.is-alcanzado) .anio { color: var(--color-deep); }
 
-  @media (max-width: 900px) {
+  @media (max-width: 960px) {
     .bento { grid-template-columns: 1fr; }
-    .fundadora { grid-template-columns: 120px minmax(0, 1fr); }
-    .iniciales { font-size: 40px; }
+    .fundadora { grid-template-columns: 160px minmax(0, 1fr); }
   }
   @media (max-width: 760px) {
-    .linea { grid-template-columns: 1fr; gap: 28px; padding-left: 32px; }
-    .linea-caja { margin-top: 32px; }
-    .riel { left: 7px; right: auto; top: 0; bottom: 0; width: 2px; height: auto; }
+    .linea { grid-template-columns: 1fr; gap: 28px; padding-left: 34px; }
+    .riel { left: 7px; right: auto; top: 0; bottom: 0; width: 3px; height: auto; }
     .lleno { transform-origin: center top; background: linear-gradient(180deg, var(--color-mid), var(--color-antidote)); }
     .hito { padding-top: 0; }
-    .nodo { left: -32px; top: 4px; }
+    .nodo { left: -34px; top: 4px; }
   }
-  @media (max-width: 480px) { .fundadora { grid-template-columns: 1fr; } .retrato { max-width: 140px; } }
+  @media (max-width: 560px) { .fundadora { grid-template-columns: 1fr; padding: 20px; } .retrato { max-width: 200px; } }
 </style>
