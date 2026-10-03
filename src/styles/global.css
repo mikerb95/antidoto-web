@@ -186,7 +186,7 @@
   /* Páginas internas (diseño claro): sección con aire, cabecera alineada a la izquierda con
      h2 y lead, y rejilla de tarjetas que se acomoda sola. */
   .bloque { padding-block: 80px; }
-  .bloque + .bloque:not(.bloque-mist) { padding-top: 0; }
+  .bloque:not(.bloque-mist) + .bloque:not(.bloque-mist) { padding-top: 0; }
   .bloque-mist { background: var(--color-mist); }
   @media (max-width: 760px) { .bloque { padding-block: 56px; } }
   .cab-izq { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; max-width: 760px; }

@@ -4,14 +4,49 @@
 
 Revisión pendiente tras actualizar `src/data/docs/`.
 
-- [ ] Páginas `/novedades/` y `/novedades/preferencias/` (y `/en/news/` y `/en/news/preferences/`). La API ya redirige a ellas desde los enlaces de confirmar, baja y preferencias, y hoy llevan a un 404. Cubre RF-46 y HU-32.
-- [ ] Marcar RF-28 y RF-30 como parciales en `requisitos.ts` mientras no existan esas páginas. Hoy la dependencia solo está anotada en RF-46.
+- [x] Páginas `/novedades/` y `/novedades/preferencias/` (y `/en/news/` y `/en/news/preferences/`). Hechas y probadas con la API en local; RF-46, HU-32 y K-49 ya están como implementados.
+- [x] ~~Marcar RF-28 y RF-30 como parciales~~: ya no hace falta, las páginas existen.
 - [ ] Reflejar en el kanban y en los requisitos lo que sigue sin commit: `PaginaPortafolio.astro`, `ia.*.md` y `src/content/ofertas/ia/`. Revisar si `K-34`, RF-11, RF-47 y RF-48 siguen vigentes.
 - [ ] Activar el asesor en producción: secret `ANTHROPIC_API_KEY` y prueba con la API real (preguntas trampa de la receta `chat-ia`). Cubre RF-39 y HU-30.
 - [ ] Medir de nuevo el rendimiento (LCP y JS inicial) con el hero actual, el asesor y las secciones nuevas. Cubre RNF-01 a RNF-03.
 - [ ] Auditoría de accesibilidad formal posterior al rediseño. Cubre RNF-06.
 - [ ] Pasar la CSP de Report-Only a enforcement tras revisar la consola. Cubre RNF-12.
 - [ ] Decidir con el dueño si `/docs/` debe seguir desplegándose con el sitio público o quedarse solo en desarrollo.
+
+## Email marketing con Resend (novedades)
+
+Estado al 03/10/2026: el código está completo y probado (suscripción con doble confirmación, bienvenida, recordatorio, preferencias y pausa, campañas programadas, prueba A/B, plantillas, importación CSV, archivo público y métricas). Falta activarlo y los datos del cliente. Detalle técnico en `api/README.md`, sección Producción.
+
+### Para activarlo (técnico)
+
+- [ ] Token de Cloudflare con permisos *Workers Scripts: Edit*, *D1: Edit* y *Account Settings: Read*, además de Pages.
+- [ ] Desplegar la API (Actions > *API (Cloudflare Worker)*). Aplica sola la migración `0004_novedades.sql`.
+- [ ] Guardar la URL de la API como variable `PUBLIC_API_URL` en GitHub. Sin ella no aparecen la sección de la home, el formulario del pie ni el archivo `/novedades/`. Lo ideal es un dominio propio (`api.antidotocolombia.com`).
+- [ ] Revisar `SITIO_URL` en `api/wrangler.toml` (hoy `https://antidotocolombia.com`): es a donde redirigen confirmar, baja y preferencias. Mientras el rediseño no esté publicado en ese dominio, esos enlaces llevarían a la SPA vieja.
+- [ ] Primer admin en la base de producción (`api/README.md`, paso 7).
+- [ ] Secret `SAL_IP` (texto aleatorio largo).
+
+### Resend y DNS (en Hostinger)
+
+- [ ] Cuenta en Resend, dominio `antidotocolombia.com` verificado (SPF y DKIM) y secret `RESEND_API_KEY` en GitHub.
+- [ ] Registro DMARC: `_dmarc.antidotocolombia.com TXT "v=DMARC1; p=none; rua=mailto:<correo>"`. Gmail y Yahoo lo exigen a quien envía en volumen. Subirlo a `quarantine` cuando los informes salgan limpios.
+- [ ] Recomendado: subdominio solo para campañas (por ejemplo `news.antidotocolombia.com`), verificado en Resend, y `MAIL_FROM_NOVEDADES` apuntando a él. Separa la reputación de las campañas de la de los correos de acceso y avisos de leads.
+- [ ] Webhook de Resend hacia `<URL de la API>/v1/resend/webhook` con `email.delivered`, `email.opened`, `email.clicked`, `email.bounced` y `email.complained`, y su secreto como `RESEND_WEBHOOK_SECRET`. Sin él no hay métricas de campañas ni bajas automáticas por rebote o queja.
+- [ ] Activar en Resend el seguimiento de aperturas y clics del dominio de campañas (sin eso la prueba A/B no tiene con qué decidir).
+- [ ] Plan Pro de Resend cuando la lista pase de unas 100 personas: el gratis permite 100 correos al día.
+
+### Datos del cliente (tarjeta K-54 en /docs/)
+
+- [ ] Frecuencia de envío. Hoy se ve como "[FRECUENCIA DE ENVÍO]" en una caja pendiente en la home y en `/novedades/`.
+- [ ] Razón social y domicilio para el pie legal de las campañas: `MAIL_DIRECCION` en `api/wrangler.toml`. Es el mismo dato que falta en la política de datos.
+- [ ] Regalo por suscribirse (opcional, por ejemplo una guía en PDF). Cuando exista: su nombre en `REGALO_NOVEDADES` (`src/data/site.ts`) y su enlace en el correo de bienvenida (bandeja > Campañas > Correos automáticos).
+- [ ] Revisar y ajustar el texto de bienvenida por defecto en los dos idiomas desde la bandeja.
+- [ ] Revisión del abogado: incluir en la política de datos la finalidad de novedades, la pausa y la importación de contactos (invitaciones a personas con relación previa).
+
+### Antes del primer envío real
+
+- [ ] Enviarse una prueba de la bienvenida y de una campaña y revisarlas en Gmail, Outlook y el celular.
+- [ ] Si se importan contactos, hacerlo solo con personas que ya tienen relación con Antídoto (clientes, asistentes, aliados).
 
 ## Indexación: buscadores y asistentes de IA
 
