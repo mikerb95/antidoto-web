@@ -7,7 +7,8 @@ import grabacion from '../../assets/fotos/grabacion.jpg';
 import catering from '../../assets/fotos/catering-buffet.jpg';
 import figura from '../../assets/fotos/figura-piezas.jpg';
 import sala from '../../assets/fotos/sala-taller.jpg';
-import { obtenerServicios } from '../../data/servicios';
+import { obtenerServicios, servicioPath } from '../../data/servicios';
+import { tp } from '../../i18n/paginas';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -24,7 +25,7 @@ const AFICHES = {
 } as const;
 const tarjetas = (await obtenerServicios()).map((sv) => {
   const id = sv.id as keyof typeof AFICHES;
-  return { id, titulo: sv[locale].title, texto: h.items[id], afiche: AFICHES[id], aliado: sv[locale].aliado };
+  return { id, href: servicioPath(sv, locale), titulo: sv[locale].title, texto: h.items[id], afiche: AFICHES[id], aliado: sv[locale].aliado };
 });
 ---
 <section id="servicios" class="servicios" aria-labelledby="servicios-t">
@@ -38,10 +39,10 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
     </div>
 
     <div class="lista" data-entra>
-      {tarjetas.map(({ id, titulo, texto, afiche: [foto, posicion], aliado }) => (
+      {tarjetas.map(({ id, href, titulo, texto, afiche: [foto, posicion], aliado }) => (
         <article class="tarjeta" data-odometro>
           <div class="info">
-            <h3>{titulo}</h3>
+            <h3><a class="t-linea" href={href}>{titulo}</a></h3>
             <p>{texto.resumen}</p>
             <ul class="puntos">
               {texto.puntos.map((p) => (
@@ -67,7 +68,10 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
                 ))}
               </dl>
             )}
-            <a class="boton boton-cian" href={rutas.contacto[locale]}>{texto.cotizar}</a>
+            <div class="acciones">
+              <a class="boton boton-cian" href={`${rutas.contacto[locale]}?servicio=${id}`}>{texto.cotizar}</a>
+              <a class="ver-linea" href={href}>{tp(locale).servicios.verLinea}</a>
+            </div>
           </div>
           <div class="afiche" data-afiche data-paralaje>
             <Image src={foto} alt={texto.alt} widths={[240, 440]} sizes="220px" style={`object-position: ${posicion}`} />
@@ -109,7 +113,11 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
   .cifras div { display: flex; flex-direction: column-reverse; }
   dd { margin: 0; font: 400 34px/1.1 var(--font-accent); color: var(--color-deep); }
   dt { font-size: 14px; color: var(--color-slate); }
-  .boton { align-self: flex-start; }
+  .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+  .ver-linea { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
+  .ver-linea::after { content: '→'; margin-left: 0.35em; }
+  .t-linea { color: inherit; text-decoration: none; }
+  .t-linea:hover { color: var(--color-deep); }
 
   .afiche { flex: 0 1 220px; min-width: 180px; min-height: 300px; position: relative; border-radius: 16px; overflow: hidden; background: var(--color-ink); }
   .afiche img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }

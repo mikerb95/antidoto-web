@@ -1,6 +1,10 @@
 ---
-// Preguntas frecuentes con <details> nativo; la primera abierta.
-import { t, type Locale } from '../../i18n/ui';
+// Preguntas frecuentes destacadas (src/data/faq.ts) con <details> nativo, la primera abierta, y
+// el enlace a la página con todas.
+import ListaFaq from '../ListaFaq.astro';
+import { preguntas } from '../../data/faq';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
 
 interface Props {
   locale: Locale;
@@ -11,14 +15,8 @@ const h = t(locale).inicio.faq;
 <section class="faq" aria-labelledby="faq-t">
   <div class="interior">
     <h2 id="faq-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
-    <div class="lista" data-entra>
-      {h.items.map(([pregunta, respuesta], i) => (
-        <details open={i === 0}>
-          <summary>{pregunta}</summary>
-          <p>{respuesta}</p>
-        </details>
-      ))}
-    </div>
+    <ListaFaq items={preguntas(locale, { destacadas: true })} abrirPrimera />
+    <a class="ver-todo" href={rutas.faq[locale]}>{tp(locale).faq.todas}</a>
   </div>
 </section>
 
@@ -27,9 +25,5 @@ const h = t(locale).inicio.faq;
   .interior { max-width: 860px; margin: 0 auto; padding: 80px 24px; display: flex; flex-direction: column; gap: 28px; }
   @media (max-width: 600px) { .interior { padding-inline: 16px; } }
   .titulo-seccion { text-align: center; }
-  .lista { display: flex; flex-direction: column; gap: 12px; }
-  details { border-radius: 16px; border: 1px solid var(--color-line-soft); background: var(--color-mist); padding: 6px 22px; }
-  summary { min-height: 52px; display: flex; align-items: center; font-weight: 600; list-style: none; cursor: pointer; }
-  summary::-webkit-details-marker { display: none; }
-  details p { margin: 0 0 16px; color: var(--color-slate); font-size: 16px; }
+  .interior :global(details) { background: var(--color-mist); }
 </style>

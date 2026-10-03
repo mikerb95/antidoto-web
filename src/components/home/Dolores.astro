@@ -11,21 +11,38 @@ import grabacion from '../../assets/fotos/grabacion.jpg';
 import equipo from '../../assets/fotos/equipo-maqueta.jpg';
 import grupo from '../../assets/fotos/grupo-aire-libre.jpg';
 import mesa from '../../assets/fotos/mesa-evento.jpg';
-import { t, type Locale } from '../../i18n/ui';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { obtenerServicios, servicioPath } from '../../data/servicios';
+import { obtenerOfertas, ofertaPath } from '../../data/contenido';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const h = t(locale).inicio.dolores;
+// Destino de cada tarjeta: la oferta o la línea que resuelve ese dolor (clave de oferta, o
+// "linea:<clave>"), o un ancla de la home. Si la oferta o la línea no se publica, va a Servicios.
+const servicios = await obtenerServicios();
+const ofertas = await obtenerOfertas();
+const destinoDe = (d: string) => {
+  if (d.startsWith('#')) return d;
+  const [tipo, clave] = d.includes(':') ? d.split(':') : ['oferta', d];
+  if (tipo === 'linea') {
+    const sv = servicios.find((x) => x.id === clave);
+    return sv ? servicioPath(sv, locale) : rutas.servicios[locale];
+  }
+  const o = ofertas.find((x) => x.id === clave);
+  const sv = o && servicios.find((x) => x.id === o.linea);
+  return o && sv ? ofertaPath(sv, o, locale) : rutas.servicios[locale];
+};
 // Foto, encuadre y destino de cada tarjeta, en el orden de los textos.
 const FOTOS = [
-  [sala, 'center', '#servicios'],
-  [taller, 'center 25%', '#servicios'],
-  [grabacion, 'center 40%', '#servicios'],
+  [sala, 'center', destinoDe('induccion')],
+  [taller, 'center 25%', destinoDe('linea:formaciones')],
+  [grabacion, 'center 40%', destinoDe('emergencias')],
   [equipo, 'center 35%', '#actividades'],
-  [grupo, 'center 60%', '#servicios'],
-  [mesa, 'center', '#servicios'],
+  [grupo, 'center 60%', destinoDe('equipos')],
+  [mesa, 'center', rutas.servicios[locale]],
 ] as const;
 ---
 <section class="dolores" aria-labelledby="dolores-t">

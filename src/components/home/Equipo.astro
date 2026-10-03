@@ -1,7 +1,8 @@
 ---
 // Equipo: tarjeta destacada de la fundadora, espacios para el equipo y la licencia de SST.
 import { SITE } from '../../data/site';
-import { t, type Locale } from '../../i18n/ui';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
 
 interface Props {
   locale: Locale;
@@ -33,6 +34,7 @@ const h = s.inicio.equipo;
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
       <p><strong>{h.licencia}</strong><span>{h.licenciaDatos}</span></p>
     </div>
+    <a class="ver-todo" href={rutas.nosotros[locale]}>{tp(locale).nosotros.seguir.join('')}</a>
   </div>
 </section>
 

@@ -3,7 +3,7 @@
 // idioma y botón Cotizar. No es fija y no enlaza a anclas de la home: cada entrada lleva a una
 // página real. Servicios, Soluciones, Nosotros y Recursos tienen submenú (patrón disclosure:
 // el texto es un enlace al índice y un botón aparte abre el panel). Servicios abre un mega menú
-// con las cuatro líneas y sus ofertas.
+// con todas las líneas y sus ofertas.
 // Sin JS: en escritorio los paneles se abren con hover y foco (CSS); en móvil el panel queda
 // abierto como lista. Con JS: clic o puntero abren, Esc cierra y devuelve el foco, y bajo
 // 1100 px todo va en el panel del botón Menú, con los submenús como acordeones.
@@ -90,7 +90,7 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
               )}
               {it.mega && (
                 <div class="sub sub-mega" id={`sub-${it.id}`} data-sub>
-                  <div class="mega-rejilla">
+                  <div class="mega-rejilla" style={`--cols: ${servicios.length}`}>
                     {servicios.map((sv) => (
                       <div class="col">
                         <a class="col-t" href={servicioPath(sv, locale)} aria-current={pag(servicioPath(sv, locale))}>{sv[locale].title}</a>
@@ -240,7 +240,7 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
   .sub-t { font-weight: 600; font-size: 15.5px; }
   .sub-d { font-size: 13.5px; color: var(--color-slate); line-height: 1.4; }
   .sub-mega { left: 0; right: 0; top: 100%; border-radius: 0 0 22px 22px; border-top: 0; padding: 28px max(24px, calc((100vw - 1200px) / 2 + 24px)) 24px; }
-  .mega-rejilla { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+  .mega-rejilla { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 24px; }
   .col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .col-t { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font: 400 20px/1.2 var(--font-display); color: var(--color-ink); text-decoration: none; }
   .col-t::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--color-antidote); flex: none; }

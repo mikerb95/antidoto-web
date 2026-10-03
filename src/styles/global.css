@@ -195,6 +195,10 @@
   .cab-izq p { margin: 0; color: var(--color-slate); max-width: 40em; }
   .rejilla-tarjetas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 20px; }
   .rejilla-tarjetas > li { min-width: 0; }
+  /* Enlace de una sección de la home a su página: la home es la portada del sitio. */
+  .ver-todo { align-self: center; display: inline-flex; align-items: center; gap: 0.4em; min-height: 44px; padding: 0 4px; color: var(--color-deep); font-weight: 600; text-decoration: none; border-bottom: 2px solid var(--color-antidote); }
+  .ver-todo::after { content: '→'; transition: transform var(--t-base) var(--ease-out); }
+  .ver-todo:hover::after { transform: translateX(4px); }
   .prosa { max-width: 42em; color: var(--color-ink); font-size: 17px; line-height: 1.7; }
   .prosa :is(h2, h3) { margin: 1.6em 0 0.5em; line-height: 1.2; }
   .prosa h2 { font-size: 30px; }

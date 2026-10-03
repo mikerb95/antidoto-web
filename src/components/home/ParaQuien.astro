@@ -1,6 +1,7 @@
 ---
 // Entradas por tipo de comprador, franja de aliados y espacios para caso y testimonios.
-import { t, type Locale } from '../../i18n/ui';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { SOLUCIONES, solucionPath } from '../../data/soluciones';
 
 interface Props {
   locale: Locale;
@@ -16,9 +17,9 @@ const [aliadosTitulo, aliadosTexto, aliadosCta] = h.aliados;
       <p>{h.lead}</p>
     </div>
     <ul class="perfiles" data-entra>
-      {h.perfiles.map(([titulo, texto]) => (
+      {h.perfiles.map(([titulo, texto], i) => (
         <li>
-          <a class="perfil" href="#cotizar">
+          <a class="perfil" href={solucionPath(SOLUCIONES.find((sol) => sol.perfil === i)!, locale)}>
             <span class="p-t">{titulo}</span>
             <span class="p-d">{texto}</span>
             <span class="p-cta">{h.verSoluciones}</span>
@@ -26,7 +27,7 @@ const [aliadosTitulo, aliadosTexto, aliadosCta] = h.aliados;
         </li>
       ))}
     </ul>
-    <a class="aliados" href="#cotizar">
+    <a class="aliados" href={rutas.trabaja[locale]}>
       <span class="a-txt"><span class="a-t">{aliadosTitulo}</span><span class="a-d">{aliadosTexto}</span></span>
       <span class="a-cta">{aliadosCta}</span>
     </a>

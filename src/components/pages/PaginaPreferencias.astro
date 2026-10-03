@@ -28,7 +28,7 @@ const textos = {
   invalido: p.invalido,
 };
 ---
-<Base locale={locale} pagina={null} title={p.title} description={p.description} alternates={rutaPreferencias} tema="claro" noindex sinReferente>
+<Base locale={locale} pagina={null} title={p.title} description={p.description} alternates={rutaPreferencias} tema="claro" novedadesPie={false} noindex sinReferente>
   <section class="pref" aria-labelledby="pref-titulo">
     <div class="caja" data-preferencias data-api={api} data-textos={JSON.stringify(textos)} data-pausa={JSON.stringify(p.pausaHasta('{}'))}>
       <h1 id="pref-titulo" class="titulo-seccion" tabindex="-1" data-titulo>{p.inicio[0]}</h1>
