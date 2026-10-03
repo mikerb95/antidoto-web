@@ -33,6 +33,15 @@ Si la API falla o no está configurada, el cotizador sigue abriendo WhatsApp igu
   - Un rebote permanente marca al contacto como `rebotado` y una queja lo da de baja.
   - Las métricas de cada campaña salen de aquí.
 - **Supresión:** un admin borra el correo, el nombre y la organización del contacto, y se revoca su autorización.
+- **Páginas en el sitio:** los enlaces de confirmar, baja y preferencias apuntan a la API (así sirven los correos viejos y la baja de un clic), pero su GET redirige a `/novedades/preferencias/` del sitio (`SITIO_URL`). Ahí los botones son formularios normales que hacen POST a la API, y la API vuelve al sitio con el resultado. La baja de un clic de RFC 8058 (cuerpo `List-Unsubscribe=One-Click`) responde 200 sin redirigir.
+- **Preferencias y pausa:** desde cualquier correo la persona elige temas, idioma o una pausa de 1, 3 o 6 meses. Quien está en pausa no entra en la audiencia.
+- **Correos automáticos** (bandeja > Campañas > Correos automáticos):
+  - Bienvenida al confirmar, editable en español e inglés, con vista previa y prueba. `{{sitio}}` es la URL del sitio. Si hay regalo (una guía), su enlace va aquí y su nombre en `REGALO_NOVEDADES` del sitio.
+  - Un solo recordatorio a quien se suscribió en el sitio y no confirmó en 48 horas (no a los invitados).
+- **Importar CSV** (bandeja > Contactos): cada persona nueva queda pendiente y recibe una invitación; el cron las manda por lotes. Quien ya estaba, incluido quien se dio de baja, no se toca.
+- **Campañas avanzadas:** programar el envío, prueba A/B de asunto (una muestra se parte en A y B; pasadas las horas elegidas el resto recibe la de más clics, o más aperturas), plantillas y duplicar.
+- **Archivo público:** las campañas marcadas como públicas se listan en `/novedades/` del sitio (`GET /v1/novedades`). Cada correo tiene versión web (`/v1/novedades/<id>`), que es también el "Ver en el navegador" del correo.
+- **Métricas de la lista** (bandeja > Métricas): altas, confirmaciones y bajas por semana, activos y en pausa, confirmación por origen (home, pie, cotizador, importados...) y apertura de las campañas. La ficha de cada lead dice si está suscrito y qué abrió.
 
 ### Chat con IA
 
@@ -70,6 +79,11 @@ Para el chat con IA, agrega `ANTHROPIC_API_KEY` a `.dev.vars`. Para probarlo sin
 
 1. **Token de Cloudflare:** al token de `CLOUDFLARE_API_TOKEN` agrégale los permisos *Workers Scripts: Edit*, *D1: Edit* y *Account Settings: Read* (hoy solo tiene Pages; el primer despliegue falló por eso).
 2. **Correo:** crea una cuenta en Resend, verifica el dominio `antidotocolombia.com` (registros DNS en Hostinger) y guarda la clave como secret `RESEND_API_KEY` en GitHub. Si el remitente va a ser otro, cambia `MAIL_FROM` en `wrangler.toml`.
+   - **DMARC:** Resend crea SPF y DKIM, pero Gmail y Yahoo exigen además un registro DMARC a quien envía en volumen. Empieza con `_dmarc.antidotocolombia.com TXT "v=DMARC1; p=none; rua=mailto:<correo>"` y súbelo a `quarantine` cuando los informes salgan limpios.
+   - **Subdominio para campañas (recomendado):** verifica también un subdominio (por ejemplo `news.antidotocolombia.com`) y usa `MAIL_FROM_NOVEDADES = "Antídoto <novedades@news.antidotocolombia.com>"`. Así la reputación de las campañas no afecta los enlaces de acceso ni los avisos de leads, y el seguimiento de clics (que reescribe enlaces) no toca los correos de acceso.
+   - **Plan:** el plan gratis de Resend permite 100 correos al día. Con una lista de más de 100 personas hace falta el plan Pro.
+   - **Pie legal:** pon la razón social y el domicilio en `MAIL_DIRECCION` (`wrangler.toml`). Sin ella, las campañas dicen solo "Antídoto · Estudio creativo empresarial · Colombia".
+   - **Sitio:** `SITIO_URL` (en `wrangler.toml`) es el sitio al que redirigen confirmar, baja y preferencias.
 3. **Sal de IP:** guarda un texto aleatorio largo como secret `SAL_IP` (por ejemplo `openssl rand -base64 32`).
 4. **Webhook de Resend (métricas de campañas):** en Resend > Webhooks crea uno hacia `<URL de la API>/v1/resend/webhook` con los eventos `email.delivered`, `email.opened`, `email.clicked`, `email.bounced` y `email.complained`, y guarda su *signing secret* (`whsec_…`) como secret `RESEND_WEBHOOK_SECRET`. Para contar aperturas y clics, activa el seguimiento de aperturas y clics del dominio en Resend. Las campañas salen de `MAIL_FROM_NOVEDADES` (en `wrangler.toml`).
 5. **Chat con IA:** crea una clave en la consola de Claude, ponle un límite de gasto mensual allá también y guárdala como secret `ANTHROPIC_API_KEY` en GitHub. El tope diario se cambia en `ASESOR_TOPE_DIARIO_USD` de `wrangler.toml`. Antes de abrirlo al público, prueba las preguntas trampa de la skill `chat-ia` (`references/pruebas.md`).
@@ -93,7 +107,7 @@ Para el chat con IA, agrega `ANTHROPIC_API_KEY` a `.dev.vars`. Para probarlo sin
 - `src/admin.ts`: bandeja, métricas, CSV y equipo.
 - `src/seguimiento.ts`: cron.
 - `src/correo.ts`: Resend y plantillas.
-- `src/marketing/`: suscripciones y baja (`suscripciones.ts`), formato de campañas (`render.ts`), motor de envío (`envios.ts`), webhook de Resend (`webhook.ts`) y API de la bandeja (`admin.ts`).
+- `src/marketing/`: suscripciones, confirmación, baja y preferencias (`suscripciones.ts`), enlaces de los correos (`enlaces.ts`), formato de campañas (`render.ts`), motor de envío con programación y prueba A/B (`envios.ts`), bienvenida, recordatorio e invitaciones (`automaticos.ts`), archivo público (`publico.ts`), webhook de Resend (`webhook.ts`) y API de la bandeja (`admin.ts`).
 - `src/asesor/`: chat con IA. Prompt (`prompt.ts`), conocimiento (`conocimiento.ts`), herramientas, bucle con el modelo inyectado (`bucle.ts`), guardia de cifras, costo y tope diario (`costo.ts`, `presupuesto.ts`), llamada a la API de Claude con `fetch` (`motor.ts`) y ruta (`ruta.ts`).
 - `src/db/schema.ts`: modelo de datos. Migraciones en `migraciones/`.
 - `src/admin-ui/`: interfaz de la bandeja (HTML, CSS y JS propios, sin dependencias). `scripts/empaquetar-ui.mjs` la mete en el Worker antes de `dev`, `deploy`, `check` y `test`.

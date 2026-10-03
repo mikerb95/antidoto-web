@@ -10,7 +10,7 @@ import { systemPrompt, RAYA_LARGA, RAYA_MEDIA } from '../src/asesor/prompt';
 import { CLAVES, conocimiento, sinPendientes } from '../src/asesor/conocimiento';
 import { extraerCifras, verificarCifras } from '../src/asesor/guardia';
 import { leerWhatsapp, mensajeWhatsapp, taparDatos, definiciones } from '../src/asesor/herramientas';
-import { atender, sinRayas, validarEntrada, MAX_LLAMADAS, type Bloque, type MensajeApi, type RespuestaApi } from '../src/asesor/bucle';
+import { atender, sinRayas, sinVoseo, validarEntrada, MAX_LLAMADAS, type Bloque, type MensajeApi, type RespuestaApi } from '../src/asesor/bucle';
 import { costoUsd } from '../src/asesor/costo';
 import { hoyBogota, presupuestoRestante, sumarGasto, topeDiarioUsd } from '../src/asesor/presupuesto';
 import { PREGUNTAS_POR_HORA } from '../src/asesor/ruta';
@@ -124,6 +124,13 @@ describe('validarEntrada', () => {
 test('sinRayas', () => {
   expect(sinRayas(`entre 3${RAYA_MEDIA}5 días`, 'es')).toBe('entre 3 a 5 días');
   expect(sinRayas(`Claro ${RAYA_LARGA} te ayudo`, 'es')).toBe('Claro, te ayudo');
+});
+
+test('sinVoseo: tuteo en español, sin tocar palabras parecidas ni el inglés', () => {
+  expect(sinVoseo('¿Para cuándo lo pensás? Contame y decime si podés.', 'es')).toBe('¿Para cuándo lo piensas? Cuéntame y dime si puedes.');
+  expect(sinVoseo('Si estás en Bogotá, además del inglés, mirá esto', 'es')).toBe('Si estás en Bogotá, además del inglés, mira esto');
+  expect(sinVoseo('Sos bienvenido', 'es')).toBe('Eres bienvenido');
+  expect(sinVoseo('Podés', 'en')).toBe('Podés');
 });
 
 test('costo con la tarifa de Haiku 4.5', () => {

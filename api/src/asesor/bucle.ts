@@ -103,6 +103,26 @@ export function sinRayas(texto: string, locale: Locale): string {
   return texto.replace(RANGO, `$1 ${locale === 'es' ? 'a' : 'to'} `).replace(RAYA, ', ');
 }
 
+// Formas de voseo que Haiku se cuela aunque el prompt lo prohíba ("¿para cuándo lo pensás?",
+// prueba real del 3 oct 2026). Lista cerrada a propósito: "estás", "además" o "inglés" también
+// llevan tilde al final y no son voseo, así que una regla general rompería texto bueno.
+const VOSEO: Record<string, string> = {
+  sos: 'eres', podés: 'puedes', querés: 'quieres', tenés: 'tienes', sabés: 'sabes', sentís: 'sientes',
+  pensás: 'piensas', necesitás: 'necesitas', preferís: 'prefieres', contás: 'cuentas', buscás: 'buscas',
+  venís: 'vienes', decís: 'dices', hacés: 'haces', pedís: 'pides', elegís: 'eliges', mirá: 'mira',
+  contame: 'cuéntame', decime: 'dime', escribí: 'escribe', avisame: 'avísame', fijate: 'fíjate', imaginate: 'imagínate',
+};
+const RE_VOSEO = new RegExp(`(?<!\\p{L})(${Object.keys(VOSEO).join('|')})(?!\\p{L})`, 'giu');
+
+/** Cambia el voseo por tuteo en español, conservando la mayúscula inicial. */
+export function sinVoseo(texto: string, locale: Locale): string {
+  if (locale !== 'es') return texto;
+  return texto.replace(RE_VOSEO, (m) => {
+    const t = VOSEO[m.toLowerCase()]!;
+    return m[0] === m[0]!.toUpperCase() ? t[0]!.toUpperCase() + t.slice(1) : t;
+  });
+}
+
 function textoDe(r: RespuestaApi): string {
   return r.content
     .filter((b): b is Extract<Bloque, { type: 'text' }> => b.type === 'text')
@@ -153,7 +173,7 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
       continue;
     }
 
-    const texto = sinRayas([...previo, textoDe(r)].filter(Boolean).join('\n\n'), e.locale);
+    const texto = sinVoseo(sinRayas([...previo, textoDe(r)].filter(Boolean).join('\n\n'), e.locale), e.locale);
     if (!texto) return cerrar(RESPALDO[e.locale], 'vueltas');
     const g = verificarCifras(texto, CIFRAS_PUBLICAS);
     if (g.ok) return cerrar(texto, null);
