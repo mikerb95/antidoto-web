@@ -104,6 +104,7 @@ const resto = await Promise.all(
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M6 13l6 6 6-6"></path></svg>
       </a>
     </div>
+    <svg class="borde" viewBox="0 0 1440 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0 12 Q180 2 360 12 T720 12 T1080 12 T1440 12 V24 H0 Z"></path></svg>
   </div>
 </section>
 
@@ -146,7 +147,10 @@ const resto = await Promise.all(
   @media (prefers-reduced-motion: reduce) { .pausa { display: none; } }
 
   .franja { position: relative; background: var(--color-antidote); color: var(--color-ink); }
-  .franja-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-block: 14px 18px; }
+  .franja-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-block: 14px 40px; }
+  /* Ola del color de la sección siguiente: el cian se recoge en curvas en vez de cortarse. */
+  .borde { position: absolute; left: 0; bottom: -1px; width: 100%; height: 28px; display: block; }
+  .borde path { fill: var(--color-paper); }
   .fundadora { display: flex; align-items: center; gap: 14px; }
   .monograma { width: 46px; height: 46px; flex: none; border-radius: 50%; background: var(--color-ink); color: var(--color-antidote); display: flex; align-items: center; justify-content: center; font: 400 18px/1 var(--font-display); }
   .fundadora p { margin: 0; display: flex; flex-direction: column; }
@@ -162,6 +166,8 @@ const resto = await Promise.all(
     .texto { gap: 16px; }
     .lead { font-size: 17px; }
     .velo { background: linear-gradient(180deg, rgb(15 24 29 / 0.82) 0%, rgb(15 24 29 / 0.7) 50%, rgb(15 24 29 / 0.55) 100%); }
+    .franja-in { padding-bottom: 30px; }
+    .borde { height: 18px; }
     .pruebalo::after { content: '↓'; animation-name: senalar-abajo; }
     @keyframes senalar-abajo { 50% { transform: translateY(4px); } }
     .pausa { top: 12px; bottom: auto; }

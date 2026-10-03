@@ -91,6 +91,120 @@ function hero(seccion: HTMLElement) {
 }
 
 /**
+ * Escena del hero: fotos reales que se acercan despacio y se relevan con la ola de líquido, y el
+ * video del cliente encima cuando existe. Todo se pide después de `load` (solo la primera foto
+ * carga con la página). Bucle con pausa: se detiene fuera de pantalla, con la pestaña oculta o
+ * cuando la persona lo pausa. El video no se pide con ahorro de datos ni en conexiones 2G.
+ */
+function escenaHero(seccion: HTMLElement) {
+  const escena = seccion.querySelector<HTMLElement>('[data-escena-hero]');
+  const boton = seccion.querySelector<HTMLButtonElement>('[data-escena-pausa]');
+  if (!escena) return;
+  pieza('escena-hero', () => {
+    const tomas = [...escena.querySelectorAll<HTMLElement>('.toma')];
+    const video = escena.querySelector<HTMLVideoElement>('[data-video]');
+    let tl: gsap.core.Timeline | null = null;
+    let videoListo = false;
+    let activo = false;
+    let pausado = false;
+
+    const aplicar = () => {
+      const correr = activo && !pausado;
+      if (videoListo && video) {
+        tl?.pause();
+        if (correr) video.play().catch(() => {});
+        else video.pause();
+      } else if (tl) {
+        if (correr) tl.play();
+        else tl.pause();
+      }
+    };
+
+    // Secuencia sin costura: la primera toma se repite al final, así el reinicio no salta.
+    const DUR = 6;
+    const CAMBIO = 1.3;
+    const ZOOM = 0.1;
+    const arrancar = () => {
+      const copia = tomas[0].cloneNode(true) as HTMLElement;
+      escena.insertBefore(copia, video);
+      const todas = [...tomas, copia];
+      todas.slice(1).forEach((t) => {
+        t.classList.remove('diferida');
+        t.style.clipPath = ola(0);
+      });
+      const k = (ZOOM * CAMBIO) / (DUR + CAMBIO);
+      tl = gsap.timeline({ repeat: -1, paused: true });
+      tl.call(() => todas.slice(1).forEach((t) => (t.style.clipPath = ola(0))), [], 0);
+      todas.forEach((t, i) => {
+        const img = t.querySelector('img');
+        const ultima = i === todas.length - 1;
+        const inicio = Math.max(0, i * DUR - CAMBIO);
+        if (img) {
+          if (i === 0) tl!.fromTo(img, { scale: 1 + k }, { scale: 1 + ZOOM, duration: DUR, ease: 'none' }, 0);
+          else tl!.fromTo(img, { scale: 1 }, { scale: ultima ? 1 + k : 1 + ZOOM, duration: ultima ? CAMBIO : DUR + CAMBIO, ease: 'none' }, inicio);
+        }
+        if (i > 0) {
+          const p = { v: 0 };
+          tl!.fromTo(p, { v: 0 }, { v: 1, duration: CAMBIO, ease: 'power2.inOut', onUpdate: () => (t.style.clipPath = ola(p.v, p.v * Math.PI * 3)) }, inicio);
+        }
+      });
+      aplicar();
+    };
+
+    const cargarVideo = () => {
+      if (!video) return;
+      const con = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+      if (con?.saveData || /2g/.test(con?.effectiveType ?? '')) return;
+      video.querySelectorAll<HTMLSourceElement>('source').forEach((s) => (s.src = s.dataset.src ?? ''));
+      video.addEventListener(
+        'canplay',
+        () => {
+          video.classList.add('listo');
+          videoListo = true;
+          aplicar();
+        },
+        { once: true },
+      );
+      video.load();
+    };
+
+    const cargar = () => {
+      const diferidas = tomas.slice(1).map((t) => {
+        const img = t.querySelector<HTMLImageElement>('img');
+        if (!img) return Promise.resolve();
+        img.srcset = img.dataset.srcset ?? '';
+        img.src = img.dataset.src ?? '';
+        return img.decode().catch(() => {});
+      });
+      Promise.all(diferidas).then(arrancar);
+      cargarVideo();
+    };
+    if (document.readyState === 'complete') cargar();
+    else addEventListener('load', cargar, { once: true });
+
+    soloVisible(seccion, {
+      play: () => {
+        activo = true;
+        aplicar();
+      },
+      pause: () => {
+        activo = false;
+        aplicar();
+      },
+    });
+    if (boton) {
+      boton.hidden = false;
+      boton.addEventListener('click', () => {
+        pausado = !pausado;
+        boton.setAttribute('aria-pressed', String(pausado));
+        boton.title = (pausado ? boton.dataset.reanudar : boton.dataset.pausar) ?? '';
+        aplicar();
+      });
+    }
+  });
+}
+
+/**
  * Olas del hero: siguen al cursor (la posición mueve las capas en sentidos contrarios y la
  * velocidad levanta la ola, que se calma sola) y, en táctil, al scroll. No es un bucle: si la
  * persona no hace nada, el agua queda quieta.
@@ -265,6 +379,7 @@ export function iniciarInicio() {
   const h = document.querySelector<HTMLElement>('[data-hero]');
   if (h) {
     hero(h);
+    escenaHero(h);
     olasVivas(h);
   }
   const r = document.querySelector<HTMLElement>('[data-resultados]');
