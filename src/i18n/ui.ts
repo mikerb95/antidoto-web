@@ -42,7 +42,7 @@ export const ui = {
     ubicacion: 'Colombia',
     idiomas: 'ES · PT · EN',
     heroCta: 'Cotizar por WhatsApp',
-    visorFicha: 'Fórmula',
+    migasLabel: 'Migas de pan',
     pause: 'Pausar animación',
     stats: [
       ['+150', 'producciones'],
@@ -357,7 +357,7 @@ export const ui = {
     ubicacion: 'Colombia',
     idiomas: 'ES · PT · EN',
     heroCta: 'Get a quote on WhatsApp',
-    visorFicha: 'Formula',
+    migasLabel: 'Breadcrumb',
     pause: 'Pause animation',
     stats: [
       ['150+', 'productions'],

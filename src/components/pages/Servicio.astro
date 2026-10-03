@@ -5,8 +5,10 @@ import Escena from '../Escena.astro';
 import ContactoCta from '../ContactoCta.astro';
 import WhatsappIcon from '../WhatsappIcon.astro';
 import { obtenerServicios, servicioPath, type Servicio } from '../../data/servicios';
+import { getImage } from 'astro:assets';
 import { t, rutas, type Locale } from '../../i18n/ui';
-import { waLink } from '../../data/site';
+import { SITE, waLink } from '../../data/site';
+import { grafo, migasSchema, servicioSchema } from '../../data/schema';
 
 interface Props {
   locale: Locale;
@@ -19,6 +21,14 @@ const txt = servicio[locale];
 const msg = s.waService(txt.title);
 const n = SERVICIOS.indexOf(servicio) + 1;
 const otros = SERVICIOS.filter((x) => x.id !== servicio.id);
+// Migas visibles y su BreadcrumbList salen de la misma lista.
+const migas: Array<[string, string]> = [
+  [SITE.name, rutas.inicio[locale]],
+  [s.nav.servicios, rutas.servicios[locale]],
+  [txt.title, servicioPath(servicio, locale)],
+];
+const foto = await getImage({ src: servicio.image, width: 1200, format: 'jpeg' });
+const jsonLd = grafo(servicioSchema(servicio, locale, foto.src), migasSchema(migas));
 ---
 <Base
   locale={locale}
@@ -27,13 +37,20 @@ const otros = SERVICIOS.filter((x) => x.id !== servicio.id);
   description={txt.lead}
   alternates={{ es: servicioPath(servicio, 'es'), en: servicioPath(servicio, 'en') }}
   waMessage={msg}
+  jsonLd={jsonLd}
   scroll="suave"
  
 >
   <section class="seccion intro" aria-labelledby="servicio-title">
     <div class="wrap grid">
       <div class="copy">
-        <p class="migas mono"><a href={rutas.servicios[locale]}>{s.nav.servicios}</a> / <span class="mono-acento">{s.visorFicha} 0{n}</span></p>
+        <nav class="migas mono" aria-label={s.migasLabel}>
+          <ol>
+            {migas.map(([nombre, ruta], i) =>
+              i < migas.length - 1 ? <li><a href={ruta}>{nombre}</a></li> : <li><span class="mono-acento" aria-current="page">{nombre}</span></li>,
+            )}
+          </ol>
+        </nav>
         <h1 id="servicio-title" data-titular style={`view-transition-name: servicio-${servicio.id}-title`}>{txt.title}</h1>
         <p class="lead">{txt.lead}</p>
         <div class="ctas">
@@ -58,7 +75,7 @@ const otros = SERVICIOS.filter((x) => x.id !== servicio.id);
         </dl>
       </div>
       <div class="incluye">
-        <Encabezado num="02" kicker={s.serviceFor} titulo={txt.title} />
+        <Encabezado num="02" kicker={txt.title} titulo={s.serviceFor} />
         <ol>
           {txt.includes.map((item, i) => (
             <li class="panel"><span class="mono mono-acento">{String(i + 1).padStart(2, '0')}</span><span>{item}</span></li>
@@ -104,8 +121,11 @@ const otros = SERVICIOS.filter((x) => x.id !== servicio.id);
 <style>
   .intro { padding-top: 40px; }
   .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 48px; align-items: center; }
-  .migas { margin: 0 0 18px; }
-  .migas a { color: var(--color-fg-muted); text-decoration: none; }
+  .migas { margin: 0 0 6px; }
+  .migas ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; }
+  .migas li { display: inline-flex; align-items: center; }
+  .migas li + li::before { content: '/'; margin: 0 0.6em; color: var(--color-fg-muted); }
+  .migas a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-fg-muted); text-decoration: none; }
   .migas a:hover { color: var(--color-fg); }
   h1 { font-size: clamp(40px, 4vw + 12px, 72px); line-height: 1; letter-spacing: -0.025em; margin: 0 0 20px; }
   .ctas { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
