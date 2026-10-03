@@ -13,7 +13,7 @@ import type { Env } from '../env';
 import { renderizar } from './render';
 import { enlace, enlaceBaja, enlacePreferencias, sitioUrl, type Locale } from './enlaces';
 import { correoConfirmacion } from './suscripciones';
-import { enviarLote, POR_LOTE } from './envios';
+import { enviarLote } from './envios';
 import { ahora, HORA, DIA } from '../util';
 
 export const CLAVES_AUTOMATICOS = ['bienvenida:es', 'bienvenida:en'] as const;
@@ -23,6 +23,8 @@ export type ClaveAutomatico = (typeof CLAVES_AUTOMATICOS)[number];
 export const RECORDATORIO_TRAS = 48 * HORA;
 const RECORDATORIO_HASTA = 7 * DIA;
 const PAUSA_MS = 600;
+/** D1 acepta como mucho 100 variables por consulta: el UPDATE del lote lleva una más que los ids. */
+const LOTE_INVITACIONES = 90;
 
 type Contenido = Pick<Automatico, 'asunto' | 'preheader' | 'cuerpo' | 'activo'>;
 
@@ -132,7 +134,7 @@ export async function invitaciones(env: Env, db: DrizzleD1Database, appUrl: stri
       .select()
       .from(contactos)
       .where(and(eq(contactos.estado, 'pendiente'), eq(contactos.origen, 'importado'), isNull(contactos.confirmacionEnviada)))
-      .limit(POR_LOTE);
+      .limit(LOTE_INVITACIONES);
     if (!filas.length) break;
     const r = await enviarLote(
       env,
