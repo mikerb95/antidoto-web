@@ -32,7 +32,9 @@ Sitio de antidotocolombia.com: estudio creativo empresarial colombiano (formacio
 - `src/data/consentimiento.json` (y su envoltorio tipado `consentimiento.ts`): textos y versiones de las autorizaciones de datos (cotización y novedades). Los comparten el sitio y la API; si cambia un texto, sube su versión y pasa la anterior a `anteriores` (la API acepta ambas mientras el sitio y la API se despliegan por separado).
 - `src/lib/origen.ts`: guarda en `sessionStorage` los UTM y el referente de la primera página de la visita, para el lead.
 - `src/i18n/ui.ts`: textos de interfaz por idioma.
-- `src/data/`: contenido (servicios, clientes, datos de contacto, JSON-LD, formas del logo).
+- `src/content/servicios/`: un Markdown por servicio y por idioma (`<clave>.<idioma>.md`), declarado en `src/content.config.ts`. Los dos idiomas se unen por `clave`, que es estable: la usan `view-transition-name`, `data-escena` y el cotizador, y la API la valida (`api/src/db/schema.ts`). Todo el sitio lee los servicios con `obtenerServicios()` de `src/data/servicios.ts`; la lógica pura (emparejado y borrador) está en `src/lib/servicios.ts` con pruebas en `tests/servicios.test.ts`.
+- Borradores: `borrador: true` en cualquiera de los dos idiomas saca el servicio entero del build de producción (ruta, enlaces, cotizador, sitemap, JSON-LD y precache). Solo se ven con `npm run dev`. Lo que el cliente no haya confirmado se construye así.
+- `src/data/`: clientes, datos de contacto, JSON-LD (`schema.ts`: organización en la home; `Service` y `BreadcrumbList` en cada página de servicio) y formas del logo.
 - `public/`: fuentes WOFF2, íconos (incluidos los `maskable`), imagen OG, `.htaccess` para Hostinger, `_headers` para Cloudflare Pages, `robots.txt`, manifest.
 - `marca/`: guía de marca, logos y fotos originales, inventario de clientes. Fuente de verdad del diseño.
 - `auditoria/`: auditoría técnica del sitio actual y brief de diseño con reglas de motion y accesibilidad.
