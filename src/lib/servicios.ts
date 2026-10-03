@@ -41,12 +41,14 @@ export interface Servicio {
   en: ServicioTexto;
 }
 
-const texto = ({ slug, title, lead, facts, includes, alt, entrada }: EntradaServicio): ServicioTexto => ({
+const texto = ({ slug, title, lead, facts, includes, herramientas, aliado, alt, entrada }: EntradaServicio): ServicioTexto => ({
   slug,
   title,
   lead,
   facts,
   includes,
+  ...(herramientas?.length ? { herramientas } : {}),
+  ...(aliado ? { aliado } : {}),
   alt,
   ...(entrada ? { entrada } : {}),
 });
@@ -66,6 +68,8 @@ export function emparejar(entradas: EntradaServicio[], { borradores }: { borrado
       [(e) => e.orden, 'tiene un orden distinto en cada idioma'],
       [(e) => e.imagen.src, 'tiene una imagen distinta en cada idioma'],
       [(e) => !!e.provisional, 'marca la foto provisional solo en un idioma'],
+      [(e) => e.aliado?.url ?? '', 'tiene un aliado distinto en cada idioma'],
+      [(e) => e.herramientas?.map((h) => h.nombre).join() ?? '', 'tiene herramientas distintas en cada idioma'],
     ],
   });
   const servicios: Servicio[] = pares.map(({ clave, borrador, es, en }) => ({
