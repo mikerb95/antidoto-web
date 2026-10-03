@@ -1,0 +1,61 @@
+---
+// Trabaja con nosotros: alianzas (consultoras, corredores, aseguradoras y agencias) y talento.
+// Sin formulario propio: la alianza va por WhatsApp y la hoja de vida por correo.
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import WhatsappIcon from '../WhatsappIcon.astro';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { SITE, waLink } from '../../data/site';
+import { grafo, migasSchema } from '../../data/schema';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const h = p.trabaja;
+const [title, description] = s.seo.trabaja;
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.nosotros, rutas.nosotros[locale]],
+  [s.nav.trabaja, rutas.trabaja[locale]],
+];
+---
+<Base locale={locale} pagina="trabaja" title={title} description={description} alternates={rutas.trabaja} jsonLd={grafo(migasSchema(migas))} tema="claro" waMessage={h.aliadosWa}>
+  <CabeceraPagina locale={locale} migas={migas} titulo={h.titulo} lead={h.lead} />
+
+  <section class="bloque" aria-label={s.nav.trabaja}>
+    <div class="wrap dos" data-entra>
+      <article class="caja oscura" aria-labelledby="aliados-t">
+        <h2 id="aliados-t">{h.aliadosTitulo[0]}<span class="resaltado">{h.aliadosTitulo[1]}</span></h2>
+        <p>{h.aliadosLead}</p>
+        <ul>{h.aliadosPuntos.map((x) => <li>{x}</li>)}</ul>
+        <a class="boton boton-cian boton-grande" href={waLink(h.aliadosWa)} target="_blank" rel="noopener"><WhatsappIcon />{h.aliadosCta}</a>
+      </article>
+      <article class="caja" aria-labelledby="talento-t">
+        <h2 id="talento-t">{h.talentoTitulo[0]}<span class="resaltado">{h.talentoTitulo[1]}</span></h2>
+        <p>{h.talentoLead}</p>
+        <p class="pendiente">{h.vacantesPendiente}</p>
+        <a class="boton boton-tinta boton-grande" href={`mailto:${SITE.email}?subject=${encodeURIComponent(h.talentoAsunto)}`}>{h.talentoCta}</a>
+      </article>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .dos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding-bottom: 32px; }
+  .caja { display: flex; flex-direction: column; gap: 16px; padding: clamp(24px, 3vw, 40px); border-radius: 26px; background: var(--color-mist); border: 1px solid var(--color-line-soft); }
+  .oscura { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }
+  h2 { margin: 0; font-size: clamp(28px, 2vw + 14px, 40px); line-height: 1.1; }
+  .caja > p:not(.pendiente) { margin: 0; color: var(--color-slate); font-size: 17px; }
+  .oscura > p { color: var(--color-fg-soft) !important; }
+  ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  li { display: flex; gap: 10px; align-items: center; }
+  li::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--color-antidote); flex: none; }
+  .caja .boton { align-self: flex-start; margin-top: auto; }
+  .caja .pendiente { margin: 0; }
+  .oscura :focus-visible { outline-color: var(--color-antidote); }
+  @media (max-width: 860px) { .dos { grid-template-columns: 1fr; } }
+</style>

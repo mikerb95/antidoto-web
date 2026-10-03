@@ -1,0 +1,94 @@
+---
+// Cómo trabajamos: los tres pasos de la home con su foto y su nivel, más lo que se entrega y
+// los tiempos, que faltan del cliente.
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import BloqueCta from '../BloqueCta.astro';
+import sala from '../../assets/fotos/sala-taller.jpg';
+import figura from '../../assets/fotos/figura-piezas.jpg';
+import grupo from '../../assets/fotos/grupo-aire-libre.jpg';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { grafo, migasSchema } from '../../data/schema';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const p = tp(locale);
+const h = s.inicio.pasos;
+const [title, description] = s.seo.comoTrabajamos;
+const FOTOS = [
+  [sala, 'center 20%'],
+  [figura, 'center'],
+  [grupo, 'center 62%'],
+] as const;
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.nosotros, rutas.nosotros[locale]],
+  [s.nav.comoTrabajamos, rutas.comoTrabajamos[locale]],
+];
+---
+<Base locale={locale} pagina="comoTrabajamos" title={title} description={description} alternates={rutas.comoTrabajamos} jsonLd={grafo(migasSchema(migas))} tema="claro" scroll="suave">
+  <CabeceraPagina locale={locale} migas={migas} titulo={p.como.titulo} lead={p.como.lead}>
+    <a class="boton boton-cian boton-grande" href={rutas.contacto[locale]} data-magnetico>{h.empezar}</a>
+  </CabeceraPagina>
+
+  <section class="bloque" aria-label={s.nav.comoTrabajamos}>
+    <div class="wrap">
+      <ol class="pasos" data-entra>
+        {h.items.map(([titulo, texto, alt], i) => {
+          const [foto, posicion] = FOTOS[i];
+          return (
+            <li class="paso">
+              <div class="media" data-paralaje>
+                <Image src={foto} alt={alt} widths={[480, 720, 960]} sizes="(max-width: 900px) 100vw, 560px" style={`object-position: ${posicion}`} />
+              </div>
+              <div class="cuerpo">
+                <span class="etiqueta">{h.etiqueta(i + 1)}</span>
+                <h2>{titulo}</h2>
+                <p>{texto}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  </section>
+
+  <section class="bloque bloque-mist" aria-labelledby="entregamos-t">
+    <div class="wrap dos">
+      <div>
+        <div class="cab-izq"><h2 id="entregamos-t">{p.como.entregamos[0]}<span class="resaltado">{p.como.entregamos[1]}</span></h2></div>
+        <p class="pendiente">{p.como.entregamosPendiente}</p>
+      </div>
+      <div>
+        <div class="cab-izq"><h2 id="tiempos-t">{p.como.tiempos[0]}<span class="resaltado">{p.como.tiempos[1]}</span></h2></div>
+        <p class="pendiente">{p.como.tiemposPendiente}</p>
+      </div>
+    </div>
+  </section>
+
+  <BloqueCta locale={locale} />
+</Base>
+
+<style>
+  .pasos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 28px; counter-reset: paso; }
+  .paso { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: center; }
+  .paso:nth-child(even) .media { order: 2; }
+  .media { aspect-ratio: 16 / 11; border-radius: 22px; overflow: hidden; background: var(--color-ink); }
+  .media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cuerpo { display: flex; flex-direction: column; gap: 12px; }
+  .etiqueta { align-self: flex-start; padding: 6px 14px; border-radius: 999px; background: var(--color-antidote); color: var(--color-ink); font-size: 14px; font-weight: 600; }
+  h2 { margin: 0; font-size: clamp(28px, 2.2vw + 12px, 40px); line-height: 1.1; }
+  .cuerpo p { margin: 0; color: var(--color-slate); font-size: 18px; max-width: 30em; }
+  .dos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
+  .dos .pendiente { margin: 0; min-height: 160px; }
+  @media (max-width: 900px) {
+    .paso { grid-template-columns: 1fr; gap: 18px; }
+    .paso:nth-child(even) .media { order: 0; }
+    .dos { grid-template-columns: 1fr; }
+  }
+</style>
