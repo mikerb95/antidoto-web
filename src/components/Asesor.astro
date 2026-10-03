@@ -290,7 +290,7 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
 
     fab.addEventListener('click', () => {
       if (!panel.hidden) mostrar(false);
-      else desplegar(menu.hidden);
+      else desplegar(menu.hasAttribute('hidden'));
     });
     opcionIa.addEventListener('click', () => mostrar(true));
     raiz.querySelector('[data-opcion-wa]')!.addEventListener('click', () => desplegar(false));
