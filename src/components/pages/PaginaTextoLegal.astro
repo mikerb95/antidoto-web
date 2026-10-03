@@ -1,0 +1,25 @@
+---
+// Términos y condiciones o cookies (borradores con noindex hasta la revisión legal).
+import PaginaLegal from './PaginaLegal.astro';
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+
+interface Props {
+  locale: Locale;
+  tipo: 'terminos' | 'cookies';
+}
+const { locale, tipo } = Astro.props;
+const [title, description] = t(locale).seo[tipo];
+const txt = tp(locale).legal[tipo];
+---
+<PaginaLegal
+  locale={locale}
+  pagina={tipo}
+  title={title}
+  description={description}
+  alternates={rutas[tipo]}
+  titulo={txt.titulo}
+  lead={txt.lead}
+  aviso=""
+  secciones={txt.secciones.map(([titulo, parrafo]) => ({ t: titulo, p: [parrafo] }))}
+/>

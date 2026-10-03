@@ -2,8 +2,7 @@
 // Política de tratamiento de datos (Ley 1581 de 2012 y Decreto 1377 de 2013, art. 13).
 // BORRADOR: estructura y contenido según lo que hace el sitio hoy. Faltan datos del cliente
 // (razón social, NIT, domicilio) y la revisión de un abogado; por eso va con noindex y aviso.
-import Base from '../../layouts/Base.astro';
-import Encabezado from '../Encabezado.astro';
+import PaginaLegal from './PaginaLegal.astro';
 import { rutaPolitica, type Locale } from '../../i18n/ui';
 import { SITE } from '../../data/site';
 import { CONSENTIMIENTO_VERSION } from '../../data/consentimiento';
@@ -144,29 +143,15 @@ const txt = es
       ],
     };
 ---
-<Base locale={locale} pagina={null} title={txt.title} description={txt.description} alternates={rutaPolitica} noindex>
-  <section class="seccion" aria-labelledby="pagina-title">
-    <div class="wrap estrecho">
-      <Encabezado kicker={txt.kicker} titulo={txt.titulo} lead={txt.lead} id="pagina-title" nivel={1} />
-      <p class="borrador panel" role="note"><span class="mono">{txt.pendiente}</span>{txt.borrador}</p>
-      {txt.secciones.map((sec) => (
-        <section class="bloque">
-          <h2>{sec.t}</h2>
-          {sec.p.map((p) => <p>{p}</p>)}
-        </section>
-      ))}
-      <p class="mono version">{txt.version}: {CONSENTIMIENTO_VERSION}</p>
-    </div>
-  </section>
-</Base>
-
-<style>
-  .estrecho { max-width: 780px; }
-  .borrador { display: grid; gap: 6px; margin: 28px 0 8px; padding: 16px 18px; border-color: rgb(255 122 89 / 0.4); font-size: 14.5px; }
-  .borrador .mono { color: var(--color-reto); }
-  .bloque { padding: 22px 0; border-bottom: 1px solid var(--color-line); }
-  .bloque h2 { margin: 0 0 10px; font: 400 24px/1.15 var(--font-display); }
-  .bloque p { margin: 0 0 10px; color: var(--color-fg-muted); line-height: 1.65; }
-  .bloque p:last-child { margin-bottom: 0; }
-  .version { margin: 24px 0 0; }
-</style>
+<PaginaLegal
+  locale={locale}
+  pagina={null}
+  title={txt.title}
+  description={txt.description}
+  alternates={rutaPolitica}
+  titulo={txt.titulo}
+  lead={txt.lead}
+  aviso={txt.borrador}
+  secciones={txt.secciones}
+  nota={`${txt.version}: ${CONSENTIMIENTO_VERSION}`}
+/>

@@ -1,0 +1,61 @@
+---
+// Plantilla de los textos legales (política de datos, términos y cookies): borradores con
+// noindex hasta la revisión legal. Un párrafo entre corchetes es un dato pendiente del cliente.
+import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import { t, rutas, type Locale, type Pagina } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { esPendiente } from '../../data/faq';
+
+interface Props {
+  locale: Locale;
+  pagina: Pagina | null;
+  title: string;
+  description: string;
+  alternates: Record<Locale, string>;
+  titulo: string;
+  lead: string;
+  /** Aviso de borrador. */
+  aviso: string;
+  secciones: ReadonlyArray<{ t: string; p: readonly string[] }>;
+  /** Línea final (p. ej. la versión de la autorización). */
+  nota?: string;
+}
+const { locale, pagina, title, description, alternates, titulo, lead, aviso, secciones, nota } = Astro.props;
+const p = tp(locale);
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [titulo, alternates[locale]],
+];
+---
+<Base locale={locale} pagina={pagina} title={title} description={description} alternates={alternates} noindex tema="claro">
+  <CabeceraPagina locale={locale} migas={migas} titulo={titulo} lead={lead}>
+    <p class="aviso" role="note" slot="pie"><span>{p.legal.borrador}</span>{aviso}</p>
+  </CabeceraPagina>
+  <div class="bloque">
+    <div class="wrap estrecho">
+      {secciones.map((sec) => (
+        <section class="parte">
+          <h2>{sec.t}</h2>
+          {sec.p.map((x) => (esPendiente(x) ? <p class="pendiente">{x}</p> : <p>{x}</p>))}
+        </section>
+      ))}
+      {nota && <p class="nota">{nota}</p>}
+      <p class="mas"><a href={rutas.mapa[locale]}>{t(locale).nav.mapa}</a></p>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .aviso { margin: 8px 0 0; display: grid; gap: 4px; padding: 14px 18px; border-radius: 14px; background: rgb(255 122 89 / 0.1); border: 1px solid rgb(255 122 89 / 0.45); font-size: 15px; max-width: 42em; }
+  .aviso span { font-weight: 600; color: #a23a1f; }
+  .estrecho { max-width: 800px; }
+  .parte { padding: 24px 0; border-bottom: 1px solid var(--color-line-soft); }
+  .parte:first-child { padding-top: 0; }
+  h2 { margin: 0 0 10px; font-size: 26px; line-height: 1.2; }
+  .parte p { margin: 0 0 12px; color: var(--color-slate); line-height: 1.7; }
+  .parte p:last-child { margin-bottom: 0; }
+  .parte .pendiente { justify-content: flex-start; text-align: left; padding: 14px; }
+  .nota { margin: 24px 0 0; font-size: 14px; color: var(--color-slate); }
+  .mas a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
+</style>
