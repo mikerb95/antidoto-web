@@ -42,7 +42,11 @@ const otro = otroIdioma(locale);
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex" />}
+    {noindex
+      ? <meta name="robots" content="noindex, follow" />
+      : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />}
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="format-detection" content="telephone=no" />
     <link rel="alternate" hreflang="es-CO" href={new URL(alternates.es, SITE.url).href} />
     <link rel="alternate" hreflang="en" href={new URL(alternates.en, SITE.url).href} />
     <link rel="alternate" hreflang="x-default" href={new URL(alternates.es, SITE.url).href} />
@@ -58,6 +62,7 @@ const otro = otroIdioma(locale);
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:locale" content={s.ogLocale} />
+    <meta property="og:locale:alternate" content={t(otro).ogLocale} />
     <meta property="og:url" content={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -66,6 +71,10 @@ const otro = otroIdioma(locale);
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={s.ogAlt} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={s.ogAlt} />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body data-scroll={scroll}>

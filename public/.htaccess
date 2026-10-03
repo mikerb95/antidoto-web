@@ -18,9 +18,13 @@ ErrorDocument 404 /404.html
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "DENY"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Cross-Origin-Resource-Policy "same-origin"
+  Header always set X-Permitted-Cross-Domain-Policies "none"
+  Header always set Origin-Agent-Cluster "?1"
   # Empieza en Report-Only: revisar la consola antes de pasarla a Content-Security-Policy.
-  Header always set Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; font-src 'self'; connect-src 'self' https://api.antidotocolombia.com https://*.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  Header always set Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; font-src 'self'; connect-src 'self' https://api.antidotocolombia.com https://*.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; frame-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests"
   Header unset X-Powered-By
 </IfModule>
 

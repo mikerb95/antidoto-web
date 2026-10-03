@@ -17,6 +17,7 @@ import grabacion from '../../assets/fotos/grabacion.jpg';
 import catering from '../../assets/fotos/catering-buffet.jpg';
 import grupo from '../../assets/fotos/grupo-aire-libre.jpg';
 import { t, rutas, type Locale } from '../../i18n/ui';
+import { VIDEO_HERO } from '../../data/site';
 
 interface Props {
   locale: Locale;
@@ -25,12 +26,7 @@ const { locale } = Astro.props;
 const s = t(locale);
 const h = s.inicio;
 
-/**
- * Clip del hero. Cuando el cliente lo entregue (horizontal, 1080p, 15 a 25 s, sin texto ni
- * audio), codifícalo a MP4 H.264 de 720p y ~1 MB (y opcionalmente WebM AV1), déjalo en
- * public/video/ y pon aquí sus rutas. Mientras sea null, la escena son las fotos.
- */
-const VIDEO: { mp4: string; webm?: string } | null = null;
+const VIDEO = VIDEO_HERO;
 
 // Encuadre de cada foto en la pantalla ancha.
 const FOTOS = [

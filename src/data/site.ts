@@ -15,3 +15,10 @@ export const SITE = {
 export function waLink(message: string): string {
   return `https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * Clip del hero de la home. Cuando el cliente lo entregue (horizontal, 1080p, 15 a 25 s, sin
+ * texto, logos ni audio), codifícalo a MP4 H.264 de 720p y ~1 MB (y si se quiere, WebM AV1),
+ * déjalo en public/video/ y pon aquí sus rutas. Mientras sea null, la escena son las fotos.
+ */
+export const VIDEO_HERO: { mp4: string; webm?: string } | null = null as { mp4: string; webm?: string } | null;
