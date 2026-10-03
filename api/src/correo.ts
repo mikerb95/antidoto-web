@@ -48,6 +48,7 @@ export const NOMBRE_SERVICIO: Record<Lead['servicio'], { es: string; en: string 
   audiovisual: { es: 'Producción audiovisual', en: 'Video production' },
   catering: { es: 'Catering corporativo', en: 'Corporate catering' },
   diseno: { es: 'Diseño de productos y experiencias', en: 'Product and experience design' },
+  ia: { es: 'Capacitación en IA para el trabajo', en: 'AI training for work' },
 };
 
 /** Marco común: tinta sobre blanco, con el cian de marca solo en el acento. */
@@ -131,7 +132,7 @@ export function correoLeadEquipo(lead: Lead, appUrl: string): Omit<Correo, 'para
     asunto: `Nuevo lead: ${servicio} · ${quien}`,
     responderA: lead.email ?? undefined,
     html: marco(
-      `Nueva solicitud de ${servicio.toLowerCase()}`,
+      `Nueva solicitud de ${servicio.charAt(0).toLowerCase()}${servicio.slice(1)}`,
       `${filas(pares)}${lead.mensaje ? `<p style="margin:0 0 6px;color:#5b6b70;font-size:13px">Mensaje</p><p style="margin:0;white-space:pre-wrap">${escapar(lead.mensaje)}</p>` : ''}${boton(enlace, 'Abrir en la bandeja')}${wa ? `<p style="margin:0"><a href="${escapar(wa)}" style="color:#0C5C7D">Escribir por WhatsApp</a></p>` : ''}`,
     ),
     texto: `Nueva solicitud de ${servicio}\n\n${textoPlano(pares)}\n\n${lead.mensaje ?? ''}\n\nBandeja: ${enlace}`,

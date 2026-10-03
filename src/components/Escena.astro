@@ -46,6 +46,12 @@ const id = servicio.id;
         <g fill="#0F181D" stroke="currentColor" stroke-width="1.6"><rect x="35" y="79" width="10" height="10" /><rect x="75" y="11" width="10" height="10" /><rect x="115" y="79" width="10" height="10" /></g>
       </g>
     )}
+    {id === 'ia' && (
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round">
+        <path class="trazo" pathLength="1" d="M34 14 H126 a14 14 0 0 1 14 14 V58 a14 14 0 0 1 -14 14 H66 L46 90 V72 H34 a14 14 0 0 1 -14 -14 V28 a14 14 0 0 1 14 -14 Z" />
+        <g fill="currentColor" stroke="none"><circle class="nodo" cx="58" cy="43" r="6" /><circle class="nodo" cx="80" cy="43" r="6" /><circle class="nodo" cx="102" cy="43" r="6" /></g>
+      </g>
+    )}
   </svg>
   {servicio.provisional && <figcaption class="tag">{provisionalLabel}</figcaption>}
 </figure>

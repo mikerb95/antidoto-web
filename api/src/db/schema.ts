@@ -6,7 +6,7 @@ import { sqliteTable, text, integer, real, index, uniqueIndex, primaryKey } from
 export const ESTADOS = ['nuevo', 'contactado', 'cotizado', 'ganado', 'perdido'] as const;
 export type Estado = (typeof ESTADOS)[number];
 
-export const SERVICIOS = ['formaciones', 'audiovisual', 'catering', 'diseno'] as const;
+export const SERVICIOS = ['formaciones', 'audiovisual', 'catering', 'diseno', 'ia'] as const;
 export type ServicioId = (typeof SERVICIOS)[number];
 
 export const leads = sqliteTable(

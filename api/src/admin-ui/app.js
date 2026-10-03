@@ -14,6 +14,7 @@ const SERVICIOS = {
   audiovisual: 'Producción audiovisual',
   catering: 'Catering corporativo',
   diseno: 'Diseño de productos',
+  ia: 'Capacitación en IA',
 };
 
 const $ = (s) => document.querySelector(s);

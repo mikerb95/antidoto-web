@@ -302,10 +302,12 @@ describe('campañas', () => {
     const { campana, audiencia } = (await (await admin('/admin/api/campanas', { method: 'POST', body: JSON.stringify({ asunto: 'News', cuerpo: 'Hi {{nombre}}', locale: 'en' }) })).json()) as { campana: { id: string }; audiencia: number };
     expect(audiencia).toBe(231);
 
+    console.log('T0', Date.now() - t);
     fallasLote = [429];
     const r = await admin(`/admin/api/campanas/${campana.id}/enviar`, { method: 'POST', body: JSON.stringify({ destinatarios: 231 }) });
     expect(((await r.json()) as { campana: { estado: string } }).campana.estado).toBe('enviando');
     expect(lotes).toHaveLength(0);
+    console.log('T1', Date.now() - t);
 
     // El cron de la hora en punto no manda lotes: eso lo hace solo el de cada 5 minutos.
     const tareas: Promise<unknown>[] = [];
@@ -314,7 +316,9 @@ describe('campañas', () => {
     await Promise.all(tareas);
     expect(lotes).toHaveLength(0);
 
+    console.log('T2', Date.now() - t);
     const res = await procesarEnvios(env, drizzle(env.DB));
+    console.log('T3', Date.now() - t);
     expect(res).toEqual({ enviados: 231, fallidos: 0 });
     expect(lotes.map((l) => l.length)).toEqual([POR_LOTE, POR_LOTE, 31]);
     expect(new Set(lotes.flat().map((c) => c.to[0])).size).toBe(231);

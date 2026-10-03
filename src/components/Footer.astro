@@ -4,6 +4,9 @@ import { t, rutas, rutaPolitica, type Locale } from '../i18n/ui';
 import { NOVEDADES, NOVEDADES_VERSION } from '../data/consentimiento';
 import { SITE, waLink } from '../data/site';
 import { obtenerServicios, servicioPath } from '../data/servicios';
+import { obtenerArticulos } from '../data/contenido';
+import { SOLUCIONES, solucionPath } from '../data/soluciones';
+import { tp } from '../i18n/paginas';
 
 interface Props {
   locale: Locale;
@@ -12,7 +15,9 @@ interface Props {
 }
 const { locale, novedades = true } = Astro.props;
 const s = t(locale);
+const p = tp(locale);
 const SERVICIOS = await obtenerServicios();
+const hayBlog = (await obtenerArticulos()).length > 0;
 const year = new Date().getFullYear();
 // La suscripción solo aparece si el build trae la API (ver api/README.md).
 const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
@@ -40,7 +45,26 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
       </div>
       <nav aria-labelledby="pie-servicios">
         <p class="titulo" id="pie-servicios">{s.footerServicios}</p>
-        <ul>{SERVICIOS.map((sv) => <li><a href={servicioPath(sv, locale)}>{sv[locale].title}</a></li>)}</ul>
+        <ul>
+          {SERVICIOS.map((sv) => <li><a href={servicioPath(sv, locale)}>{sv[locale].title}</a></li>)}
+          <li><a href={rutas.servicios[locale]}>{p.todosServicios}</a></li>
+        </ul>
+      </nav>
+      <nav aria-labelledby="pie-soluciones">
+        <p class="titulo" id="pie-soluciones">{s.nav.soluciones}</p>
+        <ul>{SOLUCIONES.map((sol) => <li><a href={solucionPath(sol, locale)}>{s.inicio.paraQuien.perfiles[sol.perfil][0]}</a></li>)}</ul>
+      </nav>
+      <nav aria-labelledby="pie-empresa">
+        <p class="titulo" id="pie-empresa">{p.mapa.grupos.empresa}</p>
+        <ul>
+          <li><a href={rutas.nosotros[locale]}>{p.navEmpresa}</a></li>
+          <li><a href={rutas.comoTrabajamos[locale]}>{s.nav.comoTrabajamos}</a></li>
+          <li><a href={rutas.portafolio[locale]}>{s.nav.portafolio}</a></li>
+          <li><a href={rutas.clientes[locale]}>{s.nav.clientes}</a></li>
+          <li><a href={rutas.trabaja[locale]}>{s.nav.trabaja}</a></li>
+          <li><a href={rutas.faq[locale]}>{s.nav.faq}</a></li>
+          {hayBlog && <li><a href={rutas.blog[locale]}>{s.nav.blog}</a></li>}
+        </ul>
       </nav>
       <div>
         <p class="titulo">{s.nav.contacto}</p>
@@ -56,6 +80,9 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
       <div class="legal">
         <span>© {year} Antídoto. {s.footerDerechos}</span>
         <a class="politica" href={rutaPolitica[locale]}>{s.footerPolitica}</a>
+        <a class="politica" href={rutas.terminos[locale]}>{s.nav.terminos}</a>
+        <a class="politica" href={rutas.cookies[locale]}>{s.nav.cookies}</a>
+        <a class="politica" href={rutas.mapa[locale]}>{s.nav.mapa}</a>
       </div>
       <p class="credito">{s.footerCredito} <a href="https://codebymike.net" target="_blank" rel="noopener">codebymike<span aria-hidden="true"> ↗</span></a></p>
     </div>
@@ -71,7 +98,9 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 <style>
   .foot { background: var(--color-ink); color: var(--color-fg-soft); font-size: 15px; }
   .pie { padding-block: 56px calc(36px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 32px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 32px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)); gap: 32px; }
+  @media (max-width: 1020px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .marca { grid-column: 1 / -1; } }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
   .marca { display: flex; flex-direction: column; gap: 14px; }
   .home { align-self: flex-start; display: inline-flex; min-height: 44px; align-items: center; color: var(--color-antidote); }
   .home :global(.logo) { display: block; height: 34px; width: auto; }

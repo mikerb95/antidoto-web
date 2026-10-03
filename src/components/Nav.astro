@@ -1,35 +1,129 @@
 ---
-// Barra de navegación del diseño claro: logo, enlaces a las secciones de la home, selector de
-// idioma y botón Cotizar. No es fija. En pantallas angostas los enlaces y el idioma van en un
-// panel que abre el botón Menú (sin JS el panel queda abierto como lista, que también sirve).
+// Barra de navegación del sitio multipágina: logo, cinco secciones con sus páginas, selector de
+// idioma y botón Cotizar. No es fija y no enlaza a anclas de la home: cada entrada lleva a una
+// página real. Servicios, Soluciones, Nosotros y Recursos tienen submenú (patrón disclosure:
+// el texto es un enlace al índice y un botón aparte abre el panel). Servicios abre un mega menú
+// con las cuatro líneas y sus ofertas.
+// Sin JS: en escritorio los paneles se abren con hover y foco (CSS); en móvil el panel queda
+// abierto como lista. Con JS: clic o puntero abren, Esc cierra y devuelve el foco, y bajo
+// 1100 px todo va en el panel del botón Menú, con los submenús como acordeones.
 // Tiene view-transition-name propio: es igual en todas las páginas y no se funde al navegar.
 import Logo from './Logo.astro';
-import { t, rutas, otroIdioma, type Locale } from '../i18n/ui';
+import { t, rutas, otroIdioma, type Locale, type Pagina } from '../i18n/ui';
+import { tp } from '../i18n/paginas';
+import { obtenerServicios, servicioPath } from '../data/servicios';
+import { obtenerOfertas, obtenerArticulos, ofertaPath } from '../data/contenido';
+import { SOLUCIONES, solucionPath } from '../data/soluciones';
 
 interface Props {
   locale: Locale;
   /** Ruta equivalente en el otro idioma. */
   alternateHref: string;
+  /** Página actual, para marcar su sección. */
+  pagina: Pagina | null;
 }
-const { locale, alternateHref } = Astro.props;
+const { locale, alternateHref, pagina } = Astro.props;
 const s = t(locale);
+const p = tp(locale);
 const home = rutas.inicio[locale];
 const otro = otroIdioma(locale);
-const enlaces = [
-  [`${home}#servicios`, s.nav.servicios],
-  [`${home}#actividades`, s.navActividades],
-  [`${home}#para-quien`, s.navParaQuien],
-  [`${home}#nosotros`, s.nav.nosotros],
+const actual = Astro.url.pathname;
+
+const servicios = await obtenerServicios();
+const ofertas = await obtenerOfertas();
+const hayBlog = (await obtenerArticulos()).length > 0;
+const perfiles = s.inicio.paraQuien.perfiles;
+
+type Enlace = { href: string; texto: string; desc?: string };
+type Item = { id: string; href: string; texto: string; secciones: Pagina[]; sub?: Enlace[]; mega?: boolean };
+
+const items: Item[] = [
+  { id: 'servicios', href: rutas.servicios[locale], texto: s.nav.servicios, secciones: ['servicios'], mega: true },
+  {
+    id: 'soluciones',
+    href: rutas.soluciones[locale],
+    texto: s.nav.soluciones,
+    secciones: ['soluciones'],
+    sub: SOLUCIONES.map((sol) => ({ href: solucionPath(sol, locale), texto: perfiles[sol.perfil][0], desc: perfiles[sol.perfil][1] })),
+  },
+  { id: 'portafolio', href: rutas.portafolio[locale], texto: s.nav.portafolio, secciones: ['portafolio'] },
+  {
+    id: 'nosotros',
+    href: rutas.nosotros[locale],
+    texto: s.nav.nosotros,
+    secciones: ['nosotros', 'comoTrabajamos', 'clientes', 'trabaja'],
+    sub: [
+      { href: rutas.nosotros[locale], texto: p.navEmpresa, desc: p.descNav.nosotros },
+      { href: rutas.comoTrabajamos[locale], texto: s.nav.comoTrabajamos, desc: p.descNav.comoTrabajamos },
+      { href: rutas.clientes[locale], texto: s.nav.clientes, desc: p.descNav.clientes },
+      { href: rutas.trabaja[locale], texto: s.nav.trabaja, desc: p.descNav.trabaja },
+    ],
+  },
+  {
+    id: 'recursos',
+    href: rutas.faq[locale],
+    texto: p.navRecursos,
+    secciones: ['faq', 'blog'],
+    sub: [
+      { href: rutas.faq[locale], texto: s.nav.faq, desc: p.descNav.faq },
+      ...(hayBlog ? [{ href: rutas.blog[locale], texto: s.nav.blog, desc: p.descNav.blog }] : []),
+    ],
+  },
 ];
+const enSeccion = (it: Item) => pagina !== null && it.secciones.includes(pagina);
+const pag = (href: string) => (href === actual ? 'page' : undefined);
 ---
 <header class="nav" data-nav>
   <div class="barra wrap">
     <a href={home} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
     <div class="derecha">
       <nav aria-label={s.menuLabel} class="links" id="nav-links" data-links>
-        {enlaces.map(([href, label]) => <a href={href}>{label}</a>)}
+        <ul class="lista">
+          {items.map((it) => (
+            <li class:list={['item', { mega: it.mega, 'con-sub': it.mega || it.sub, actual: enSeccion(it) }]} data-item>
+              <a class="top" href={it.href} aria-current={pag(it.href)}>{it.texto}</a>
+              {(it.mega || it.sub) && (
+                <button class="abre" type="button" aria-expanded="false" aria-controls={`sub-${it.id}`} hidden data-abre>
+                  <span class="sr">{p.submenu(it.texto)}</span>
+                  <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"></path></svg>
+                </button>
+              )}
+              {it.mega && (
+                <div class="sub sub-mega" id={`sub-${it.id}`} data-sub>
+                  <div class="mega-rejilla">
+                    {servicios.map((sv) => (
+                      <div class="col">
+                        <a class="col-t" href={servicioPath(sv, locale)} aria-current={pag(servicioPath(sv, locale))}>{sv[locale].title}</a>
+                        <ul>
+                          {ofertas.filter((o) => o.linea === sv.id).map((o) => (
+                            <li><a href={ofertaPath(sv, o, locale)} aria-current={pag(ofertaPath(sv, o, locale))}>{o[locale].title}</a></li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                  <a class="sub-todos" href={it.href}>{p.todosServicios}</a>
+                </div>
+              )}
+              {it.sub && (
+                <div class="sub" id={`sub-${it.id}`} data-sub>
+                  <ul>
+                    {it.sub.map((e) => (
+                      <li>
+                        <a class="sub-enlace" href={e.href} aria-current={pag(e.href)}>
+                          <span class="sub-t">{e.texto}</span>
+                          {e.desc && <span class="sub-d">{e.desc}</span>}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
         <a class="idioma" href={alternateHref} hreflang={otro} lang={otro} aria-label={s.switchLangLabel}>
-          <span class="actual">{locale.toUpperCase()}</span><span aria-hidden="true">/</span><span>{otro.toUpperCase()}</span>
+          <span class="actual-idioma">{locale.toUpperCase()}</span><span aria-hidden="true">/</span><span>{otro.toUpperCase()}</span>
         </a>
       </nav>
       <a class="boton boton-cian cotizar" href={rutas.contacto[locale]}>{s.navQuote}</a>
@@ -41,27 +135,77 @@ const enlaces = [
 </header>
 
 <script>
-  // Menú en pantallas angostas: el script oculta el panel y muestra el botón. Esc lo cierra y
-  // devuelve el foco al botón; un enlace del panel también lo cierra.
+  // Submenús y menú móvil. El estado vive en aria-expanded y en la clase .abierto del <li>.
   const nav = document.querySelector<HTMLElement>('[data-nav]');
-  const boton = nav?.querySelector<HTMLButtonElement>('[data-menu]');
+  const menu = nav?.querySelector<HTMLButtonElement>('[data-menu]');
   const panel = nav?.querySelector<HTMLElement>('[data-links]');
-  if (nav && boton && panel) {
+  if (nav && menu && panel) {
+    nav.classList.add('con-js');
+    const angosto = matchMedia('(max-width: 1100px)');
+    const items = [...nav.querySelectorAll<HTMLElement>('[data-item]')].filter((li) => li.querySelector('[data-abre]'));
+    const boton = (li: HTMLElement) => li.querySelector<HTMLButtonElement>('[data-abre]')!;
+
+    const abrirSub = (li: HTMLElement, si: boolean) => {
+      boton(li).setAttribute('aria-expanded', String(si));
+      li.classList.toggle('abierto', si);
+    };
+    const cerrarSubs = (salvo?: HTMLElement) => items.forEach((li) => li !== salvo && abrirSub(li, false));
+
+    const timers = new WeakMap<HTMLElement, number>();
+    for (const li of items) {
+      const b = boton(li);
+      b.hidden = false;
+      b.addEventListener('click', () => {
+        const si = b.getAttribute('aria-expanded') !== 'true';
+        if (!angosto.matches) cerrarSubs(li);
+        abrirSub(li, si);
+      });
+      // Puntero fino en escritorio: abre al pasar y cierra con un respiro para cruzar al panel.
+      li.addEventListener('pointerenter', (e) => {
+        if (e.pointerType !== 'mouse' || angosto.matches) return;
+        clearTimeout(timers.get(li));
+        cerrarSubs(li);
+        abrirSub(li, true);
+      });
+      li.addEventListener('pointerleave', (e) => {
+        if (e.pointerType !== 'mouse' || angosto.matches) return;
+        timers.set(li, window.setTimeout(() => abrirSub(li, false), 220));
+      });
+      // El foco que sale del ítem cierra su panel en escritorio.
+      li.addEventListener('focusout', (e) => {
+        if (!angosto.matches && !li.contains(e.relatedTarget as Node)) abrirSub(li, false);
+      });
+    }
+
+    // Menú móvil: el script oculta el panel y muestra el botón.
     nav.classList.add('con-menu');
-    boton.hidden = false;
-    const abrir = (si: boolean) => {
-      boton.setAttribute('aria-expanded', String(si));
+    menu.hidden = false;
+    const abrirMenu = (si: boolean) => {
+      menu.setAttribute('aria-expanded', String(si));
       nav.classList.toggle('abierto', si);
     };
-    boton.addEventListener('click', () => abrir(boton.getAttribute('aria-expanded') !== 'true'));
+    menu.addEventListener('click', () => abrirMenu(menu.getAttribute('aria-expanded') !== 'true'));
     panel.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).closest('a')) abrir(false);
+      if ((e.target as HTMLElement).closest('a')) abrirMenu(false);
     });
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && nav.classList.contains('abierto')) {
-        abrir(false);
-        boton.focus();
+      if (e.key !== 'Escape') return;
+      const abierto = items.find((li) => li.classList.contains('abierto'));
+      if (abierto) {
+        abrirSub(abierto, false);
+        boton(abierto).focus();
+      } else if (nav.classList.contains('abierto')) {
+        abrirMenu(false);
+        menu.focus();
       }
+    });
+    document.addEventListener('click', (e) => {
+      if (!angosto.matches && !nav.contains(e.target as Node)) cerrarSubs();
+    });
+    angosto.addEventListener('change', () => {
+      cerrarSubs();
+      abrirMenu(false);
     });
   }
 </script>
@@ -71,13 +215,48 @@ const enlaces = [
   .barra { padding-block: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .home { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-antidote); }
   .home :global(.logo) { display: block; height: 34px; width: auto; }
-  .derecha { display: flex; align-items: center; gap: 28px; }
+  .derecha { display: flex; align-items: center; gap: 24px; }
 
-  .links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; }
-  .links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink); text-decoration: none; font-weight: 500; font-size: 16px; }
-  .links a:hover { color: var(--color-deep); }
-  .idioma { gap: 6px; font-size: 14px !important; font-weight: 600 !important; letter-spacing: 0.06em; color: var(--color-slate) !important; }
-  .idioma .actual { color: var(--color-deep); }
+  .links { display: flex; align-items: center; gap: 24px; }
+  .lista { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 4px 22px; }
+  .item { display: flex; align-items: center; }
+  .item:not(.mega) { position: relative; }
+  .top { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink); text-decoration: none; font-weight: 500; font-size: 16px; position: relative; }
+  .top:hover { color: var(--color-deep); }
+  /* Sección actual: un punto cian bajo el texto. */
+  .item.actual > .top::after { content: ''; position: absolute; left: 50%; bottom: 4px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--color-antidote); }
+  .abre { display: inline-grid; place-items: center; width: 28px; height: 44px; margin-left: 2px; padding: 0; border: 0; background: none; color: var(--color-slate); cursor: pointer; border-radius: 8px; }
+  .abre[hidden] { display: none; }
+  .abre svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--t-base) var(--ease-out); }
+  .item.abierto .abre svg { transform: rotate(180deg); }
+  .abre:hover { color: var(--color-deep); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* Paneles en escritorio: bajan con clip-path, como el líquido. */
+  .sub { position: absolute; top: 100%; left: -16px; min-width: 300px; padding: 10px; border-radius: 16px; background: var(--color-paper); border: 1px solid var(--color-line-soft); box-shadow: 0 24px 50px rgb(15 24 29 / 0.12); clip-path: inset(0 0 100% 0); visibility: hidden; transition: clip-path var(--t-base) var(--ease-out), visibility 0s linear var(--t-base); }
+  .sub ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .sub-enlace { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; text-decoration: none; color: var(--color-ink); }
+  .sub-enlace:hover, .sub-enlace[aria-current] { background: var(--color-mist); }
+  .sub-t { font-weight: 600; font-size: 15.5px; }
+  .sub-d { font-size: 13.5px; color: var(--color-slate); line-height: 1.4; }
+  .sub-mega { left: 0; right: 0; top: 100%; border-radius: 0 0 22px 22px; border-top: 0; padding: 28px max(24px, calc((100vw - 1200px) / 2 + 24px)) 24px; }
+  .mega-rejilla { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+  .col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .col-t { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font: 400 20px/1.2 var(--font-display); color: var(--color-ink); text-decoration: none; }
+  .col-t::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--color-antidote); flex: none; }
+  .col-t:hover { color: var(--color-deep); }
+  .col ul { display: grid; gap: 0; }
+  .col li a { display: flex; align-items: center; min-height: 40px; padding-left: 18px; color: var(--color-slate); text-decoration: none; font-size: 15px; }
+  .col li a:hover, .col li a[aria-current] { color: var(--color-deep); text-decoration: underline; text-underline-offset: 3px; }
+  .sub-todos { display: inline-flex; align-items: center; min-height: 44px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-line-soft); width: 100%; color: var(--color-deep); font-weight: 600; text-decoration: none; }
+  .sub-todos::after { content: '→'; margin-left: 0.4em; }
+
+  .item.abierto > .sub,
+  .nav:not(.con-js) .item:hover > .sub,
+  .nav:not(.con-js) .item:focus-within > .sub { clip-path: inset(0 -60px -60px -60px); visibility: visible; transition: clip-path var(--t-base) var(--ease-out), visibility 0s; }
+
+  .idioma { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; text-decoration: none; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; color: var(--color-slate); }
+  .idioma .actual-idioma { color: var(--color-deep); }
   .cotizar { font-size: 16px; padding: 0 22px; }
   .nav :focus-visible { outline-color: var(--color-deep); }
 
@@ -86,18 +265,40 @@ const enlaces = [
   .rayas i { position: absolute; left: 0; right: 0; height: 2px; border-radius: 2px; background: currentColor; transition: transform var(--t-base) var(--ease-out); }
   .rayas i:first-child { top: 0; }
   .rayas i:last-child { bottom: 0; right: 5px; background: var(--color-mid); }
-  .nav:global(.abierto) .rayas i:first-child { transform: translateY(4px) rotate(45deg); }
-  .nav:global(.abierto) .rayas i:last-child { transform: translateY(-4px) rotate(-45deg); right: 0; }
+  .nav.abierto .rayas i:first-child { transform: translateY(4px) rotate(45deg); }
+  .nav.abierto .rayas i:last-child { transform: translateY(-4px) rotate(-45deg); right: 0; }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1240px) {
+    .lista { gap: 4px 14px; }
+    .derecha, .links { gap: 16px; }
+  }
+
+  /* Bajo 1100 px: todo va en el panel del botón Menú; los submenús son acordeones. Sin JS el
+     panel queda en el flujo como lista completa. */
+  @media (max-width: 1100px) {
+    .barra { flex-wrap: wrap; }
     .derecha { gap: 10px; }
     .cotizar { padding: 0 16px; font-size: 15px; }
-    .nav:global(.con-menu) .menu { display: inline-flex; }
-    /* Panel desplegable bajo la barra: se abre con clip-path, como el líquido que baja. */
-    .nav:global(.con-menu) .links { position: absolute; left: 0; right: 0; top: 100%; flex-direction: column; align-items: stretch; gap: 0; padding: 8px 16px 16px; background: var(--color-paper); border-bottom: 1px solid var(--color-line-soft); box-shadow: 0 20px 40px rgb(15 24 29 / 0.1); clip-path: inset(0 0 100% 0); visibility: hidden; transition: clip-path var(--t-base) var(--ease-out), visibility 0s linear var(--t-base); }
-    .nav:global(.con-menu.abierto) .links { clip-path: inset(0 0 -40px 0); visibility: visible; transition: clip-path var(--t-base) var(--ease-out), visibility 0s; }
-    .nav:global(.con-menu) .links a { font-size: 18px; min-height: 52px; border-bottom: 1px solid var(--color-line-soft); }
-    .nav:global(.con-menu) .links a:last-child { border-bottom: 0; }
+    .links { flex-direction: column; align-items: stretch; gap: 0; width: 100%; }
+    .nav:not(.con-menu) .derecha { flex-wrap: wrap; }
+    .lista { flex-direction: column; align-items: stretch; gap: 0; }
+    .item { flex-wrap: wrap; border-bottom: 1px solid var(--color-line-soft); }
+    .top { flex: 1; font-size: 18px; min-height: 52px; }
+    .item.actual > .top::after { left: auto; right: auto; bottom: auto; position: static; margin: 0 0 0 10px; }
+    .abre { width: 52px; height: 52px; }
+    .sub, .sub-mega { position: static; width: 100%; min-width: 0; padding: 0 0 12px; border: 0; border-radius: 0; box-shadow: none; clip-path: none; visibility: visible; transition: none; }
+    .nav.con-js .sub { display: none; }
+    .nav.con-js .item.abierto > .sub { display: block; }
+    .mega-rejilla { grid-template-columns: 1fr; gap: 8px; }
+    .col-t { font-size: 17px; }
+    .col li a { min-height: 44px; }
+    .sub-enlace { padding: 10px 12px; }
+    .sub-todos { margin-top: 4px; }
+    .idioma { min-height: 52px; font-size: 15px; }
+
+    .nav.con-menu .menu { display: inline-flex; }
+    .nav.con-menu .links { position: absolute; left: 0; right: 0; top: 100%; width: auto; max-height: calc(100svh - 80px); overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 16px; background: var(--color-paper); border-bottom: 1px solid var(--color-line-soft); box-shadow: 0 20px 40px rgb(15 24 29 / 0.1); clip-path: inset(0 0 100% 0); visibility: hidden; transition: clip-path var(--t-base) var(--ease-out), visibility 0s linear var(--t-base); }
+    .nav.con-menu.abierto .links { clip-path: inset(0 0 -40px 0); visibility: visible; transition: clip-path var(--t-base) var(--ease-out), visibility 0s; }
   }
   @media (max-width: 440px) {
     .barra { gap: 8px; }

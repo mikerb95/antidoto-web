@@ -87,7 +87,7 @@ const otro = otroIdioma(locale);
   <body data-scroll={scroll}>
     <a class="skip" href="#main">{s.skip}</a>
     {!claro && <Ambiente lado={pagina === 'nosotros' || pagina === 'contacto' ? 'izquierda' : 'derecha'} />}
-    <Nav locale={locale} alternateHref={alternates[otro]} />
+    <Nav locale={locale} alternateHref={alternates[otro]} pagina={pagina} />
     <main id="main">
       <slot />
     </main>

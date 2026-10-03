@@ -1,5 +1,5 @@
 ---
-// Servicios como ventana fija con escenas. En escritorio, los cuatro pasos corren a la
+// Servicios como ventana fija con escenas. En escritorio, los pasos corren a la
 // izquierda y la ventana de la derecha se queda quieta y cambia de escena con un barrido
 // que sube como líquido; la barra lateral es el nivel del frasco. En móvil no hay nada
 // fijo: cada paso lleva su propia escena y su firma se anima al entrar en pantalla.
@@ -92,7 +92,7 @@ const SERVICIOS = await obtenerServicios();
               onToggle: (self) => self.isActive && mostrar(i),
             }),
           );
-          // Nivel del frasco: sube con el avance por los cuatro servicios.
+          // Nivel del frasco: sube con el avance por los servicios.
           const nivel = gsap.fromTo('[data-nivel]', { scaleY: 0 }, {
             scaleY: 1, ease: 'none', transformOrigin: '50% 100%',
             scrollTrigger: { trigger: stage, start: 'top 55%', end: 'bottom 55%', scrub: 0.4 },

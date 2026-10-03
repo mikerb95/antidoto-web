@@ -6,6 +6,7 @@ import taller from '../../assets/fotos/taller.jpg';
 import grabacion from '../../assets/fotos/grabacion.jpg';
 import catering from '../../assets/fotos/catering-buffet.jpg';
 import figura from '../../assets/fotos/figura-piezas.jpg';
+import sala from '../../assets/fotos/sala-taller.jpg';
 import { obtenerServicios } from '../../data/servicios';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
@@ -19,10 +20,11 @@ const AFICHES = {
   audiovisual: [grabacion, 'center'],
   catering: [catering, '62% center'],
   diseno: [figura, 'center'],
+  ia: [sala, 'center 30%'],
 } as const;
 const tarjetas = (await obtenerServicios()).map((sv) => {
   const id = sv.id as keyof typeof AFICHES;
-  return { id, titulo: sv[locale].title, texto: h.items[id], afiche: AFICHES[id] };
+  return { id, titulo: sv[locale].title, texto: h.items[id], afiche: AFICHES[id], aliado: sv[locale].aliado };
 });
 ---
 <section id="servicios" class="servicios" aria-labelledby="servicios-t">
@@ -36,7 +38,7 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
     </div>
 
     <div class="lista" data-entra>
-      {tarjetas.map(({ id, titulo, texto, afiche: [foto, posicion] }) => (
+      {tarjetas.map(({ id, titulo, texto, afiche: [foto, posicion], aliado }) => (
         <article class="tarjeta" data-odometro>
           <div class="info">
             <h3>{titulo}</h3>
@@ -52,11 +54,19 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
             {id === 'formaciones' && (
               <p class="plataforma"><span>{h.plataforma}</span><span class="nombre">{h.plataformaNombre}</span></p>
             )}
-            <dl class="cifras">
-              {texto.cifras.map(([valor, etiqueta]) => (
-                <div><dt>{etiqueta}</dt><dd data-cifra={/\d/.test(valor) && !valor.includes('[') ? '' : undefined}>{valor}</dd></div>
-              ))}
-            </dl>
+            {aliado && 'aliado' in texto && (
+              <p class="plataforma">
+                <span>{texto.aliado}</span>
+                <a class="nombre" href={aliado.url} target="_blank" rel="noopener">{aliado.nombre}</a>
+              </p>
+            )}
+            {texto.cifras.length > 0 && (
+              <dl class="cifras">
+                {texto.cifras.map(([valor, etiqueta]) => (
+                  <div><dt>{etiqueta}</dt><dd data-cifra={/\d/.test(valor) && !valor.includes('[') ? '' : undefined}>{valor}</dd></div>
+                ))}
+              </dl>
+            )}
             <a class="boton boton-cian" href={rutas.contacto[locale]}>{texto.cotizar}</a>
           </div>
           <div class="afiche" data-afiche data-paralaje>
@@ -91,6 +101,9 @@ const tarjetas = (await obtenerServicios()).map((sv) => {
 
   .info > .plataforma { align-self: flex-start; display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-radius: 10px; background: var(--color-ink); color: var(--color-paper); font-size: 13px; font-weight: 500; }
   .plataforma .nombre { color: var(--color-glow); font-weight: 600; }
+  /* Área táctil de 44 px sin cambiar el alto de la etiqueta. */
+  a.nombre { padding-block: 12px; margin-block: -12px; text-decoration: underline; text-underline-offset: 3px; }
+  a.nombre:hover { text-decoration-thickness: 2px; }
 
   .cifras { margin: 0; display: flex; flex-wrap: wrap; gap: 8px 32px; }
   .cifras div { display: flex; flex-direction: column-reverse; }

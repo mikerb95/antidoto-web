@@ -2,6 +2,9 @@
 // Regla: todo texto nuevo va en los dos idiomas y sin guiones largos ni semilargos.
 
 export const LOCALES = ['es', 'en'] as const;
+
+/** Baja solo la primera letra, para meter un título en una frase sin romper siglas como IA o AI. */
+export const enFrase = (s: string): string => s.charAt(0).toLowerCase() + s.slice(1);
 export type Locale = (typeof LOCALES)[number];
 
 /** Páginas del sitio y su ruta en cada idioma. */
@@ -117,7 +120,7 @@ export const ui = {
 
 
     servicesKicker: 'Qué hacemos',
-    servicesTitle: 'Cuatro servicios, una sola fórmula',
+    servicesTitle: 'Cinco servicios, una sola fórmula',
     servicesLead: 'Para talento humano, SST, comunicaciones internas, bienestar y rectorías.',
     serviceMore: 'Ver servicio',
     servicioCols: ['Servicio', 'Qué incluye', 'Datos'],
@@ -190,7 +193,7 @@ export const ui = {
       resumenLead: 'Revisa el mensaje. Al enviarlo se abre WhatsApp con el texto listo.',
       mensaje: (d: { servicio: string; fecha: string; personas: string; ciudad: string; tipo: string }) =>
         [
-          `Hola Antídoto, quiero cotizar ${d.servicio.toLowerCase()}.`,
+          `Hola Antídoto, quiero cotizar ${enFrase(d.servicio)}.`,
           d.tipo && `Organización: ${d.tipo}.`,
           d.fecha && `Fecha aproximada: ${d.fecha}.`,
           d.personas && `Personas: ${d.personas}.`,
@@ -221,12 +224,15 @@ export const ui = {
     ctaWhatsapp: 'WhatsApp',
     ctaEmail: 'Correo',
     waDefault: 'Hola Antídoto, quiero cotizar un servicio.',
-    waService: (s: string) => `Hola Antídoto, quiero cotizar ${s.toLowerCase()}.`,
+    waService: (s: string) => `Hola Antídoto, quiero cotizar ${enFrase(s)}.`,
     serviceFor: 'Qué incluye',
     otherServices: 'Otros servicios',
     fichaServicio: 'Ficha del servicio',
     publico: 'Para',
     publicoTexto: 'Empresas, colegios, universidades y organizaciones',
+    herramientas: 'Herramientas',
+    herramientasTitulo: 'Con qué trabajamos',
+    aliadoEnlace: (nombre: string) => `Conoce a ${nombre}`,
 
     footerServicios: 'Servicios',
     footerEstado: 'Atendiendo en Colombia',
@@ -252,7 +258,7 @@ export const ui = {
 
     seo: {
       inicio: ['Antídoto | Formaciones, audiovisual y catering para empresas', 'Estudio creativo empresarial en Colombia: formaciones vivenciales, producción audiovisual, catering corporativo y diseño de experiencias para empresas.'],
-      servicios: ['Servicios | Antídoto', 'Formaciones vivenciales, producción audiovisual, catering corporativo y diseño de productos y experiencias para empresas y colegios en Colombia.'],
+      servicios: ['Servicios | Antídoto', 'Formaciones vivenciales, producción audiovisual, catering corporativo, diseño de productos y experiencias y capacitación en IA para empresas y colegios en Colombia.'],
       clientes: ['Clientes | Antídoto', 'Enel, Claro, Seguros Bolívar, WSP y otras 14 marcas de energía, ingeniería, transporte, seguros y SST trabajan con Antídoto.'],
       nosotros: ['Nosotros | Antídoto', 'Antídoto es un estudio creativo empresarial fundado en 2020 por María Paula Ramos, ingeniera civil especialista en Gerencia de SST.'],
       contacto: ['Contacto y cotización | Antídoto', 'Cotiza formaciones, producción audiovisual, catering o diseño en pocos pasos y recibe tu propuesta por WhatsApp.'],
@@ -320,7 +326,7 @@ export const ui = {
         ],
       },
       servicios: {
-        titulo: ['Cuatro servicios, ', 'una sola fórmula'],
+        titulo: ['Cinco servicios, ', 'una sola fórmula'],
         lead: 'Para talento humano, SST, comunicaciones internas, bienestar y rectorías. Se contratan por separado o como un solo evento.',
         testimonio: '[TESTIMONIO VALIDADO: frase corta, foto, nombre, cargo y empresa]',
         logos: '[LOGOS DE 3 CLIENTES DE ESTA LÍNEA, con autorización]',
@@ -358,6 +364,15 @@ export const ui = {
             cotizar: 'Cotizar diseño',
             afiche: 'Diseño',
             alt: 'Figura armada con piezas de construcción',
+          },
+          ia: {
+            resumen: 'Tu equipo aprende a usar la IA en su trabajo real, con criterio y sin exponer datos.',
+            puntos: ['Claude, Gemini, ChatGPT y Copilot', 'Con los procesos y documentos de tu área', 'Presencial o por videollamada'],
+            aliado: 'Dictada por',
+            cifras: [],
+            cotizar: 'Cotizar capacitación',
+            afiche: 'IA aplicada',
+            alt: 'Sala lista para un taller, con la pantalla de bienvenida y las cajas de material',
           },
         },
       },
@@ -507,7 +522,7 @@ export const ui = {
 
 
     servicesKicker: 'What we do',
-    servicesTitle: 'Four services, one formula',
+    servicesTitle: 'Five services, one formula',
     servicesLead: 'For HR, health and safety, internal communications, wellbeing and school leaders.',
     serviceMore: 'See service',
     servicioCols: ['Service', 'What it includes', 'Facts'],
@@ -580,7 +595,7 @@ export const ui = {
       resumenLead: 'Check the message. Sending it opens WhatsApp with the text ready.',
       mensaje: (d: { servicio: string; fecha: string; personas: string; ciudad: string; tipo: string }) =>
         [
-          `Hi Antídoto, I would like a quote for ${d.servicio.toLowerCase()}.`,
+          `Hi Antídoto, I would like a quote for ${enFrase(d.servicio)}.`,
           d.tipo && `Organization: ${d.tipo}.`,
           d.fecha && `Approximate date: ${d.fecha}.`,
           d.personas && `People: ${d.personas}.`,
@@ -610,12 +625,15 @@ export const ui = {
     ctaWhatsapp: 'WhatsApp',
     ctaEmail: 'Email',
     waDefault: 'Hi Antídoto, I would like a quote.',
-    waService: (s: string) => `Hi Antídoto, I would like a quote for ${s.toLowerCase()}.`,
+    waService: (s: string) => `Hi Antídoto, I would like a quote for ${enFrase(s)}.`,
     serviceFor: 'What it includes',
     otherServices: 'Other services',
     fichaServicio: 'Service sheet',
     publico: 'For',
     publicoTexto: 'Companies, schools, universities and organizations',
+    herramientas: 'Tools',
+    herramientasTitulo: 'What we work with',
+    aliadoEnlace: (nombre: string) => `Meet ${nombre}`,
 
     footerServicios: 'Services',
     footerEstado: 'Available in Colombia',
@@ -641,7 +659,7 @@ export const ui = {
 
     seo: {
       inicio: ['Antídoto | Training, video and catering for companies', 'Creative studio in Colombia: experiential training, video production, corporate catering and experience design for companies and schools.'],
-      servicios: ['Services | Antídoto', 'Experiential training, video production, corporate catering and product and experience design for companies and schools in Colombia.'],
+      servicios: ['Services | Antídoto', 'Experiential training, video production, corporate catering, product and experience design and AI training for companies and schools in Colombia.'],
       clientes: ['Clients | Antídoto', 'Enel, Claro, Seguros Bolívar, WSP and 14 other energy, engineering, transport, insurance and safety brands work with Antídoto.'],
       nosotros: ['About | Antídoto', 'Antídoto is a creative studio founded in 2020 by María Paula Ramos, a civil engineer specialized in health and safety management.'],
       contacto: ['Contact and quote | Antídoto', 'Get a quote for training, video, catering or design in a few steps and receive your proposal on WhatsApp.'],
@@ -707,7 +725,7 @@ export const ui = {
         ],
       },
       servicios: {
-        titulo: ['Four services, ', 'one formula'],
+        titulo: ['Five services, ', 'one formula'],
         lead: 'For HR, health and safety, internal communications, wellbeing and school leadership. Hire them separately or as a single event.',
         testimonio: '[VALIDATED TESTIMONIAL: short quote, photo, name, role and company]',
         logos: '[LOGOS OF 3 CLIENTS IN THIS LINE, with permission]',
@@ -745,6 +763,15 @@ export const ui = {
             cotizar: 'Quote design',
             afiche: 'Design',
             alt: 'Figure built with construction bricks',
+          },
+          ia: {
+            resumen: 'Your team learns to use AI in their real work, with good judgment and without exposing data.',
+            puntos: ['Claude, Gemini, ChatGPT and Copilot', 'With your team’s own processes and documents', 'In person or by video call'],
+            aliado: 'Taught by',
+            cifras: [],
+            cotizar: 'Quote training',
+            afiche: 'Applied AI',
+            alt: 'Room set up for a workshop, with the welcome screen and the boxes of materials',
           },
         },
       },

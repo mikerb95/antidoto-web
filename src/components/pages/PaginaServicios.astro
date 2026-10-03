@@ -1,31 +1,129 @@
 ---
+// Índice de servicios: las cuatro líneas de negocio, cada una con sus ofertas enlazadas.
+import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
-import Encabezado from '../Encabezado.astro';
-import ServiciosEscenas from '../ServiciosEscenas.astro';
-import Stats from '../Stats.astro';
-import ContactoCta from '../ContactoCta.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
+import BloqueCta from '../BloqueCta.astro';
+import ListaFaq from '../ListaFaq.astro';
+import { obtenerServicios, servicioPath } from '../../data/servicios';
+import { obtenerOfertas, ofertaPath } from '../../data/contenido';
+import { preguntas } from '../../data/faq';
+import { grafo, listaSchema, migasSchema, faqSchema } from '../../data/schema';
 import { t, rutas, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const s = t(locale);
+const p = tp(locale);
 const [title, description] = s.seo.servicios;
+const servicios = await obtenerServicios();
+const ofertas = await obtenerOfertas();
+const faq = preguntas(locale, { tema: 'general' });
+const migas: Array<[string, string]> = [
+  [p.inicio, rutas.inicio[locale]],
+  [s.nav.servicios, rutas.servicios[locale]],
+];
+const jsonLd = grafo(
+  listaSchema(title, rutas.servicios[locale], servicios.map((sv) => [sv[locale].title, servicioPath(sv, locale)])),
+  migasSchema(migas),
+  faqSchema(faq),
+);
+const [combinarT, combinarD, combinarCta] = p.servicios.combinar;
 ---
-<Base locale={locale} pagina="servicios" title={title} description={description} alternates={rutas.servicios} scroll="suave">
-  <section class="seccion cabecera" aria-labelledby="pagina-title">
+<Base locale={locale} pagina="servicios" title={title} description={description} alternates={rutas.servicios} jsonLd={jsonLd} tema="claro" scroll="suave">
+  <CabeceraPagina locale={locale} migas={migas} titulo={p.servicios.titulo} lead={p.servicios.lead} />
+
+  <section class="bloque" aria-label={s.nav.servicios}>
     <div class="wrap">
-      <Encabezado num="01" kicker={s.servicesKicker} titulo={s.servicesTitle} lead={s.servicesLead} id="pagina-title" nivel={1} />
-      <div class="franja"><Stats locale={locale} /></div>
+      <ol class="lineas" data-entra>
+        {servicios.map((sv, i) => {
+          const txt = sv[locale];
+          const suyas = ofertas.filter((o) => o.linea === sv.id);
+          return (
+            <li class="linea">
+              <a class="foto" href={servicioPath(sv, locale)} tabindex="-1" aria-hidden="true" data-paralaje>
+                <Image src={sv.image} alt="" widths={[400, 640, 880]} sizes="(max-width: 900px) 100vw, 440px" />
+                <span class="num">0{i + 1}</span>
+              </a>
+              <div class="info">
+                <h2><a href={servicioPath(sv, locale)} style={`view-transition-name: servicio-${sv.id}-title`}>{txt.title}</a></h2>
+                <p class="lead-l">{txt.lead}</p>
+                <ul class="hechos">{txt.facts.map((f) => <li>{f}</li>)}</ul>
+                {suyas.length > 0 && (
+                  <div class="ofertas">
+                    <p class="ofertas-t">{p.servicios.ofertasDe(suyas.length)}</p>
+                    <ul>
+                      {suyas.map((o) => <li><a href={ofertaPath(sv, o, locale)}>{o[locale].title}</a></li>)}
+                    </ul>
+                  </div>
+                )}
+                <a class="boton boton-tinta" href={servicioPath(sv, locale)}>{p.servicios.verLinea}</a>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+
+      <a class="combinar" href={rutas.comoTrabajamos[locale]}>
+        <span class="c-txt"><span class="c-t">{combinarT}</span><span class="c-d">{combinarD}</span></span>
+        <span class="c-cta">{combinarCta}</span>
+      </a>
     </div>
   </section>
-  <div><ServiciosEscenas locale={locale} /></div>
-  <ContactoCta locale={locale} num="03" />
+
+  <section class="bloque bloque-mist" aria-labelledby="faq-servicios-t">
+    <div class="wrap faq">
+      <div class="cab-izq">
+        <h2 id="faq-servicios-t">{p.faq.titulo[0]}<span class="resaltado">{p.faq.titulo[1]}</span></h2>
+        <p>{p.faq.lead}</p>
+        <a class="mas" href={rutas.faq[locale]}>{p.faq.todas}</a>
+      </div>
+      <ListaFaq items={faq} />
+    </div>
+  </section>
+
+  <BloqueCta locale={locale} />
 </Base>
 
 <style>
-  .cabecera { padding-bottom: 24px; }
-  .franja { margin-top: 32px; }
-  .franja :global(.wrap) { padding-inline: 0; }
+  .lineas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 28px; }
+  .linea { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 36px; align-items: center; padding: 24px; border-radius: 26px; background: var(--color-paper); border: 1px solid var(--color-line-soft); box-shadow: 0 10px 30px rgb(15 24 29 / 0.05); }
+  .linea:nth-child(even) .foto { order: 2; }
+  .foto { position: relative; display: block; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: var(--color-ink); }
+  .foto img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--t-slow) var(--ease-out); }
+  .foto:hover img { transform: scale(1.03); }
+  .num { position: absolute; left: 16px; top: 16px; padding: 6px 12px; border-radius: 999px; background: var(--color-antidote); color: var(--color-ink); font: 400 18px/1 var(--font-accent); }
+  .info { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  h2 { margin: 0; font-size: clamp(28px, 2.4vw + 12px, 40px); line-height: 1.1; }
+  h2 a { color: var(--color-ink); text-decoration: none; }
+  h2 a:hover { color: var(--color-deep); }
+  .lead-l { margin: 0; color: var(--color-slate); font-size: 17px; }
+  .hechos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .hechos li { padding: 6px 12px; border-radius: 999px; background: var(--color-mist); border: 1px solid var(--color-line-soft); font-size: 14px; font-weight: 500; }
+  .ofertas-t { margin: 4px 0 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-slate); }
+  .ofertas ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 0 20px; }
+  .ofertas a { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-ink); text-decoration: none; font-weight: 500; border-bottom: 1px solid var(--color-line-soft); }
+  .ofertas a::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--color-mid); flex: none; }
+  .ofertas a:hover { color: var(--color-deep); }
+  .info > .boton { align-self: flex-start; margin-top: 6px; }
+
+  .combinar { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 24px 28px; border-radius: 22px; background: var(--color-mist); border: 1px solid var(--color-line-soft); color: var(--color-ink); text-decoration: none; }
+  .c-txt { display: flex; flex-direction: column; gap: 4px; }
+  .c-t { font: 400 22px/1.2 var(--font-display); }
+  .c-d { color: var(--color-slate); font-size: 15px; }
+  .c-cta { color: var(--color-deep); font-weight: 600; }
+  .c-cta::after { content: '→'; margin-left: 0.35em; display: inline-block; transition: transform var(--t-base) var(--ease-out); }
+  .combinar:hover .c-cta::after { transform: translateX(4px); }
+
+  .faq { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 40px; align-items: start; }
+  .mas { align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
+
+  @media (max-width: 900px) {
+    .linea { grid-template-columns: 1fr; gap: 20px; padding: 16px; }
+    .linea:nth-child(even) .foto { order: 0; }
+    .faq { grid-template-columns: 1fr; gap: 0; }
+  }
 </style>

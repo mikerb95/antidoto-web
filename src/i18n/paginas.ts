@@ -2,7 +2,7 @@
 // portafolio, empresa, FAQ, blog, legales y mapa del sitio). Los textos comunes siguen en ui.ts.
 // Regla: los dos idiomas, sin guiones largos ni semilargos, sin emojis. Lo que va entre
 // corchetes es un dato que falta del cliente y se muestra en una caja .pendiente.
-import type { Locale } from './ui';
+import { enFrase, type Locale } from './ui';
 
 export const paginas = {
   es: {
@@ -35,7 +35,7 @@ export const paginas = {
     },
 
     servicios: {
-      titulo: ['Cuatro líneas, ', 'una sola fórmula'],
+      titulo: ['Cinco líneas, ', 'una sola fórmula'],
       lead: 'Formaciones, producción audiovisual, catering y diseño para empresas, colegios y universidades. Se contratan por separado o como un solo evento.',
       ofertasDe: (n: number) => (n === 1 ? '1 oferta' : `${n} ofertas`),
       verLinea: 'Ver la línea',
@@ -65,7 +65,7 @@ export const paginas = {
       otras: (linea: string) => `Más de ${linea}`,
       soluciones: ['Recomendada ', 'para'],
       cotizarEsta: 'Cotizar esta oferta',
-      wa: (oferta: string, linea: string) => `Hola Antídoto, quiero cotizar ${oferta.toLowerCase()} (${linea.toLowerCase()}).`,
+      wa: (oferta: string, linea: string) => `Hola Antídoto, quiero cotizar ${enFrase(oferta)} (${enFrase(linea)}).`,
     },
 
     soluciones: {
@@ -224,7 +224,7 @@ export const paginas = {
     },
 
     servicios: {
-      titulo: ['Four lines, ', 'one formula'],
+      titulo: ['Five lines, ', 'one formula'],
       lead: 'Training, video production, catering and design for companies, schools and universities. Book them separately or as a single event.',
       ofertasDe: (n: number) => (n === 1 ? '1 offering' : `${n} offerings`),
       verLinea: 'See this line',
@@ -254,7 +254,7 @@ export const paginas = {
       otras: (linea: string) => `More from ${linea}`,
       soluciones: ['Recommended ', 'for'],
       cotizarEsta: 'Get a quote for this',
-      wa: (oferta: string, linea: string) => `Hi Antídoto, I would like a quote for ${oferta.toLowerCase()} (${linea.toLowerCase()}).`,
+      wa: (oferta: string, linea: string) => `Hi Antídoto, I would like a quote for ${enFrase(oferta)} (${enFrase(linea)}).`,
     },
 
     soluciones: {
