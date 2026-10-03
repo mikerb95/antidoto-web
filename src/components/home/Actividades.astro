@@ -81,7 +81,11 @@ const textos = { posicion: tr.posicion, instruccion: tr.instruccion, acierto: tr
         b.textContent = li.textContent?.trim() ?? '';
         li.textContent = '';
         li.appendChild(b);
-        b.addEventListener('click', () => pintar(elegir(estado, i)));
+        b.addEventListener('click', () => {
+          pintar(elegir(estado, i));
+          // El botón pulsado queda deshabilitado: el foco pasa a "Jugar de nuevo" para no perderse.
+          if (estado.fase !== 'jugando') otra.focus();
+        });
         return b;
       });
 

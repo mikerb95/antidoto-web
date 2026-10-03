@@ -32,7 +32,7 @@ const FOTOS = [
   <div class="wrap interior">
     <div class="cab-seccion">
       <h2 id="dolores-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
-      <p>{h.lead}</p>
+      <p><span class="con-cursor">{h.lead}</span><span class="tactil">{h.leadTactil}</span></p>
     </div>
     <div class="rejilla">
       {h.items.map(([dolor, solucion], i) => {
@@ -62,6 +62,9 @@ const FOTOS = [
   .chip { position: absolute; left: 16px; bottom: 16px; max-width: 78%; padding: 10px 14px; border-radius: 12px; background: var(--color-paper); color: var(--color-ink); font-weight: 600; font-size: 16px; line-height: 1.3; isolation: isolate; }
   .chip::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--color-antidote); clip-path: inset(100% 0 0 0); transition: clip-path var(--t-slow) var(--ease-in-out); }
   .sol { display: none; }
+  /* La indicación depende del dispositivo: sin cursor, la dosis llega al cruzar el centro. */
+  .tactil { display: none; }
+  @media (hover: none) { .con-cursor { display: none; } .tactil { display: inline; } }
 
   .dolor:hover .pain, .dolor:focus-visible .pain, .dolor:global(.dosis) .pain { display: none; }
   .dolor:hover .sol, .dolor:focus-visible .sol, .dolor:global(.dosis) .sol { display: inline; }

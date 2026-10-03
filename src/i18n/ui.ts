@@ -222,6 +222,7 @@ export const ui = {
       dolores: {
         titulo: ['¿Te suena esto ', 'en tu empresa?'],
         lead: 'Pasa el cursor por cada situación para ver cómo la resolvemos.',
+        leadTactil: 'Desliza: cada situación muestra cómo la resolvemos al llegar al centro de la pantalla.',
         items: [
           ['La inducción se olvida en una semana', 'Inducciones en video que sí se ven completas'],
           ['Capacitaciones que nadie quiere tomar', 'Formaciones que se viven con las manos'],
@@ -540,6 +541,7 @@ export const ui = {
       dolores: {
         titulo: ['Does this sound familiar ', 'at your company?'],
         lead: 'Hover over each situation to see how we solve it.',
+        leadTactil: 'Scroll: each situation shows how we solve it as it reaches the middle of the screen.',
         items: [
           ['Onboarding is forgotten within a week', 'Onboarding videos people actually finish'],
           ['Training nobody wants to attend', 'Training you live with your hands'],
