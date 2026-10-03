@@ -263,6 +263,10 @@ const canales = [
       if (errorContacto) errorContacto.hidden = true;
     });
     form.addEventListener('submit', (e) => e.preventDefault());
+    // ?servicio=<clave> (desde el chat con IA) deja el servicio elegido.
+    const pedido = new URLSearchParams(location.search).get('servicio');
+    const opcion = [...form.querySelectorAll<HTMLInputElement>('input[name="servicio"]')].find((i) => i.value === pedido);
+    if (opcion) opcion.checked = true;
     form.hidden = false;
     nivel.style.transform = `scaleX(${1 / pasos.length})`;
   }
