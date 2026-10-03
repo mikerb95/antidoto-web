@@ -88,7 +88,8 @@ const textos = {
       function mostrarFinal() {
         const [titulo, detalle] = txt[estado.fase as 'acierto' | 'fallo' | 'tiempo'];
         fTitulo.textContent = titulo;
-        fDetalle.textContent = detalle.replace('{p}', String(estado.puesto)).replace('{s}', String(DURACION - estado.restante));
+        // Mínimo 1 s: quien responde antes de que arranque el reloj no lee "0 s".
+        fDetalle.textContent = detalle.replace('{p}', String(estado.puesto)).replace('{s}', String(Math.max(1, DURACION - estado.restante)));
         final.hidden = false;
         final.focus({ preventScroll: true });
         if (!reducido()) llenar(final, { duracion: 0.9 });

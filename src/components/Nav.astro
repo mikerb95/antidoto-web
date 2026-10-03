@@ -99,5 +99,12 @@ const enlaces = [
     .nav:global(.con-menu) .links a { font-size: 18px; min-height: 52px; border-bottom: 1px solid var(--color-line-soft); }
     .nav:global(.con-menu) .links a:last-child { border-bottom: 0; }
   }
-  @media (max-width: 360px) { .home :global(.logo) { height: 28px; } }
+  @media (max-width: 440px) {
+    .barra { gap: 8px; }
+    .derecha { gap: 8px; }
+    .home :global(.logo) { height: 28px; }
+    .cotizar { padding: 0 14px; }
+    .menu { padding: 0 12px; gap: 8px; }
+  }
+  @media (max-width: 350px) { .menu { font-size: 0; gap: 0; } }
 </style>
