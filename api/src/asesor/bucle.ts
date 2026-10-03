@@ -7,7 +7,8 @@
 //
 // El modelo se inyecta (`Dependencias`) para probar el bucle sin red.
 // Módulo PURO.
-import { ui, type Locale } from '../../../src/i18n/ui';
+import type { Locale } from '../../../src/i18n/ui';
+import { UI as ui } from './publico.gen';
 import { CIFRAS_PUBLICAS, type Clave } from './conocimiento';
 import { sumarUso, USO_CERO, type Uso, type UsageApi } from './costo';
 import { verificarCifras } from './guardia';

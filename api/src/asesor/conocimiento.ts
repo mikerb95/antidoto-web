@@ -10,9 +10,8 @@
 // ni calcular_precio, y la guardia de cifras no deja pasar ninguna cifra de dinero.
 //
 // Módulo PURO.
-import { ui, rutas, type Locale } from '../../../src/i18n/ui';
-import { SITE } from '../../../src/data/site';
-import { SERVICIOS_PUBLICOS, CLIENTES_PUBLICOS } from './publico.gen';
+import type { Locale } from '../../../src/i18n/ui';
+import { SERVICIOS_PUBLICOS, CLIENTES_PUBLICOS, UI as ui, RUTAS as rutas, SITE } from './publico.gen';
 
 export type Clave = (typeof SERVICIOS_PUBLICOS)[number]['clave'];
 export const CLAVES = SERVICIOS_PUBLICOS.map((s) => s.clave) as readonly Clave[];

@@ -2,7 +2,8 @@
 // codebymike.net, del que sale esta receta (skill chat-ia, references/prompt.md).
 //
 // Módulo PURO.
-import { ui, type Locale } from '../../../src/i18n/ui';
+import type { Locale } from '../../../src/i18n/ui';
+import { UI as ui } from './publico.gen';
 import { CLAVES, conocimiento, type Clave } from './conocimiento';
 
 export const MAX_PREGUNTAS = 30;
