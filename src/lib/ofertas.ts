@@ -2,7 +2,6 @@
 // Un Markdown por oferta y por idioma en src/content/ofertas/<linea>/<clave>.<idioma>.md.
 // Las ofertas salen de `includes` de cada servicio: no se inventa ninguna.
 // Sin imports de Astro en tiempo de ejecución para poder probarla en tests/contenido.test.ts.
-import type { ImageMetadata } from 'astro';
 import type { Locale } from '../i18n/ui';
 import { emparejarPorClave, repetido } from './contenido';
 import { servicioPath, type Servicio } from './servicios';
@@ -85,7 +84,3 @@ export function ofertaPath(linea: Servicio, oferta: Oferta, locale: Locale): str
   return `${servicioPath(linea, locale)}${oferta[locale].slug}/`;
 }
 
-/** Imagen de la oferta o, si no tiene, la de su línea. */
-export function imagenOferta(oferta: { image?: ImageMetadata }, linea: Servicio): ImageMetadata {
-  return oferta.image ?? linea.image;
-}

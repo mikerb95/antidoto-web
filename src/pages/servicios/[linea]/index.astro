@@ -4,8 +4,8 @@ import Servicio from '../../../components/pages/Servicio.astro';
 import { obtenerServicios } from '../../../data/servicios';
 
 export const getStaticPaths = (async () =>
-  (await obtenerServicios()).map((servicio) => ({ params: { slug: servicio.en.slug }, props: { servicio } }))) satisfies GetStaticPaths;
+  (await obtenerServicios()).map((servicio) => ({ params: { linea: servicio.es.slug }, props: { servicio } }))) satisfies GetStaticPaths;
 
 const { servicio } = Astro.props;
 ---
-<Servicio locale="en" servicio={servicio} />
+<Servicio locale="es" servicio={servicio} />

@@ -1,0 +1,17 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Oferta from '../../../components/pages/Oferta.astro';
+import { obtenerServicios } from '../../../data/servicios';
+import { obtenerOfertas } from '../../../data/contenido';
+
+export const getStaticPaths = (async () => {
+  const servicios = await obtenerServicios();
+  return (await obtenerOfertas()).map((oferta) => {
+    const linea = servicios.find((s) => s.id === oferta.linea)!;
+    return { params: { linea: linea.es.slug, oferta: oferta.es.slug }, props: { linea, oferta } };
+  });
+}) satisfies GetStaticPaths;
+
+const { linea, oferta } = Astro.props;
+---
+<Oferta locale="es" linea={linea} oferta={oferta} />
