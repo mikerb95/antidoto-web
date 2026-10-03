@@ -7,6 +7,7 @@ import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import BarraWhatsapp from '../components/BarraWhatsapp.astro';
 import Motion from '../components/Motion.astro';
+import Asesor from '../components/Asesor.astro';
 import { t, otroIdioma, type Locale, type Pagina } from '../i18n/ui';
 import { SITE } from '../data/site';
 
@@ -92,6 +93,7 @@ const otro = otroIdioma(locale);
     </main>
     <Footer locale={locale} novedades={pagina !== 'inicio'} />
     {!claro && <BarraWhatsapp locale={locale} message={waMessage} />}
+    {!noindex && <Asesor locale={locale} pagina={pagina} />}
     <Motion />
   </body>
 </html>
