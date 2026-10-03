@@ -1,5 +1,5 @@
 // Gestos comunes a todas las páginas: titulares que se arman y botones magnéticos.
-import { gsap, pieza } from './core';
+import { gsap, ScrollTrigger, pieza } from './core';
 import { SplitText } from 'gsap/SplitText';
 
 gsap.registerPlugin(SplitText);
@@ -60,5 +60,32 @@ export function magneticos(raiz: ParentNode = document) {
       };
       window.addEventListener('pointermove', mover, { passive: true });
     });
+  });
+}
+
+/**
+ * Grupos `[data-entra]`: sus hijos entran escalonados al asomar el grupo. `clearProps` devuelve
+ * el control al CSS al terminar (el hover de las tarjetas usa transform).
+ */
+export function entradas(raiz: ParentNode = document) {
+  raiz.querySelectorAll<HTMLElement>('[data-entra]').forEach((grupo) => {
+    const hijos = [...grupo.children] as HTMLElement[];
+    pieza(
+      'entrada',
+      () => {
+        gsap.set(hijos, { y: 28, opacity: 0 });
+        let hecho = false;
+        ScrollTrigger.create({
+          trigger: grupo,
+          start: 'top 88%',
+          onEnter: () => {
+            if (hecho) return;
+            hecho = true;
+            gsap.to(hijos, { y: 0, opacity: 1, duration: 0.8, ease: 'expo.out', stagger: 0.08, clearProps: 'transform,opacity' });
+          },
+        });
+      },
+      () => gsap.set(hijos, { clearProps: 'transform,opacity' }),
+    );
   });
 }
