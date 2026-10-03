@@ -11,7 +11,7 @@
     "migraciones:remoto": "wrangler d1 migrations apply antidoto --remote",
     "check": "tsc --noEmit && tsc --noEmit -p test",
     "test": "vitest run",
-    "ui": "node scripts/empaquetar-ui.mjs",
+    "ui": "node scripts/empaquetar-ui.mjs && node scripts/empaquetar-conocimiento.mjs",
     "predev": "npm run ui",
     "predeploy": "npm run ui",
     "precheck": "npm run ui",

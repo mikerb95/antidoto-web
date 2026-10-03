@@ -1,6 +1,7 @@
 // Worker de la API de Antídoto. Rutas:
 //   POST /v1/leads                  público (solo orígenes del sitio): guarda un lead
 //   POST /v1/suscripciones          público (solo orígenes del sitio): suscripción a novedades
+//   GET|POST /v1/asesor             público (solo orígenes del sitio): chat con IA (src/asesor/)
 //   GET|POST /v1/suscripcion/confirmar|baja?t=   doble confirmación y baja (por token)
 //   POST /v1/resend/webhook         eventos de Resend, firmados con Svix
 //   POST /auth/enlace               pide el enlace de acceso por correo
@@ -19,6 +20,7 @@ import { crearSuscripcion, confirmar, baja } from './marketing/suscripciones';
 import { webhookResend } from './marketing/webhook';
 import { procesarEnvios } from './marketing/envios';
 import * as mk from './marketing/admin';
+import { rutaAsesor } from './asesor/ruta';
 import { ADMIN_HTML, ADMIN_JS, ADMIN_CSS } from './admin-ui';
 import { json } from './util';
 
@@ -47,6 +49,14 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
     if (metodo === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (metodo !== 'POST') return json({ ok: false }, 405, cors);
     return ruta === '/v1/leads' ? crearLead(req, env, db, appUrl, diferir, cors) : crearSuscripcion(req, env, db, appUrl, cors, diferir);
+  }
+
+  if (ruta === '/v1/asesor') {
+    const origen = req.headers.get('origin');
+    if (!origenPermitido(origen, env, env.ENTORNO === 'local')) return json({ ok: false, error: 'origen' }, 403);
+    const cors = cabecerasCors(origen!);
+    if (metodo === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'access-control-allow-methods': 'GET, POST, OPTIONS' } });
+    return rutaAsesor(req, env, db, diferir, cors);
   }
 
   // Autorizadas por token o por firma, no por sesión: los proveedores de correo hacen el POST de
