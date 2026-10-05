@@ -2,7 +2,7 @@
 import Logo from './Logo.astro';
 import { t, rutas, rutaPolitica, type Locale } from '../i18n/ui';
 import { NOVEDADES, NOVEDADES_VERSION } from '../data/consentimiento';
-import { SITE, waLink } from '../data/site';
+import { SITE, PORTAL, waLink } from '../data/site';
 import { obtenerServicios, servicioPath } from '../data/servicios';
 import { obtenerArticulos } from '../data/contenido';
 import { SOLUCIONES, solucionPath } from '../data/soluciones';
@@ -74,6 +74,13 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
           <li><a href={SITE.instagram} target="_blank" rel="noopener">Instagram</a></li>
           <li><a href={SITE.linkedin} target="_blank" rel="noopener">LinkedIn</a></li>
         </ul>
+        <nav class="portal" aria-labelledby="pie-portal">
+          <p class="titulo" id="pie-portal">{s.portalTitulo}</p>
+          <ul>
+            <li><a href={PORTAL.url} hreflang="es">{s.portalParticipante}</a></li>
+            <li><a href={PORTAL.empresas} hreflang="es">{s.portalEmpresa}</a></li>
+          </ul>
+        </nav>
       </div>
     </div>
     <div class="base">
@@ -105,6 +112,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
   .home { align-self: flex-start; display: inline-flex; min-height: 44px; align-items: center; color: var(--color-antidote); }
   .home :global(.logo) { display: block; height: 34px; width: auto; }
   .marca > p { margin: 0; }
+  .portal { margin-top: 24px; }
   .titulo { margin: 0 0 6px; color: var(--color-paper); font-weight: 600; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; }
   ul a { color: var(--color-fg-soft); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }

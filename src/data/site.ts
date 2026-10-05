@@ -11,6 +11,16 @@ export const SITE = {
   foundingYear: 2020,
 } as const;
 
+/**
+ * Plataforma de misiones: proyecto aparte (Next.js en Vercel, repo `antidoto`). Los participantes
+ * entran con el código de su actividad y las empresas ven sus resultados en /admin/. Va en la URL
+ * de Vercel hasta tener control del DNS; ahí solo cambian estas dos URLs por el subdominio.
+ */
+export const PORTAL = {
+  url: 'https://antidotocolombia.vercel.app/',
+  empresas: 'https://antidotocolombia.vercel.app/admin/login',
+} as const;
+
 /** Enlace de WhatsApp con el mensaje ya escrito. */
 export function waLink(message: string): string {
   return `https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(message)}`;

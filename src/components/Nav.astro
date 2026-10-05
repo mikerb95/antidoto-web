@@ -9,6 +9,7 @@
 // 1100 px todo va en el panel del botón Menú, con los submenús como acordeones.
 // Tiene view-transition-name propio: es igual en todas las páginas y no se funde al navegar.
 import Logo from './Logo.astro';
+import { PORTAL } from '../data/site';
 import { t, rutas, otroIdioma, type Locale, type Pagina } from '../i18n/ui';
 import { tp } from '../i18n/paginas';
 import { obtenerServicios, servicioPath } from '../data/servicios';
@@ -127,6 +128,8 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
             </li>
           ))}
         </ul>
+        <!-- Plataforma de misiones (otro sitio, solo en español): para quien ya tiene un código. -->
+        <a class="mision" href={PORTAL.url} hreflang="es" aria-label={s.portalNavLabel}>{s.portalNav}<span aria-hidden="true"> ↗</span></a>
         <a class="idioma" href={alternateHref} hreflang={otro} lang={otro} aria-label={s.switchLangLabel}>
           <span class="actual-idioma">{locale.toUpperCase()}</span><span aria-hidden="true">/</span><span>{otro.toUpperCase()}</span>
         </a>
@@ -259,6 +262,8 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
 
   .idioma { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; text-decoration: none; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; color: var(--color-slate); }
   .idioma .actual-idioma { color: var(--color-deep); }
+  .mision { display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; text-decoration: none; font-size: 15px; font-weight: 500; color: var(--color-slate); }
+  .mision:hover { color: var(--color-deep); }
   .cotizar { font-size: 16px; padding: 0 22px; }
   .nav :focus-visible { outline-color: var(--color-deep); }
 
@@ -296,7 +301,8 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
     .col li a { min-height: 44px; }
     .sub-enlace { padding: 10px 12px; }
     .sub-todos { margin-top: 4px; }
-    .idioma { min-height: 52px; font-size: 15px; }
+    .idioma, .mision { min-height: 52px; font-size: 15px; }
+    .mision { border-bottom: 1px solid var(--color-line-soft); }
 
     .nav.con-menu .menu { display: inline-flex; order: 1; }
     .nav.con-menu .links { position: absolute; left: 0; right: 0; top: 100%; width: auto; max-height: calc(100svh - 80px); overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 16px; background: var(--color-paper); border-bottom: 1px solid var(--color-line-soft); box-shadow: 0 20px 40px rgb(15 24 29 / 0.1); clip-path: inset(0 0 100% 0); visibility: hidden; transition: clip-path var(--t-base) var(--ease-out), visibility 0s linear var(--t-base); }

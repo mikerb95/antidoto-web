@@ -82,6 +82,12 @@ export const ui = {
     homeLabel: 'Antídoto, inicio',
     langLabel: 'Idioma',
     switchLangLabel: 'Ver el sitio en inglés',
+    // Plataforma de misiones (proyecto aparte, ver PORTAL en src/data/site.ts).
+    portalNav: 'Mi misión',
+    portalNavLabel: 'Mi misión: entra con el código de tu actividad',
+    portalTitulo: 'Plataforma de misiones',
+    portalParticipante: 'Entrar con mi código',
+    portalEmpresa: 'Acceso para empresas',
     waFab: 'Escríbenos por WhatsApp',
     // Chat con IA (src/components/Asesor.astro). Solo aparece con PUBLIC_API_URL.
     asesor: {
@@ -531,6 +537,11 @@ export const ui = {
     homeLabel: 'Antídoto, home',
     langLabel: 'Language',
     switchLangLabel: 'Ver el sitio en español',
+    portalNav: 'My mission',
+    portalNavLabel: 'My mission: join with your activity code (in Spanish)',
+    portalTitulo: 'Mission platform',
+    portalParticipante: 'Join with my code',
+    portalEmpresa: 'Company access',
     waFab: 'Message us on WhatsApp',
     asesor: {
       menu: 'Contact options: WhatsApp or AI assistant',
