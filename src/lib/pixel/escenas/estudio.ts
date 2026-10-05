@@ -100,7 +100,7 @@ export class Estudio {
     this.tl.clear();
     this.tl.push(
       poseTo(this.a, STAND, 0.2, 'feliz'),
-      walkTo(this.a, b.x, b.y, VELOCIDAD * 1.5),
+      walkTo(this.a, b.x, b.y, VELOCIDAD),
       act(() => (this.a.facing = 1)),
       poseTo(this.a, AGACHA, 0.18),
       poseTo(this.a, SALTO, 0.12),

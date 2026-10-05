@@ -92,9 +92,9 @@ export const INVESTIGACIONES: Investigacion[] = [
         donde: 'src/components/home/Hero.astro',
       },
       {
-        decision: 'La trivia jugable como pieza central del hero, que se llena de líquido cian al responder.',
+        decision: 'La trivia jugable como pieza central del hero, que se llenaba de líquido cian al responder. El 05/10/2026 la reemplazó el estudio pixel con el paseo hasta la sala (RF-04), con el mismo principio de mostrar en vez de contar.',
         porque: 'Mostrar en vez de contar, y una pieza interactiva en lugar de una foto decorativa. El reloj arranca con la interacción para que no se agote mientras se lee.',
-        donde: 'src/components/home/Trivia.astro, src/lib/trivia.ts',
+        donde: 'src/components/home/Estudio.astro, src/components/home/Sala.astro',
       },
       {
         decision: 'Se quitó la foto con velo oscuro; el fondo es blanco y el protagonista es el cian de la marca.',

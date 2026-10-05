@@ -36,6 +36,15 @@ function iniciarScroll() {
   gsap.ticker.lagSmoothing(0);
 }
 
+/**
+ * Lleva el scroll a `y` en el acto (el paseo del facilitador lo mueve cuadro a cuadro). Con Lenis
+ * pasa por él, así la rueda sigue desde ahí cuando la persona retoma el control.
+ */
+export function scrollAl(y: number) {
+  if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+  else window.scrollTo(0, y);
+}
+
 /** Registra una pieza de motion con su respaldo si falla (fail-open). */
 export function pieza(nombre: string, iniciar: () => void | (() => void), restaurar?: () => void) {
   if (reducido()) return;

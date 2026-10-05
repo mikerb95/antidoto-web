@@ -7,6 +7,7 @@ import ClientesCifras from '../home/ClientesCifras.astro';
 import Dolores from '../home/Dolores.astro';
 import Pasos from '../home/Pasos.astro';
 import Servicios from '../home/Servicios.astro';
+import Sala from '../home/Sala.astro';
 import Actividades from '../home/Actividades.astro';
 import ParaQuien from '../home/ParaQuien.astro';
 import Equipo from '../home/Equipo.astro';
@@ -25,6 +26,7 @@ const [title, description] = t(locale).seo.inicio;
 ---
 <Base locale={locale} pagina="inicio" title={title} description={description} alternates={rutas.inicio} jsonLd={organizationSchema(await obtenerServicios(), locale)} scroll="suave">
   <Hero locale={locale} />
+  <Sala locale={locale} />
   <ClientesCifras locale={locale} />
   <Dolores locale={locale} />
   <Pasos locale={locale} />

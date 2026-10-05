@@ -60,3 +60,26 @@ q.update(0.1);
 const qb = new PixelBuffer(q.width, q.height);
 q.render(qb);
 writeFileSync(join(dir, 'sala-quieto.png'), png(qb, Math.max(1, k - 1), fondo));
+
+// Paracaídas del paseo: salto, apertura, colgado y desinflado.
+{
+  const { drawAvatar, poseRig, STAND } = await import('../src/lib/pixel/avatar.ts');
+  const { FACILITADOR } = await import('../src/lib/pixel/escenas/estudio.ts');
+  const pc = await import('../src/lib/pixel/paracaidas.ts');
+  const cuadros: [string, number, number, ReturnType<typeof pc.poseColgado>][] = [
+    ['caida', 0, 0, pc.CAIDA],
+    ['abre', 0.4, 0, pc.poseColgado(0)],
+    ['colgado', 1, 0, pc.poseColgado(0.6)],
+    ['aterriza', 1, 0.4, pc.ATERRIZA],
+    ['desinflado', 1, 1, STAND],
+  ];
+  const tira = new PixelBuffer(96 * cuadros.length, 136);
+  cuadros.forEach(([, apertura, colapso, pose], n) => {
+    const b = new PixelBuffer(96, 136);
+    const rig = poseRig(pose, 40, 130, 1);
+    pc.drawParacaidas(b, { x: (rig.handN.x + rig.handF.x) / 2, y: Math.min(rig.handN.y, rig.handF.y) }, apertura, colapso, 130);
+    drawAvatar(b, pose, FACILITADOR, 40, 130, 1, 'feliz');
+    tira.blit(b, n * 96, 0);
+  });
+  writeFileSync(join(dir, 'paracaidas.png'), png(tira, k, hex('#f3f8fa')));
+}

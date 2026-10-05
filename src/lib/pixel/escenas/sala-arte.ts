@@ -1,4 +1,4 @@
-// Arte de la sala de la actividad, la sección a ancho completo de la home: la sala virtual donde
+// Arte de la sala de la actividad, la sección a ancho completo de la home: el salón donde
 // un equipo juega un rompehielos con un facilitador de Antídoto. Pantalla grande con las tres
 // opciones, tres baldosas de color para votar con los pies, el círculo de quien habla, puffs y
 // plantas. Lo importante va en el centro: en celular se ve solo la franja del medio.

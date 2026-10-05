@@ -10,7 +10,9 @@ import { gsap, ScrollTrigger, pieza, soloVisible } from './core';
 import { ola } from './liquido';
 import { odometro } from './cifras';
 import { llenar } from './llenar';
-import { iniciarEstudio } from './estudio';
+import { iniciarEstudio, type ControlEstudio } from './estudio';
+import { iniciarSala, type ControlSala } from './sala';
+import { iniciarPaseo } from './paseo';
 
 gsap.registerPlugin(SplitText);
 
@@ -382,9 +384,16 @@ export function iniciarInicio() {
     hero(h);
     escenaHero(h);
     olasVivas(h);
-    const estudio = h.querySelector<HTMLElement>('[data-estudio]');
-    if (estudio) iniciarEstudio(estudio);
   }
+  // Estudio pixel del hero, sala de la actividad y el paseo que los une.
+  let ctrlEstudio: ControlEstudio | null = null;
+  let ctrlSala: ControlSala | null = null;
+  const estudio = document.querySelector<HTMLElement>('[data-estudio]');
+  if (estudio) iniciarEstudio(estudio, (c) => (ctrlEstudio = c));
+  const sala = document.querySelector<HTMLElement>('[data-sala]');
+  if (sala) iniciarSala(sala, (c) => (ctrlSala = c));
+  const paseo = document.querySelector<HTMLAnchorElement>('[data-paseo]');
+  if (paseo) iniciarPaseo(paseo, () => ctrlEstudio, () => ctrlSala);
   const r = document.querySelector<HTMLElement>('[data-resultados]');
   if (r) resultados(r);
   document.querySelectorAll<HTMLElement>('main section:not([data-hero]) .resaltado').forEach((r) => dosis(r, 'asomar'));

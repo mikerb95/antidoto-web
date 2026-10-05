@@ -5,6 +5,8 @@ import { STAND, lerpPose } from '../src/lib/pixel/avatar';
 import { Timeline, act, wait } from '../src/lib/pixel/actor';
 import { Iso } from '../src/lib/pixel/iso';
 import { Estudio, PUNTOS } from '../src/lib/pixel/escenas/estudio';
+import { Sala, RONDAS } from '../src/lib/pixel/escenas/sala';
+import { enRuta, scrollFinal, type Ruta } from '../src/lib/pixel/paseo';
 import { posters } from '../scripts/posters.mts';
 
 describe('PixelBuffer', () => {
@@ -86,6 +88,91 @@ describe('Estudio', () => {
     new Estudio().render(a);
     new Estudio().render(b);
     expect(a.data).toEqual(b.data);
+  });
+});
+
+describe('Sala', () => {
+  it('en cada ronda votan los otros cuatro', () => {
+    for (const r of RONDAS) expect(r.votos).toHaveLength(4);
+  });
+
+  it('sin llegada no hay facilitador ni juego; al llegar corre el guion completo', () => {
+    const dichas: string[] = [];
+    const s = new Sala({ di: (_q, l) => dichas.push(l) });
+    for (let k = 0; k < 90; k++) s.update(1 / 30);
+    expect(dichas).toEqual([]);
+    s.llegar(true);
+    for (let k = 0; k < 30 * 120 && !dichas.includes('cierra'); k++) s.update(1 / 30);
+    expect(dichas).toEqual(['abre', 'frases-0', 'vota', 'revela-0', 'frases-1', 'vota', 'revela-1', 'cierra']);
+  });
+
+  it('si ya entró por la puerta, el del paseo toma su lugar sin reiniciar el juego', () => {
+    const dichas: string[] = [];
+    const s = new Sala({ di: (_q, l) => dichas.push(l) });
+    s.llegar(false);
+    for (let k = 0; k < 30 * 16; k++) s.update(1 / 30);
+    const antes = dichas.length;
+    s.llegar(true);
+    for (let k = 0; k < 30 * 60 && !dichas.includes('cierra'); k++) s.update(1 / 30);
+    expect(antes).toBeGreaterThan(0);
+    expect(dichas.filter((l) => l === 'abre')).toHaveLength(1);
+  });
+
+  it('el punto de llegada del paseo queda dentro del lienzo', () => {
+    const p = new Sala().llegada();
+    expect(p.x).toBeGreaterThan(0);
+    expect(p.x).toBeLessThan(640);
+    expect(p.y).toBeLessThan(312);
+  });
+});
+
+describe('Ruta del paseo', () => {
+  const r: Ruta = {
+    desde: { x: 1000, y: 700 },
+    hasta: { x: 900, y: 4200 },
+    scrollDesde: 0,
+    scrollHasta: 3600,
+    ancho: 1440,
+    escalaDesde: 1.7,
+    escalaHasta: 2,
+  };
+
+  it('empieza y termina exactamente en los pies de salida y de llegada', () => {
+    expect(enRuta(r, 0).pies).toEqual(r.desde);
+    expect(enRuta(r, 1).pies).toEqual(r.hasta);
+    expect(enRuta(r, 1).scroll).toBe(3600);
+    expect(enRuta(r, 1).escala).toBe(2);
+  });
+
+  it('salta, abre, baja meciéndose y aterriza, sin salirse de la ventana', () => {
+    const fases: string[] = [];
+    for (let u = 0; u <= 1; u += 0.01) {
+      const p = enRuta(r, u);
+      if (fases.at(-1) !== p.fase) fases.push(p.fase);
+      expect(p.pies.x).toBeGreaterThanOrEqual(40);
+      expect(p.pies.x).toBeLessThanOrEqual(1440 - 40);
+      expect(Math.abs(p.angulo)).toBeLessThanOrEqual(9);
+    }
+    expect(fases).toEqual(['salto', 'abre', 'baja', 'aterriza']);
+    expect(enRuta(r, 0).apertura).toBe(0);
+    expect(enRuta(r, 0.5).apertura).toBe(1);
+    expect(enRuta(r, 1).angulo).toBeCloseTo(0);
+  });
+
+  it('en pantalla el personaje no se escapa por arriba ni por abajo', () => {
+    for (let u = 0.1; u <= 0.9; u += 0.05) {
+      const p = enRuta(r, u);
+      const enPantalla = p.pies.y - p.scroll;
+      expect(enPantalla).toBeGreaterThan(500);
+      expect(enPantalla).toBeLessThan(800);
+    }
+  });
+
+  it('scrollFinal encuadra la sala', () => {
+    // Sala en 5000, lienzo hasta 5900, llegada en 5800, ventana de 900: el lienzo entero a la vista.
+    expect(scrollFinal({ llegadaY: 5800, abajo: 5900, arriba: 5000, alto: 900, maximo: 20000 })).toBe(5024);
+    expect(scrollFinal({ llegadaY: 500, abajo: 600, arriba: 0, alto: 900, maximo: 10000 })).toBe(0);
+    expect(scrollFinal({ llegadaY: 20000, abajo: 20100, arriba: 19000, alto: 900, maximo: 10000 })).toBe(10000);
   });
 });
 

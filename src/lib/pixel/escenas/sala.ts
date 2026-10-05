@@ -147,7 +147,16 @@ export class Sala {
 
   /** Llega el facilitador (desde el paseo, en el borde; o por la puerta) y arranca el juego. */
   llegar(desdeElPaseo: boolean) {
-    if (this.presente) return;
+    if (this.presente) {
+      // Ya había entrado por la puerta: el que baja con el paseo toma su lugar (no hay dos).
+      if (!desdeElPaseo) return;
+      const f = this.gente[0];
+      const d = this.llegada();
+      f.tl.clear();
+      Object.assign(f.a, { x: d.x, y: d.y, facing: -1, walking: false, pose: STAND });
+      this.irA(0, CASA[0].i, CASA[0].j, CASA[0].mira);
+      return;
+    }
     this.presente = true;
     const f = this.gente[0];
     const d = desdeElPaseo ? this.llegada() : arte.iso.P(PUERTA.i, PUERTA.j);
