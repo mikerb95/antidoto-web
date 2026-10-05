@@ -137,6 +137,20 @@
   @keyframes boton-ola { to { transform: translateX(-24px); } }
 
   /* Dato que falta del cliente: caja punteada visible con el texto entre corchetes. */
+  /* Burbuja de chat de las escenas pixel (estudio del hero y sala de la actividad), sobre la cabeza
+     del que habla. El script la mueve con --x y --y y corre --cola para que la punta siga apuntando
+     a la cabeza si la caja se recorta contra el borde. El enlace mide 24 px a la vista y 44 al toque. */
+  .burbuja-pixel { --cola: 50%; position: absolute; left: var(--x); top: var(--y); z-index: 1; margin: 0; width: max-content; max-width: min(280px, 78%); padding: 10px 14px; border: 2px solid var(--color-ink); border-radius: 12px; background: var(--color-paper); color: var(--color-ink); font: 500 14px/1.4 var(--font-sans); translate: -50% calc(-100% - 14px); box-shadow: 0 3px 0 rgb(15 24 29 / 0.25); transform-origin: var(--cola) 100%; transition: opacity var(--t-base) var(--ease-out), scale var(--t-base) var(--ease-out); }
+  .burbuja-pixel::after { content: ''; position: absolute; left: var(--cola); bottom: -9px; width: 12px; height: 9px; translate: -50% 0; background: var(--color-ink); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  .burbuja-pixel::before { content: ''; position: absolute; left: var(--cola); bottom: -5px; z-index: 1; width: 7px; height: 5px; translate: -50% 0; background: var(--color-paper); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  .burbuja-pixel-texto { white-space: pre-line; }
+  .burbuja-pixel.oculta { opacity: 0; scale: 0.9; pointer-events: none; }
+  .burbuja-pixel :focus-visible { outline-color: var(--color-deep); }
+  .burbuja-pixel-enlace { display: inline-flex; align-items: center; min-height: 24px; padding-block: 10px; margin-block: -10px; margin-left: 4px; color: var(--color-deep); font-weight: 600; white-space: nowrap; }
+  .burbuja-pixel-enlace[hidden] { display: none; }
+  .burbuja-pixel-enlace::after { content: '→'; margin-left: 4px; }
+  @media (max-width: 900px) { .burbuja-pixel { font-size: 13px; padding: 8px 12px; } }
+
   .pendiente {
     display: flex; align-items: center; justify-content: center; text-align: center;
     padding: 22px; border-radius: 18px; border: 2px dashed var(--color-dash);

@@ -1,0 +1,73 @@
+---
+// El estudio de Antídoto en pixel art, la pieza de la derecha del hero: una ventana a un cuarto
+// del mundo pixel (motor en src/lib/pixel/) donde un facilitador recorre el guiño de cada línea y
+// habla de ella. El botón lo hace salir del recuadro y bajar con la página hasta la sala de la
+// actividad (src/lib/motion/paseo.ts).
+//
+// Sin JS o con movimiento reducido queda el PNG quieto (npm run pixel:posters) con la burbuja de
+// bienvenida, y el botón es un enlace a la sala. El lienzo animado reemplaza al PNG después de
+// `load` (src/lib/motion/estudio.ts). Las frases salen de los servicios publicables: un borrador
+// no aparece.
+import poster1x from '../../assets/pixel/estudio.png?url';
+import poster2x from '../../assets/pixel/estudio@2x.png?url';
+import { Estudio, PUNTOS } from '../../lib/pixel/escenas/estudio';
+import { obtenerServicios, servicioPath } from '../../data/servicios';
+import { t, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const e = t(locale).inicio.estudio;
+const frasesPorClave = e.frases as Record<string, string>;
+const frases = (await obtenerServicios())
+  .filter((sv) => frasesPorClave[sv.id] && PUNTOS[sv.id])
+  .map((sv) => ({ clave: sv.id, texto: frasesPorClave[sv.id], href: servicioPath(sv, locale) }));
+const guion = { hola: e.hola, frases, cierre: e.cierre };
+
+// La burbuja del PNG quieto apunta a la cabeza del facilitador en ese mismo cuadro.
+const escena = new Estudio();
+escena.update(0.5);
+const cabeza = escena.speaker();
+const x = (cabeza.x / escena.width) * 100;
+const y = (cabeza.y / escena.height) * 100;
+---
+<div class="estudio" data-estudio>
+  <figure class="ventana" data-estudio-ventana data-guion={JSON.stringify(guion)}>
+    <picture>
+      <source media="(min-width: 901px)" srcset={poster1x} />
+      <img class="poster" src={poster2x} alt={e.label} width="300" height="240" decoding="async" data-estudio-poster />
+    </picture>
+    <canvas class="lienzo" hidden aria-hidden="true" data-estudio-lienzo></canvas>
+    <p class="burbuja-pixel" style={`--x: ${x}%; --y: ${y}%`} data-burbuja>
+      <span class="burbuja-pixel-texto" data-burbuja-texto>{e.hola}</span>
+      <a class="burbuja-pixel-enlace" hidden data-burbuja-enlace>{e.verLinea}</a>
+    </p>
+    <figcaption class="sr">
+      {e.dice}:
+      <ul>
+        <li>{e.hola}</li>
+        {frases.map((f) => <li>{f.texto}</li>)}
+        <li>{e.cierre}</li>
+      </ul>
+    </figcaption>
+  </figure>
+  <a class="boton boton-cian paseo" href="#sala" data-paseo>
+    {e.boton}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M6 13l6 6 6-6"></path></svg>
+  </a>
+</div>
+
+<style>
+  .estudio { width: 100%; max-width: 560px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  /* El cuarto flota sobre la escena del hero, sin marco, como las salas de Habbo. La sombra sigue
+     la silueta del cuarto (drop-shadow lee la transparencia del lienzo) y lo despega del fondo. */
+  .ventana { position: relative; margin: 0; width: 100%; aspect-ratio: 300 / 240; }
+  .poster, .lienzo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 6px rgb(0 0 0 / 0.35)) drop-shadow(0 26px 34px rgb(0 0 0 / 0.5)); }
+  .poster { image-rendering: auto; }
+  @media (min-width: 901px) { .poster { image-rendering: pixelated; } }
+  .lienzo[hidden] { display: none; }
+
+  .paseo svg { width: 18px; height: 18px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+</style>

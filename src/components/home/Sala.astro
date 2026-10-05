@@ -1,0 +1,94 @@
+---
+// Sala de la actividad, a ancho completo: así se ve una actividad virtual cuando una empresa la
+// contrata. Un equipo juega "dos verdades y una mentira" con el facilitador de Antídoto, que llega
+// desde el estudio del hero (el paseo, src/lib/motion/paseo.ts) o entra por la puerta si nadie tocó
+// el botón. Motor y escena en src/lib/pixel/escenas/sala.ts; guion de burbujas en
+// src/lib/motion/sala.ts.
+//
+// Sin JS o con movimiento reducido queda el PNG quieto de la revelación con su burbuja. En celular
+// el lienzo es más ancho que la pantalla y se ve la franja del medio, donde pasa el juego.
+import poster from '../../assets/pixel/sala@2x.png?url';
+import { Sala } from '../../lib/pixel/escenas/sala';
+import { t, rutas, type Locale } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const s = t(locale);
+const h = s.inicio.sala;
+const lineas = h.lineas as Record<string, string>;
+
+const escena = new Sala();
+const quieto = escena.cuadroQuieto();
+const cabeza = escena.cabeza(quieto.quien);
+const x = (cabeza.x / escena.width) * 100;
+const y = (cabeza.y / escena.height) * 100;
+---
+<section id="sala" class="sala" aria-labelledby="sala-t" data-sala>
+  <div class="wrap cab">
+    <div class="texto">
+      <p class="etiqueta">{h.etiqueta}</p>
+      <h2 id="sala-t" class="titulo-seccion" tabindex="-1">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
+    </div>
+    <div class="texto">
+      <p class="lead">{h.lead}</p>
+      <p class="juego">{h.juego}</p>
+      <a class="boton boton-cian" href={`${rutas.contacto[locale]}?servicio=formaciones&oferta=equipos`} data-magnetico>{h.cotizar}</a>
+    </div>
+  </div>
+
+  <figure class="escenario" data-sala-ventana data-lineas={JSON.stringify(lineas)}>
+    <div class="lienzos" style={`--x: ${x}%; --y: ${y}%`}>
+      <img class="poster" src={poster} alt={h.label} width="1280" height="624" loading="lazy" decoding="async" data-sala-poster />
+      <canvas class="lienzo" hidden aria-hidden="true" data-sala-lienzo></canvas>
+      <p class="burbuja-pixel" data-burbuja><span class="burbuja-pixel-texto" data-burbuja-texto>{lineas[quieto.linea]}</span></p>
+    </div>
+    <figcaption class="sr">
+      {h.dice}:
+      <ul>
+        {Object.values(lineas).map((l) => <li>{l}</li>)}
+      </ul>
+    </figcaption>
+    <button class="pausa" type="button" hidden aria-pressed="false" aria-label={s.pause} title={s.pause} data-sala-pausa data-pausar={s.pause} data-reanudar={s.resume}>
+      <svg class="i-pausa" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="6" width="3.2" height="12" rx="1"></rect><rect x="13.8" y="6" width="3.2" height="12" rx="1"></rect></svg>
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"></path></svg>
+    </button>
+  </figure>
+</section>
+
+<style>
+  .sala { position: relative; background: var(--color-paper); padding-block: 96px 40px; overflow: hidden; }
+  .cab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px 56px; align-items: end; }
+  .texto { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+  .etiqueta { margin: 0; font: 500 13px/1.3 var(--font-mono); letter-spacing: 0.04em; color: var(--color-deep); }
+  h2 { margin: 0; }
+  h2:focus { outline: none; }
+  .lead { margin: 0; font-size: 18px; color: var(--color-slate); }
+  .juego { margin: 0; font-size: 15px; color: var(--color-slate); }
+
+  /* El lienzo mide 2x en escritorio (pixel exacto) y en celular es más ancho que la pantalla:
+     se centra y se recorta a los lados. La burbuja vive dentro del mismo marco. */
+  .escenario { position: relative; margin: 24px 0 0; overflow-x: clip; }
+  .lienzos { position: relative; width: min(1280px, max(100%, 170vw)); aspect-ratio: 640 / 312; left: 50%; translate: -50% 0; }
+  .poster, .lienzo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: auto; filter: drop-shadow(0 4px 4px rgb(15 24 29 / 0.16)) drop-shadow(0 22px 30px rgb(15 24 29 / 0.2)); }
+  @media (min-width: 1100px) { .poster { image-rendering: pixelated; } }
+  .lienzo[hidden] { display: none; }
+  .burbuja-pixel { max-width: min(300px, 40%); }
+
+  .pausa { position: absolute; right: 16px; bottom: 0; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--color-ink); opacity: 0.65; cursor: pointer; transition: opacity var(--t-fast) var(--ease-out); }
+  .pausa:hover, .pausa:focus-visible { opacity: 1; }
+  .pausa svg { width: 18px; height: 18px; fill: currentColor; }
+  .pausa .i-play, .pausa[aria-pressed='true'] .i-pausa { display: none; }
+  .pausa[aria-pressed='true'] .i-play { display: block; }
+  .pausa[hidden] { display: none; }
+  @media (prefers-reduced-motion: reduce) { .pausa { display: none; } }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  @media (max-width: 900px) {
+    .sala { padding-block: 64px 24px; }
+    .cab { grid-template-columns: minmax(0, 1fr); }
+    .lead { font-size: 17px; }
+    .burbuja-pixel { max-width: min(260px, 70vw); }
+  }
+</style>

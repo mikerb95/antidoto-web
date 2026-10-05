@@ -10,6 +10,7 @@ import { gsap, ScrollTrigger, pieza, soloVisible } from './core';
 import { ola } from './liquido';
 import { odometro } from './cifras';
 import { llenar } from './llenar';
+import { iniciarEstudio } from './estudio';
 
 gsap.registerPlugin(SplitText);
 
@@ -57,14 +58,14 @@ function dosis(res: HTMLElement, cuando: 'asomar' | number) {
 }
 
 /**
- * Hero: el titular sube palabra a palabra y su resaltado recibe la dosis; la trivia entra
+ * Hero: el titular sube palabra a palabra y su resaltado recibe la dosis; el estudio pixel entra
  * llenándose de líquido y la franja de la fundadora sube desde abajo.
  */
 function hero(seccion: HTMLElement) {
   const h1 = seccion.querySelector<HTMLElement>('h1');
   const res = h1?.querySelector<HTMLElement>('.resaltado');
   const resto = seccion.querySelectorAll<HTMLElement>('[data-hero-entra]');
-  const juego = seccion.querySelector<HTMLElement>('[data-hero-juego] .pantalla');
+  const juego = seccion.querySelector<HTMLElement>('[data-hero-juego] [data-estudio-ventana]');
   const franja = seccion.querySelector<HTMLElement>('[data-hero-franja]');
   let split: SplitText | null = null;
   pieza(
@@ -381,6 +382,8 @@ export function iniciarInicio() {
     hero(h);
     escenaHero(h);
     olasVivas(h);
+    const estudio = h.querySelector<HTMLElement>('[data-estudio]');
+    if (estudio) iniciarEstudio(estudio);
   }
   const r = document.querySelector<HTMLElement>('[data-resultados]');
   if (r) resultados(r);

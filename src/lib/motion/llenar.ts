@@ -1,5 +1,5 @@
 // Llenado de líquido: el gesto común de la home. Anima solo clip-path con el borde de ola de
-// liquido.ts. Lo usan las piezas de inicio.ts y la trivia.
+// liquido.ts. Lo usan las piezas de inicio.ts.
 import { gsap } from './core';
 import { ola } from './liquido';
 

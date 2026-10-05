@@ -3,7 +3,7 @@
 // cliente cuando exista (VIDEO, abajo) y mientras tanto una secuencia de fotos reales que se
 // acercan despacio y se relevan con la ola de líquido. Encima, un degradado que oscurece solo la
 // zona del texto (NN/g: contraste donde va el texto, no un velo sobre todo). A la izquierda el
-// titular con un solo botón; a la derecha la trivia jugable. Abajo, la franja cian con la
+// titular con un solo botón; a la derecha el estudio de Antídoto en pixel art (Estudio.astro). Abajo, la franja cian con la
 // fundadora y oleaje que sigue al cursor; deja asomar la sección siguiente.
 //
 // La escena es un bucle: tiene pausa y se detiene fuera de pantalla (src/lib/motion/inicio.ts).
@@ -11,7 +11,7 @@
 // la página; las demás y el video se piden después de `load`.
 import { Image, getImage } from 'astro:assets';
 import Olas from './Olas.astro';
-import Trivia from './Trivia.astro';
+import Estudio from './Estudio.astro';
 import bandera from '../../assets/fotos/formacion-bandera.jpg';
 import grabacion from '../../assets/fotos/grabacion.jpg';
 import catering from '../../assets/fotos/catering-buffet.jpg';
@@ -75,11 +75,10 @@ const resto = await Promise.all(
           {h.cotizar}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
         </a>
-        <p class="pruebalo">{h.pruebalo}</p>
       </div>
     </div>
     <div class="juego" data-hero-juego>
-      <Trivia locale={locale} />
+      <Estudio locale={locale} />
     </div>
   </div>
 
@@ -126,10 +125,6 @@ const resto = await Promise.all(
   h1 .resaltado { padding: 0 0.22em; text-shadow: none; }
   .lead { margin: 0; max-width: 34em; color: var(--color-fg-soft); font-size: 19px; }
   .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
-  .pruebalo { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--color-glow); }
-  /* La flecha apunta a la trivia: a la derecha en escritorio, abajo cuando la rejilla se apila. */
-  .pruebalo::after { content: '→'; display: inline-block; animation: senalar 1.6s var(--ease-in-out) 3; }
-  @keyframes senalar { 50% { transform: translateX(5px); } }
   .hero :focus-visible { outline-color: var(--color-antidote); }
 
   .juego { display: flex; justify-content: center; }
@@ -164,8 +159,6 @@ const resto = await Promise.all(
     .velo { background: linear-gradient(180deg, rgb(15 24 29 / 0.82) 0%, rgb(15 24 29 / 0.7) 50%, rgb(15 24 29 / 0.55) 100%); }
     .franja-in { padding-bottom: 30px; }
     .borde { height: 18px; }
-    .pruebalo::after { content: '↓'; animation-name: senalar-abajo; }
-    @keyframes senalar-abajo { 50% { transform: translateY(4px); } }
     .pausa { top: 12px; bottom: auto; }
   }
 </style>
