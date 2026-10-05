@@ -2,10 +2,8 @@
 // Layout de todas las páginas. Sitio multipágina: cada navegación carga un documento
 // nuevo y el paso lo animan las view transitions nativas declaradas en global.css.
 import '../styles/global.css';
-import Ambiente from '../components/Ambiente.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import BarraWhatsapp from '../components/BarraWhatsapp.astro';
 import Motion from '../components/Motion.astro';
 import Asesor from '../components/Asesor.astro';
 import { t, otroIdioma, type Locale, type Pagina } from '../i18n/ui';
@@ -19,7 +17,7 @@ interface Props {
   description: string;
   /** Rutas equivalentes en cada idioma, para hreflang y el selector de idioma. */
   alternates: Record<Locale, string>;
-  /** Mensaje de WhatsApp del botón flotante (por defecto, el general). */
+  /** Mensaje de WhatsApp de la burbuja de contacto (por defecto, el general). */
   waMessage?: string;
   jsonLd?: Record<string, unknown>;
   noindex?: boolean;
@@ -27,22 +25,19 @@ interface Props {
   sinCanonical?: boolean;
   /** Scroll suave (Lenis) en páginas de marketing; las de lectura conservan el nativo. */
   scroll?: 'suave' | 'nativo';
-  /** Claro: la home rediseñada, sin el fondo con brillos ni la barra de WhatsApp. */
-  tema?: 'oscuro' | 'claro';
   /** Formulario de novedades en el pie. Por defecto, en todas menos la home, que tiene su sección. */
   novedadesPie?: boolean;
   /** Sin referente al salir (páginas con un token en la URL). */
   sinReferente?: boolean;
 }
-const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, sinCanonical = false, scroll = 'nativo', tema = 'oscuro', novedadesPie = pagina !== 'inicio', sinReferente = false } = Astro.props;
-const claro = tema === 'claro';
+const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, sinCanonical = false, scroll = 'nativo', novedadesPie = pagina !== 'inicio', sinReferente = false } = Astro.props;
 const s = t(locale);
 const canonical = new URL(alternates[locale], SITE.url).href;
 const ogImage = new URL('/og/antidoto-og.jpg', SITE.url).href;
 const otro = otroIdioma(locale);
 ---
 <!doctype html>
-<html lang={s.htmlLang} data-tema={tema}>
+<html lang={s.htmlLang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -91,14 +86,12 @@ const otro = otroIdioma(locale);
   </head>
   <body data-scroll={scroll}>
     <a class="skip" href="#main">{s.skip}</a>
-    {!claro && <Ambiente lado={pagina === 'nosotros' || pagina === 'contacto' ? 'izquierda' : 'derecha'} />}
     <Nav locale={locale} alternateHref={alternates[otro]} pagina={pagina} />
     <main id="main">
       <slot />
     </main>
     <Footer locale={locale} novedades={novedadesPie} />
-    {!claro && <BarraWhatsapp locale={locale} message={waMessage} />}
-    {!noindex && <Asesor locale={locale} pagina={pagina} />}
+    {!noindex && <Asesor locale={locale} pagina={pagina} mensaje={waMessage} />}
     <Motion />
   </body>
 </html>

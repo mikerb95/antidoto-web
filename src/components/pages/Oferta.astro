@@ -59,11 +59,10 @@ const perfiles = s.inicio.paraQuien.perfiles;
   alternates={{ es: ofertaPath(linea, oferta, 'es'), en: ofertaPath(linea, oferta, 'en') }}
   waMessage={msg}
   jsonLd={jsonLd}
-  tema="claro"
   scroll="suave"
 >
   <CabeceraPagina locale={locale} migas={migas} kicker={lineaTxt.title} titulo={txt.title} lead={txt.lead} imagen={linea.image} alt={lineaTxt.alt} vt={`oferta-${oferta.id}-title`}>
-    <a class="boton boton-cian boton-grande" href={`${rutas.contacto[locale]}?servicio=${linea.id}`} data-magnetico>{p.oferta.cotizarEsta}</a>
+    <a class="boton boton-cian boton-grande" href={`${rutas.contacto[locale]}?servicio=${linea.id}&oferta=${oferta.id}`} data-magnetico>{p.oferta.cotizarEsta}</a>
     <a class="boton boton-borde boton-grande" href={waLink(msg)} target="_blank" rel="noopener"><WhatsappIcon />WhatsApp</a>
     {txt.para.length > 0 && (
       <p class="para" slot="pie"><span>{p.oferta.para}:</span>{txt.para.map((x) => <span class="chip">{x}</span>)}</p>
@@ -133,7 +132,7 @@ const perfiles = s.inicio.paraQuien.perfiles;
     </section>
   )}
 
-  <BloqueCta locale={locale} servicio={linea.id} mensaje={msg} />
+  <BloqueCta locale={locale} servicio={linea.id} oferta={oferta.id} mensaje={msg} />
 </Base>
 
 <style>

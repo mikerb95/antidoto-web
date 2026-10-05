@@ -42,7 +42,6 @@ const jsonLd = grafo(listaSchema(title, ruta, articulos.map((a) => [a[locale].ti
   description={seoD}
   alternates={categoria ? { es: categoriaPath(categoria, 'es'), en: categoriaPath(categoria, 'en') } : rutas.blog}
   jsonLd={jsonLd}
-  tema="claro"
 >
   <CabeceraPagina locale={locale} migas={migas} kicker={nombreCat} titulo={p.blog.titulo} lead={p.blog.lead}>
     {categorias.length > 1 && (

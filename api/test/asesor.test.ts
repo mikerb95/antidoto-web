@@ -43,6 +43,14 @@ describe('prompt y conocimiento', () => {
     expect(extraerCifras(c)).toEqual([]);
     expect(conocimiento('en')).toContain('Experiential training');
   });
+  test('el conocimiento trae las ofertas, las soluciones y la FAQ completa, con sus páginas', () => {
+    const c = conocimiento('es');
+    expect(c).toContain('/servicios/produccion-audiovisual/planes-de-emergencia/');
+    expect(c).toContain('/soluciones/sst-y-hseq/');
+    expect(c).toContain('/preguntas-frecuentes/');
+    expect(c).toContain('¿Trabajan solo con empresas?');
+    expect(conocimiento('en')).toContain('/en/solutions/health-and-safety/');
+  });
   test('las claves de los servicios son las que valida la base', () => {
     expect([...CLAVES].sort()).toEqual([...SERVICIOS].sort());
   });

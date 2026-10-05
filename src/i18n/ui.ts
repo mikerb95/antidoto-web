@@ -201,9 +201,10 @@ export const ui = {
       anterior: 'Atrás',
       enviar: 'Enviar por WhatsApp',
       resumenLead: 'Revisa el mensaje. Al enviarlo se abre WhatsApp con el texto listo.',
-      mensaje: (d: { servicio: string; fecha: string; personas: string; ciudad: string; tipo: string }) =>
+      mensaje: (d: { servicio: string; oferta?: string; fecha: string; personas: string; ciudad: string; tipo: string }) =>
         [
           `Hola Antídoto, quiero cotizar ${enFrase(d.servicio)}.`,
+          d.oferta && `Oferta: ${d.oferta}.`,
           d.tipo && `Organización: ${d.tipo}.`,
           d.fecha && `Fecha aproximada: ${d.fecha}.`,
           d.personas && `Personas: ${d.personas}.`,
@@ -261,6 +262,7 @@ export const ui = {
       title: 'Novedades por correo | Antídoto',
       description: 'Los correos de novedades de Antídoto: ideas, contenidos y propuestas para formar, cuidar y celebrar equipos.',
       titulo: 'Novedades de Antídoto',
+      miga: 'Novedades',
       lead: 'Lo que hemos enviado por correo. Léelo aquí o recíbelo en tu bandeja de entrada.',
       anteriores: 'Correos anteriores',
       cargando: 'Cargando correos',
@@ -488,13 +490,6 @@ export const ui = {
       },
       faq: {
         titulo: ['Preguntas ', 'frecuentes'],
-        items: [
-          ['¿En qué ciudades prestan el servicio?', 'Atendemos eventos en todo el país. [SEDE Y CIUDADES PRINCIPALES]'],
-          ['¿Las formaciones pueden ser virtuales?', 'Sí. Las actividades digitales funcionan en sala, en campo o por videollamada.'],
-          ['¿En qué idiomas trabajan?', 'Español, portugués e inglés.'],
-          ['¿Cuánto tarda la entrega de un video de inducción?', '[TIEMPO DE ENTREGA]'],
-          ['¿Cuál es el pedido mínimo de catering?', '[PEDIDO MÍNIMO]'],
-        ],
       },
       novedades: {
         titulo: ['Ideas para tu equipo, ', 'en tu correo'],
@@ -654,9 +649,10 @@ export const ui = {
       anterior: 'Back',
       enviar: 'Send on WhatsApp',
       resumenLead: 'Check the message. Sending it opens WhatsApp with the text ready.',
-      mensaje: (d: { servicio: string; fecha: string; personas: string; ciudad: string; tipo: string }) =>
+      mensaje: (d: { servicio: string; oferta?: string; fecha: string; personas: string; ciudad: string; tipo: string }) =>
         [
           `Hi Antídoto, I would like a quote for ${enFrase(d.servicio)}.`,
+          d.oferta && `Offer: ${d.oferta}.`,
           d.tipo && `Organization: ${d.tipo}.`,
           d.fecha && `Approximate date: ${d.fecha}.`,
           d.personas && `People: ${d.personas}.`,
@@ -713,6 +709,7 @@ export const ui = {
       title: 'News by email | Antídoto',
       description: 'News emails from Antídoto: ideas, content and offers to train, care for and celebrate teams.',
       titulo: 'News from Antídoto',
+      miga: 'News',
       lead: 'What we have sent by email. Read it here or get it in your inbox.',
       anteriores: 'Past emails',
       cargando: 'Loading emails',
@@ -938,13 +935,6 @@ export const ui = {
       },
       faq: {
         titulo: ['Frequently asked ', 'questions'],
-        items: [
-          ['Which cities do you work in?', 'We serve events across the country. [MAIN OFFICE AND MAIN CITIES]'],
-          ['Can the training be virtual?', 'Yes. The digital activities work in a room, in the field or on a video call.'],
-          ['Which languages do you work in?', 'Spanish, Portuguese and English.'],
-          ['How long does an onboarding video take to deliver?', '[DELIVERY TIME]'],
-          ['What is the minimum catering order?', '[MINIMUM ORDER]'],
-        ],
       },
       novedades: {
         titulo: ['Ideas for your team, ', 'in your inbox'],

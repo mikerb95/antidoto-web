@@ -28,7 +28,7 @@ const textos = {
   invalido: p.invalido,
 };
 ---
-<Base locale={locale} pagina={null} title={p.title} description={p.description} alternates={rutaPreferencias} tema="claro" novedadesPie={false} noindex sinReferente>
+<Base locale={locale} pagina={null} title={p.title} description={p.description} alternates={rutaPreferencias} novedadesPie={false} noindex sinReferente>
   <section class="pref" aria-labelledby="pref-titulo">
     <div class="caja" data-preferencias data-api={api} data-textos={JSON.stringify(textos)} data-pausa={JSON.stringify(p.pausaHasta('{}'))}>
       <h1 id="pref-titulo" class="titulo-seccion" tabindex="-1" data-titulo>{p.inicio[0]}</h1>
@@ -161,7 +161,7 @@ const textos = {
   .pref { background: var(--color-paper); }
   .caja { max-width: 680px; margin: 0 auto; padding: 72px 24px 88px; display: flex; flex-direction: column; gap: 20px; }
   @media (max-width: 600px) { .caja { padding: 40px 16px 64px; } }
-  .lead { margin: 0; color: var(--color-slate); font-size: 18px; }
+  .lead { margin: 0; color: var(--color-slate); font-size: 18px; max-width: 34em; }
   [hidden] { display: none !important; }
   .accion { margin: 0; }
   .enlace { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-ink); font-weight: 600; text-underline-offset: 3px; }

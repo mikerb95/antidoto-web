@@ -28,7 +28,7 @@ const migas: Array<[string, string]> = [
   [titulo, alternates[locale]],
 ];
 ---
-<Base locale={locale} pagina={pagina} title={title} description={description} alternates={alternates} noindex tema="claro">
+<Base locale={locale} pagina={pagina} title={title} description={description} alternates={alternates} noindex>
   <CabeceraPagina locale={locale} migas={migas} titulo={titulo} lead={lead}>
     <p class="aviso" role="note" slot="pie"><span>{p.legal.borrador}</span>{aviso}</p>
   </CabeceraPagina>

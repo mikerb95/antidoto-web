@@ -8,7 +8,7 @@ Revisión pendiente tras actualizar `src/data/docs/`.
 - [x] ~~Marcar RF-28 y RF-30 como parciales~~: ya no hace falta, las páginas existen.
 - [x] Reflejar en el kanban y en los requisitos el sitio multipágina: K-34 hecho, RF-01, RF-05, RF-11 (parcial: faltan casos) y RF-47 actualizados. RF-48 sigue parcial por las respuestas pendientes.
 - [ ] Activar el asesor en producción: secret `ANTHROPIC_API_KEY` y prueba con la API real (preguntas trampa de la receta `chat-ia`). Cubre RF-39 y HU-30.
-- [ ] Medir de nuevo el rendimiento (LCP y JS inicial) con el hero actual, el asesor y las secciones nuevas. Cubre RNF-01 a RNF-03.
+- [x] Medir de nuevo el rendimiento (LCP y JS inicial) con el hero actual, el asesor y las secciones nuevas (05/10/2026, cifras en CLAUDE.md, dentro del presupuesto). Falta confirmarlo con PageSpeed Insights sobre la URL publicada. Cubre RNF-01 a RNF-03.
 - [ ] Auditoría de accesibilidad formal posterior al rediseño. Cubre RNF-06.
 - [ ] Pasar la CSP de Report-Only a enforcement tras revisar la consola. Cubre RNF-12.
 - [ ] Decidir con el dueño si `/docs/` debe seguir desplegándose con el sitio público o quedarse solo en desarrollo.
@@ -19,14 +19,14 @@ El sitio ya tiene páginas e índices reales: líneas y ofertas, soluciones por 
 
 ### Técnico
 
-- [ ] Migas de pan en `/novedades/` y `/en/news/`: son las únicas dos páginas que no pasan `npm run verificar`. Al corregirlas, agregar `npm run verificar` a `.github/workflows/ci.yml` después del build.
-- [ ] El asesor (`api/src/asesor/conocimiento.ts`) lee las preguntas de `ui.inicio.faq.items`, pero el sitio ya las toma de `src/data/faq.ts`. Pasar el asesor a `faq.ts` y borrar `inicio.faq` de `ui.ts` para no tener dos fuentes. De paso, que el asesor conozca las ofertas y las soluciones y enlace a sus páginas.
-- [ ] Decidir la barra inferior de WhatsApp en móvil (RF-07). Ahora que todas las páginas usan `tema="claro"`, `BarraWhatsapp` ya no aparece en ninguna. O se activa en las internas (cuidando que no choque con el botón del asesor) o se borra y se ajusta RF-07.
-- [ ] Limpiar el diseño oscuro que quedó sin uso: `Ambiente`, `BarraWhatsapp` (según lo anterior), `tema="oscuro"` en `Base.astro` y las clases `.panel`, `.btn`, `.eyebrow` y `.mono` de `global.css` que ya nadie use. El bloque de movimiento reducido de `global.css` repite reglas de `.resaltado`, `.boton` y `.pendiente`: revisar.
-- [ ] Cotizador: hoy acepta `?servicio=`. Sumar `?oferta=` para que el mensaje de WhatsApp nombre la oferta desde la que llegó la persona.
+- [x] Migas de pan en `/novedades/` y `/en/news/` (05/10/2026). `npm run verificar` ya corre en el CI después del build.
+- [x] El asesor lee las preguntas de `src/data/faq.ts` (se borró `inicio.faq.items` de `ui.ts`) y conoce las ofertas y las soluciones, con enlace a sus páginas (05/10/2026). Hay que redesplegar el Worker para que lo use.
+- [x] Barra inferior de WhatsApp: borrada por decisión del dueño (05/10/2026). La burbuja recibe el mensaje de cada página y, sin la API, queda solo con WhatsApp. RF-07 ajustado. Antes: Ahora que todas las páginas usan `tema="claro"`, `BarraWhatsapp` ya no aparece en ninguna. O se activa en las internas (cuidando que no choque con el botón del asesor) o se borra y se ajusta RF-07.
+- [x] (05/10/2026, comparado con capturas antes y después) Limpiar el diseño oscuro que quedó sin uso: `Ambiente`, `BarraWhatsapp` (según lo anterior), `tema="oscuro"` en `Base.astro` y las clases `.panel`, `.btn`, `.eyebrow` y `.mono` de `global.css` que ya nadie use. El bloque de movimiento reducido de `global.css` repite reglas de `.resaltado`, `.boton` y `.pendiente`: revisar.
+- [x] (05/10/2026) Cotizador: hoy acepta `?servicio=`. Sumar `?oferta=` para que el mensaje de WhatsApp nombre la oferta desde la que llegó la persona.
 - [ ] Analítica sin cookies (Plausible o Cloudflare Web Analytics) con eventos de clic a WhatsApp, envío del cotizador y uso del asesor. Al activarla, completar la sección "Medición" de `/cookies/`.
-- [ ] Prueba de accesibilidad del mega menú con lector de pantalla (NVDA y VoiceOver) y solo con teclado: Tab, Esc y el foco al cerrar. También capturas con movimiento reducido de las páginas nuevas. Hasta ahora solo se verificó con capturas en 1440 y 390 px.
-- [ ] Medir el JS inicial y el LCP de las páginas nuevas (línea, oferta, solución) contra el presupuesto. Solo se sumó el script de la nav, pero no se midió con las importaciones dinámicas.
+- [ ] Prueba de accesibilidad del mega menú con lector de pantalla (NVDA y VoiceOver). La de solo teclado ya se hizo (05/10/2026): en escritorio, Tab, Enter, Esc y el foco al cerrar funcionan; en móvil, el Tab después de abrir Menú salía del panel y se corrigió poniendo el botón antes del panel en el DOM. También capturas con movimiento reducido de las páginas nuevas. Hasta ahora solo se verificó con capturas en 1440 y 390 px.
+- [x] (05/10/2026: 68,6 KB gzip y LCP de 0,7 a 1,7 s) Medir el JS inicial y el LCP de las páginas nuevas (línea, oferta, solución) contra el presupuesto. Solo se sumó el script de la nav, pero no se midió con las importaciones dinámicas.
 - [ ] Cuando haya varios casos o artículos: filtros como páginas propias en el portafolio (hoy son anclas) y búsqueda estática con Pagefind para el blog.
 - [ ] Imagen OG por tipo de página (línea, oferta, caso, artículo). Hoy todas comparten `og/antidoto-og.jpg`.
 - [ ] Los avisos de colección vacía de `casos` y `blog` en el build desaparecen con el primer caso o artículo. No son errores.

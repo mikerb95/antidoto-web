@@ -10,14 +10,17 @@ interface Props {
   locale: Locale;
   /** Clave del servicio para preseleccionarlo en el cotizador. */
   servicio?: string;
+  /** Clave de la oferta, para que el mensaje del cotizador la nombre. */
+  oferta?: string;
   /** Mensaje de WhatsApp (por defecto el general). */
   mensaje?: string;
   titulo?: string;
   lead?: string;
 }
-const { locale, servicio, mensaje, titulo, lead } = Astro.props;
+const { locale, servicio, oferta, mensaje, titulo, lead } = Astro.props;
 const p = tp(locale);
-const cotizador = `${rutas.contacto[locale]}${servicio ? `?servicio=${encodeURIComponent(servicio)}` : ''}`;
+const query = new URLSearchParams({ ...(servicio && { servicio }), ...(oferta && { oferta }) }).toString();
+const cotizador = `${rutas.contacto[locale]}${query ? `?${query}` : ''}`;
 ---
 <section class="bloque-cta" aria-labelledby="cta-pagina-t">
   <div class="wrap">

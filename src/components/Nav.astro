@@ -77,6 +77,11 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
   <div class="barra wrap">
     <a href={home} class="home" aria-label={s.homeLabel}><Logo class="logo" /></a>
     <div class="derecha">
+      <!-- Antes del panel en el DOM: al abrirlo, el siguiente Tab entra a los enlaces. A la vista
+           queda a la derecha de Cotizar (order). -->
+      <button class="menu" type="button" aria-expanded="false" aria-controls="nav-links" hidden data-menu>
+        <span class="rayas" aria-hidden="true"><i></i><i></i></span>{s.menuBoton}
+      </button>
       <nav aria-label={s.menuLabel} class="links" id="nav-links" data-links>
         <ul class="lista">
           {items.map((it) => (
@@ -127,9 +132,6 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
         </a>
       </nav>
       <a class="boton boton-cian cotizar" href={rutas.contacto[locale]}>{s.navQuote}</a>
-      <button class="menu" type="button" aria-expanded="false" aria-controls="nav-links" hidden data-menu>
-        <span class="rayas" aria-hidden="true"><i></i><i></i></span>{s.menuBoton}
-      </button>
     </div>
   </div>
 </header>
@@ -296,7 +298,7 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
     .sub-todos { margin-top: 4px; }
     .idioma { min-height: 52px; font-size: 15px; }
 
-    .nav.con-menu .menu { display: inline-flex; }
+    .nav.con-menu .menu { display: inline-flex; order: 1; }
     .nav.con-menu .links { position: absolute; left: 0; right: 0; top: 100%; width: auto; max-height: calc(100svh - 80px); overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 16px; background: var(--color-paper); border-bottom: 1px solid var(--color-line-soft); box-shadow: 0 20px 40px rgb(15 24 29 / 0.1); clip-path: inset(0 0 100% 0); visibility: hidden; transition: clip-path var(--t-base) var(--ease-out), visibility 0s linear var(--t-base); }
     .nav.con-menu.abierto .links { clip-path: inset(0 0 -40px 0); visibility: visible; transition: clip-path var(--t-base) var(--ease-out), visibility 0s; }
   }

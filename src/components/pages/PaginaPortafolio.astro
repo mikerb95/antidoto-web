@@ -30,7 +30,7 @@ const jsonLd = grafo(
   migasSchema(migas),
 );
 ---
-<Base locale={locale} pagina="portafolio" title={title} description={description} alternates={rutas.portafolio} jsonLd={jsonLd} tema="claro" scroll="suave">
+<Base locale={locale} pagina="portafolio" title={title} description={description} alternates={rutas.portafolio} jsonLd={jsonLd} scroll="suave">
   <CabeceraPagina locale={locale} migas={migas} titulo={p.portafolio.titulo} lead={p.portafolio.lead}>
     {grupos.length > 1 && (
       <nav class="filtro" aria-label={s.nav.servicios}>

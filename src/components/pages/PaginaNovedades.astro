@@ -4,8 +4,11 @@
 // correo se lee en su versión web, que vive en la API (es el mismo "Ver en el navegador").
 // Sin PUBLIC_API_URL no hay archivo ni formulario: la página queda con noindex.
 import Base from '../../layouts/Base.astro';
+import CabeceraPagina from '../CabeceraPagina.astro';
 import Novedades from '../home/Novedades.astro';
-import { t, rutaNovedades, type Locale } from '../../i18n/ui';
+import { t, rutas, rutaNovedades, type Locale } from '../../i18n/ui';
+import { tp } from '../../i18n/paginas';
+import { grafo, migasSchema } from '../../data/schema';
 
 interface Props {
   locale: Locale;
@@ -14,14 +17,13 @@ const { locale } = Astro.props;
 const s = t(locale);
 const p = s.novedadesPagina;
 const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+const migas: Array<[string, string]> = [
+  [tp(locale).inicio, rutas.inicio[locale]],
+  [p.miga, rutaNovedades[locale]],
+];
 ---
-<Base locale={locale} pagina={null} title={p.title} description={p.description} alternates={rutaNovedades} tema="claro" novedadesPie={false} noindex={!api}>
-  <section class="cabeza" aria-labelledby="novedades-titulo">
-    <div class="interior">
-      <h1 id="novedades-titulo" class="titulo-seccion">{p.titulo}</h1>
-      <p class="lead">{p.lead}</p>
-    </div>
-  </section>
+<Base locale={locale} pagina={null} title={p.title} description={p.description} alternates={rutaNovedades} jsonLd={grafo(migasSchema(migas))} novedadesPie={false} noindex={!api}>
+  <CabeceraPagina locale={locale} migas={migas} titulo={p.titulo} lead={p.lead} />
 
   {api && (
     <section class="archivo" aria-labelledby="archivo-t">
@@ -77,12 +79,9 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 </script>
 
 <style>
-  .cabeza { background: var(--color-paper); }
   .interior { max-width: 860px; margin: 0 auto; padding: 64px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
   @media (max-width: 600px) { .interior { padding-inline: 16px; padding-top: 40px; } }
-  .lead { margin: 0; color: var(--color-slate); font-size: 18px; max-width: 36em; }
   .archivo { background: var(--color-paper); }
-  .archivo .interior { padding-top: 0; }
   .sub { margin: 16px 0 0; font: 600 20px/1.3 var(--font-sans); }
   .estado { margin: 0; color: var(--color-slate); }
   .estado:empty { display: none; }

@@ -1,6 +1,7 @@
-// Empaqueta lo que publica el sitio sobre los servicios (src/content/servicios/*.md) y los
-// nombres de los clientes (src/data/clientes.ts) en un módulo que el asesor lee. Así el asesor
-// dice lo mismo que la página: si cambia un Markdown, cambia lo que sabe, sin tocar el prompt.
+// Empaqueta lo que publica el sitio sobre los servicios y sus ofertas (src/content/servicios/ y
+// src/content/ofertas/), las soluciones por área, las preguntas frecuentes y los nombres de los
+// clientes en un módulo que el asesor lee. Así el asesor dice lo mismo que la página: si cambia
+// un Markdown, cambia lo que sabe, sin tocar el prompt.
 // Corre antes de dev, deploy, check y test; el archivo generado no se versiona.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 
@@ -58,6 +59,27 @@ const servicios = claves
   .sort((a, b) => a.orden - b.orden)
   .map(({ orden: _, ...s }) => s);
 
+// Ofertas de cada línea (src/content/ofertas/<linea>/<clave>.<idioma>.md), con la misma regla:
+// un borrador en cualquier idioma, o una línea que no se publica, la saca.
+const dirOfertas = new URL('src/content/ofertas/', raiz);
+const entradasOfertas = readdirSync(dirOfertas, { recursive: true })
+  .filter((f) => f.endsWith('.md'))
+  .map((f) => leerFrontmatter(readFileSync(new URL(f, dirOfertas), 'utf8')));
+const lineas = new Set(servicios.map((s) => s.clave));
+const ofertas = [...new Set(entradasOfertas.map((e) => e.clave))]
+  .map((clave) => {
+    const es = entradasOfertas.find((e) => e.clave === clave && e.idioma === 'es');
+    const en = entradasOfertas.find((e) => e.clave === clave && e.idioma === 'en');
+    if (!es || !en || es.borrador || en.borrador || !lineas.has(es.linea)) return null;
+    const texto = (e) => ({ titulo: e.title, slug: e.slug, resumen: e.lead, para: e.para ?? [] });
+    return { clave, linea: es.linea, orden: es.orden ?? 99, es: texto(es), en: texto(en) };
+  })
+  .filter(Boolean)
+  .sort((a, b) => a.orden - b.orden)
+  .map(({ orden: _, ...o }) => o);
+for (const sv of servicios) sv.ofertas = ofertas.filter((o) => o.linea === sv.clave).map(({ linea: _, ...o }) => o);
+const ofertasPublicas = new Set(ofertas.map((o) => o.clave));
+
 const fuenteClientes = readFileSync(new URL('src/data/clientes.ts', raiz), 'utf8');
 const clientes = [...fuenteClientes.matchAll(/^\s*\['[\w-]+', '([^']+)', '\w+'\],?$/gm)].map((m) => m[1]);
 if (!clientes.length) throw new Error('No se encontraron clientes en src/data/clientes.ts');
@@ -70,15 +92,33 @@ const { ui, rutas } = await import(new URL('src/i18n/ui.ts', raiz).href);
 const { SITE } = await import(new URL('src/data/site.ts', raiz).href);
 const contacto = { url: SITE.url, phoneDisplay: SITE.phoneDisplay, email: SITE.email };
 
-const salida = `// Generado por scripts/empaquetar-conocimiento.mjs desde src/content/servicios/, src/data/clientes.ts,
-// src/i18n/ui.ts y src/data/site.ts. No editar.
+// Preguntas frecuentes (src/data/faq.ts, las mismas de /preguntas-frecuentes/): sin las del tema
+// de una línea que no se publica.
+const { FAQ } = await import(new URL('src/data/faq.ts', raiz).href);
+const temasLinea = new Set(entradas.map((e) => e.clave));
+const faq = FAQ.filter((p) => !temasLinea.has(p.tema) || lineas.has(p.tema)).map(({ tema, es, en }) => ({ tema, es, en }));
+
+// Soluciones por área (src/data/soluciones.ts): título y descripción de ui.inicio.paraQuien,
+// como en su página, y solo las ofertas publicadas.
+const { SOLUCIONES, solucionesBase } = await import(new URL('src/data/soluciones.ts', raiz).href);
+const soluciones = SOLUCIONES.map((sol) => ({
+  clave: sol.clave,
+  perfil: sol.perfil,
+  slug: sol.slug,
+  ofertas: sol.ofertas.filter((o) => ofertasPublicas.has(o)),
+}));
+
+const salida = `// Generado por scripts/empaquetar-conocimiento.mjs desde src/content/servicios/, src/content/ofertas/,
+// src/data/clientes.ts, src/data/faq.ts, src/data/soluciones.ts, src/i18n/ui.ts y src/data/site.ts. No editar.
 import type { ui as Ui, rutas as Rutas } from '../../../src/i18n/ui';
 
 export const SERVICIOS_PUBLICOS = ${JSON.stringify(servicios, null, 2)} as const;
 export const CLIENTES_PUBLICOS: readonly string[] = ${JSON.stringify(clientes)};
 /** Textos de ui.ts sin sus funciones (JSON): el asesor solo lee datos. */
 export const UI = ${JSON.stringify(ui)} as unknown as typeof Ui;
-export const RUTAS = ${JSON.stringify({ servicios: rutas.servicios, contacto: rutas.contacto })} as Pick<typeof Rutas, 'servicios' | 'contacto'>;
+export const RUTAS = ${JSON.stringify({ servicios: rutas.servicios, contacto: rutas.contacto, faq: rutas.faq, soluciones: solucionesBase })} as Pick<typeof Rutas, 'servicios' | 'contacto' | 'faq'> & { soluciones: Record<'es' | 'en', string> };
+export const FAQ_PUBLICA: readonly { tema: string; es: readonly [string, string]; en: readonly [string, string] }[] = ${JSON.stringify(faq)};
+export const SOLUCIONES_PUBLICAS: readonly { clave: string; perfil: number; slug: Record<'es' | 'en', string>; ofertas: readonly string[] }[] = ${JSON.stringify(soluciones)};
 export const SITE = ${JSON.stringify(contacto)} as const;
 `;
 writeFileSync(new URL('../src/asesor/publico.gen.ts', import.meta.url), salida);

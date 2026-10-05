@@ -31,7 +31,7 @@ const migas: Array<[string, string]> = [
   [s.nav.comoTrabajamos, rutas.comoTrabajamos[locale]],
 ];
 ---
-<Base locale={locale} pagina="comoTrabajamos" title={title} description={description} alternates={rutas.comoTrabajamos} jsonLd={grafo(migasSchema(migas))} tema="claro" scroll="suave">
+<Base locale={locale} pagina="comoTrabajamos" title={title} description={description} alternates={rutas.comoTrabajamos} jsonLd={grafo(migasSchema(migas))} scroll="suave">
   <CabeceraPagina locale={locale} migas={migas} titulo={p.como.titulo} lead={p.como.lead}>
     <a class="boton boton-cian boton-grande" href={rutas.contacto[locale]} data-magnetico>{h.empezar}</a>
   </CabeceraPagina>

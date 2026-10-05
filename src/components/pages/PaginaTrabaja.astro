@@ -23,7 +23,7 @@ const migas: Array<[string, string]> = [
   [s.nav.trabaja, rutas.trabaja[locale]],
 ];
 ---
-<Base locale={locale} pagina="trabaja" title={title} description={description} alternates={rutas.trabaja} jsonLd={grafo(migasSchema(migas))} tema="claro" waMessage={h.aliadosWa}>
+<Base locale={locale} pagina="trabaja" title={title} description={description} alternates={rutas.trabaja} jsonLd={grafo(migasSchema(migas))} waMessage={h.aliadosWa}>
   <CabeceraPagina locale={locale} migas={migas} titulo={h.titulo} lead={h.lead} />
 
   <section class="bloque" aria-label={s.nav.trabaja}>

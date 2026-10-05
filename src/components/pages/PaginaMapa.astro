@@ -19,7 +19,7 @@ const migas: Array<[string, string]> = [
   [s.nav.mapa, rutas.mapa[locale]],
 ];
 ---
-<Base locale={locale} pagina="mapa" title={title} description={description} alternates={rutas.mapa} jsonLd={grafo(migasSchema(migas))} tema="claro">
+<Base locale={locale} pagina="mapa" title={title} description={description} alternates={rutas.mapa} jsonLd={grafo(migasSchema(migas))}>
   <CabeceraPagina locale={locale} migas={migas} titulo={p.mapa.titulo} lead={p.mapa.lead} />
   <div class="bloque"><div class="wrap"><IndiceSitio locale={locale} /></div></div>
 </Base>

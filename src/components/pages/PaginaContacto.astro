@@ -5,6 +5,7 @@ import { tp } from '../../i18n/paginas';
 import { grafo, migasSchema } from '../../data/schema';
 import WhatsappIcon from '../WhatsappIcon.astro';
 import { obtenerServicios } from '../../data/servicios';
+import { obtenerOfertas } from '../../data/contenido';
 import { t, rutas, rutaPolitica, type Locale } from '../../i18n/ui';
 import { SITE, waLink } from '../../data/site';
 import { CONSENTIMIENTO, CONSENTIMIENTO_VERSION, NOVEDADES, NOVEDADES_VERSION } from '../../data/consentimiento';
@@ -15,6 +16,8 @@ interface Props {
 const { locale } = Astro.props;
 const s = t(locale);
 const SERVICIOS = await obtenerServicios();
+// Ofertas publicadas por clave, para nombrar en el mensaje la que trae ?oferta=.
+const ofertas = Object.fromEntries((await obtenerOfertas()).map((o) => [o.id, { linea: o.linea, titulo: o[locale].title }]));
 const c = s.cot;
 const [title, description] = s.seo.contacto;
 const migas: Array<[string, string]> = [
@@ -33,7 +36,7 @@ const canales = [
   { k: s.canales.linkedin, v: 'Antídoto Colombia', href: SITE.linkedin, externo: true },
 ];
 ---
-<Base locale={locale} pagina="contacto" title={title} description={description} alternates={rutas.contacto} jsonLd={grafo(migasSchema(migas))} tema="claro">
+<Base locale={locale} pagina="contacto" title={title} description={description} alternates={rutas.contacto} jsonLd={grafo(migasSchema(migas))}>
   <CabeceraPagina locale={locale} migas={migas} titulo={s.contactoTitle} lead={s.contactoLead} />
   <section class="bloque" aria-label={s.contactoKicker}>
     <div class="wrap">
@@ -41,7 +44,7 @@ const canales = [
       <div class="bento">
         <!-- El cotizador necesita JS para armar el mensaje: el script lo muestra. Sin JS
              quedan visibles los canales directos. -->
-        <form class="cotizador caja" hidden data-cotizador data-wa={SITE.whatsapp} data-api={api || undefined} novalidate aria-labelledby="cot-title">
+        <form class="cotizador caja" hidden data-cotizador data-wa={SITE.whatsapp} data-api={api || undefined} data-ofertas={JSON.stringify(ofertas)} novalidate aria-labelledby="cot-title">
           <div class="cot-top">
             <p class="mono mono-acento" id="cot-title">{c.titulo}</p>
             <p class="mono" aria-live="polite" data-paso-texto>{c.paso(1, pasos.length)}</p>
@@ -180,8 +183,14 @@ const canales = [
       const [a, m] = v.split('-').map(Number);
       return new Intl.DateTimeFormat(document.documentElement.lang, { month: 'long', year: 'numeric' }).format(new Date(a, m - 1, 1));
     };
+    // ?oferta=<clave> (desde la página de una oferta): se nombra en el mensaje mientras siga
+    // elegida su línea.
+    const ofertas: Record<string, { linea: string; titulo: string }> = JSON.parse(form.dataset.ofertas ?? '{}');
+    const params = new URLSearchParams(location.search);
+    const ofertaPedida = ofertas[params.get('oferta') ?? ''];
+    const oferta = () => (ofertaPedida && elegido()?.value === ofertaPedida.linea ? ofertaPedida.titulo : '');
     const mensaje = () => {
-      const base = c.mensaje({ servicio: elegido()?.dataset.titulo ?? '', tipo: valor('tipo'), fecha: fechaLegible(valor('fecha')), personas: valor('personas'), ciudad: valor('ciudad') });
+      const base = c.mensaje({ servicio: elegido()?.dataset.titulo ?? '', oferta: oferta(), tipo: valor('tipo'), fecha: fechaLegible(valor('fecha')), personas: valor('personas'), ciudad: valor('ciudad') });
       if (!valor('nombre')) return base;
       const [primera, ...resto] = base.split('\n');
       return [primera, c.presentacion(valor('nombre'), valor('empresa')), ...resto].join('\n');
@@ -269,8 +278,9 @@ const canales = [
       if (errorContacto) errorContacto.hidden = true;
     });
     form.addEventListener('submit', (e) => e.preventDefault());
-    // ?servicio=<clave> (desde el chat con IA) deja el servicio elegido.
-    const pedido = new URLSearchParams(location.search).get('servicio');
+    // ?servicio=<clave> (desde el chat con IA o una página de servicio) deja el servicio elegido;
+    // con solo ?oferta=, el de su línea.
+    const pedido = params.get('servicio') ?? ofertaPedida?.linea;
     const opcion = [...form.querySelectorAll<HTMLInputElement>('input[name="servicio"]')].find((i) => i.value === pedido);
     if (opcion) opcion.checked = true;
     form.hidden = false;

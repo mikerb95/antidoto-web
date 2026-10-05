@@ -53,11 +53,8 @@
   --t-slow: 480ms;
   --t-narrative: 1000ms;
   --nav-h: 0px;
-  color-scheme: dark;
+  color-scheme: light;
 }
-
-/* Tema claro (home). El resto del sitio sigue oscuro hasta su rediseño. */
-:root[data-tema='claro'] { color-scheme: light; }
 
 /* Navegación entre páginas: view transitions nativas entre documentos (sin router SPA).
    Cada página se carga de verdad y el navegador anima el paso: la nueva sube como
@@ -73,29 +70,24 @@
 }
 
 @layer base {
-  html { scroll-padding-top: calc(var(--nav-h) + 16px); background: var(--color-ink-deep); }
+  html { scroll-padding-top: calc(var(--nav-h) + 16px); background: var(--color-paper); }
   body {
     background: transparent;
     min-height: 100svh;
-    color: var(--color-fg);
+    color: var(--color-ink);
     font-family: var(--font-sans);
-    font-size: 16px;
+    font-size: 17px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.01em; text-wrap: balance; }
-  :focus-visible { outline: 2px solid var(--color-antidote); outline-offset: 3px; border-radius: 6px; }
   /* Sobre blanco el cian no da 3:1: el foco usa el azul profundo. */
-  :root[data-tema='claro'] { background: var(--color-paper); }
-  :root[data-tema='claro'] body { color: var(--color-ink); font-size: 17px; }
-  :root[data-tema='claro'] :focus-visible { outline-color: var(--color-deep); }
+  :focus-visible { outline: 2px solid var(--color-deep); outline-offset: 3px; border-radius: 6px; }
 }
 
 @layer components {
   .wrap { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
   @media (max-width: 600px) { .wrap { padding-inline: 16px; } }
-
-  .eyebrow { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-glow); }
 
   /* Palabra de acento con degradado de la marca. Global a propósito: SplitText crea las
      palabras en tiempo de ejecución y el recorte del degradado no llega a hijos transformados,
@@ -104,42 +96,7 @@
 
   /* Etiqueta pequeña en mayúsculas (Poppins). */
   .mono { font: 600 11px/1.3 var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-fg-muted); }
-  /* Mono solo para el oficio audiovisual: timecode, REC, fichas del visor (brief §3). */
-  .oficio { font: 500 11px/1.3 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; }
   .mono-acento { color: var(--color-antidote); }
-  @keyframes latido { 50% { opacity: 0.35; } }
-
-  /* Tarjeta glass: vidrio de laboratorio sobre el fondo con brillos. */
-  .panel {
-    position: relative; border-radius: 18px;
-    background: linear-gradient(180deg, rgb(128 220 255 / 0.06), rgb(128 220 255 / 0.015));
-    border: 1px solid rgb(128 220 255 / 0.1);
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-  }
-  .panel-fuerte { background: rgb(10 17 21 / 0.82); }
-  a.panel { text-decoration: none; transition: border-color var(--t-base) var(--ease-out), transform var(--t-base) var(--ease-out); }
-  a.panel:hover { border-color: rgb(59 200 243 / 0.4); }
-
-  /* Secciones más compactas que antes: el aire lo da la rejilla, no el vacío. */
-  .seccion { padding-block: 72px; position: relative; }
-  @media (max-width: 760px) { .seccion { padding-block: 56px; } }
-  .lead { font-size: clamp(17px, 1.2vw + 10px, 20px); color: var(--color-fg-muted); max-width: 34em; }
-
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-    min-height: 48px; padding: 0 22px; border-radius: 999px;
-    font: 600 15px/1 var(--font-sans); text-decoration: none; cursor: pointer;
-    border: 1.5px solid transparent; position: relative; overflow: hidden; isolation: isolate;
-  }
-  .btn svg { width: 18px; height: 18px; flex: none; }
-  .btn-inner { display: inline-flex; align-items: center; gap: 10px; }
-  .btn-primary { background: var(--color-antidote); color: var(--color-ink); }
-  .btn-primary::before { background: var(--color-glow); }
-  .btn-ghost { border-color: rgb(237 242 241 / 0.28); color: var(--color-fg); transition: border-color var(--t-base) var(--ease-out); }
-  .btn-ghost:hover { border-color: var(--color-antidote); }
-  .btn-sm { min-height: 44px; padding: 0 18px; font-size: 14px; }
-
   /* Home claro: palabra resaltada con fondo cian (el cian solo lleva texto tinta). */
   .resaltado { position: relative; background: var(--color-antidote); color: var(--color-ink); padding: 0 0.25em; border-radius: 8px; white-space: nowrap; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
   /* Dosis (src/lib/motion/inicio.ts): mientras el líquido sube, el resaltado queda sin fondo y
@@ -168,7 +125,7 @@
      La máscara recorta la cresta (periodo de 24 px) y la capa mide un periodo de más: correrla
      24 px a la izquierda deja la ola calzada consigo misma. `translate` lleva la subida y
      `transform` el oleaje, que solo corre mientras el puntero está encima. */
-  .boton::before, .btn-primary::before {
+  .boton::before {
     content: ''; position: absolute; top: 0; bottom: 0; left: 0; right: -24px; z-index: -1;
     mask:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 6'%3E%3Cpath d='M0 3Q6 0 12 3T24 3V6H0Z'/%3E%3C/svg%3E") 0 0 / 24px 6px repeat-x,
@@ -176,7 +133,7 @@
     translate: 0 101%; transition: translate var(--t-base) var(--ease-out);
     animation: boton-ola 1.2s linear infinite paused;
   }
-  .boton:hover::before, .btn-primary:hover::before { translate: none; animation-play-state: running; }
+  .boton:hover::before { translate: none; animation-play-state: running; }
   @keyframes boton-ola { to { transform: translateX(-24px); } }
 
   /* Dato que falta del cliente: caja punteada visible con el texto entre corchetes. */
@@ -213,13 +170,6 @@
      El ancho es el del cero, el dígito más ancho de Modulus: ninguna cifra se recorta al rodar. */
   .odo-col { display: inline-block; height: 1.1em; overflow: hidden; vertical-align: top; }
   .odo-tira { display: block; width: 1ch; word-break: break-all; line-height: 1.1em; text-align: center; }
-
-  .pause-btn {
-    display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px;
-    background: none; border: 1px solid var(--color-line); color: var(--color-fg-muted);
-    font: 500 13px/1 var(--font-sans); cursor: pointer;
-  }
-  .pause-btn:hover { color: var(--color-fg); border-color: var(--color-antidote); }
 }
 
 /* Movimiento reducido: sin bucles ni desplazamientos, fundidos casi instantáneos. */
@@ -231,42 +181,6 @@
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
   }
-  /* Home claro: palabra resaltada con fondo cian (el cian solo lleva texto tinta). */
-  .resaltado { position: relative; background: var(--color-antidote); color: var(--color-ink); padding: 0 0.25em; border-radius: 8px; white-space: nowrap; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
-  /* Dosis (src/lib/motion/inicio.ts): mientras el líquido sube, el resaltado queda sin fondo y
-     una copia en tinta sobre cian lo llena. line-height normal: la copia calza con la caja en línea. */
-  .resaltado.dosis-pendiente { background: transparent; color: inherit; }
-  .dosis-lleno { position: absolute; inset: 0; display: block; padding: inherit; border-radius: inherit; background: var(--color-antidote); color: var(--color-ink); line-height: normal; white-space: nowrap; pointer-events: none; }
-
-  .titulo-seccion { margin: 0; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.15; text-wrap: wrap; }
-  .cab-seccion { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
-  .cab-seccion p { margin: 0; color: var(--color-slate); max-width: 560px; }
-
-  /* Botones del diseño claro: esquinas de 10 a 12 px, no píldora. */
-  .boton {
-    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-    min-height: 48px; padding: 0 20px; border-radius: 10px; border: 1.5px solid transparent;
-    font: 600 15px/1.2 var(--font-sans); text-decoration: none; cursor: pointer;
-    position: relative; isolation: isolate; overflow: hidden;
-  }
-  .boton svg { width: 18px; height: 18px; flex: none; }
-  .boton-grande { min-height: 54px; padding: 0 28px; border-radius: 12px; font-size: 17px; }
-  .boton-cian { background: var(--color-antidote); color: var(--color-ink); }
-  .boton-tinta { background: var(--color-ink); color: var(--color-paper); }
-  .boton-borde { border-color: currentColor; color: inherit; }
-  /* Hover: una capa más clara sube desde abajo (solo transform). */
-  .boton::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; background: rgb(255 255 255 / 0.22);
-    transform: translateY(101%); transition: transform var(--t-base) var(--ease-out);
-  }
-  .boton:hover::before { transform: none; }
-
-  /* Dato que falta del cliente: caja punteada visible con el texto entre corchetes. */
-  .pendiente {
-    display: flex; align-items: center; justify-content: center; text-align: center;
-    padding: 22px; border-radius: 18px; border: 2px dashed var(--color-dash);
-    color: var(--color-slate); font-size: 15px; font-weight: 500; line-height: 1.45;
-  }
-
-  .pause-btn { display: none; }
+  /* El oleaje del hover no corre: la capa sube sin ola. */
+  .boton::before { animation: none; }
 }

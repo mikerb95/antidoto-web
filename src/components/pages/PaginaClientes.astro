@@ -23,7 +23,7 @@ const migas: Array<[string, string]> = [
   [s.nav.clientes, rutas.clientes[locale]],
 ];
 ---
-<Base locale={locale} pagina="clientes" title={title} description={description} alternates={rutas.clientes} jsonLd={grafo(migasSchema(migas))} tema="claro" scroll="suave">
+<Base locale={locale} pagina="clientes" title={title} description={description} alternates={rutas.clientes} jsonLd={grafo(migasSchema(migas))} scroll="suave">
   <CabeceraPagina locale={locale} migas={migas} titulo={s.clientsTitle} lead={s.clientsLead}>
     <p class="total" slot="pie"><strong>{CLIENTES.length}</strong> {s.marcas(CLIENTES.length).replace(/^\d+\s/, '')}</p>
   </CabeceraPagina>

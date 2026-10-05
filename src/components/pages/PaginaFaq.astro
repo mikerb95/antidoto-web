@@ -29,7 +29,7 @@ const migas: Array<[string, string]> = [
 const jsonLd = grafo(faqSchema(grupos.flatMap((g) => g.items)), migasSchema(migas));
 const [otraT, otraD] = p.faq.otra;
 ---
-<Base locale={locale} pagina="faq" title={title} description={description} alternates={rutas.faq} jsonLd={jsonLd} tema="claro">
+<Base locale={locale} pagina="faq" title={title} description={description} alternates={rutas.faq} jsonLd={jsonLd}>
   <CabeceraPagina locale={locale} migas={migas} titulo={p.faq.titulo} lead={p.faq.lead}>
     <nav class="temas" aria-label={p.faq.indice}>
       {grupos.map((g) => <a href={`#tema-${g.tema}`}>{g.nombre}</a>)}

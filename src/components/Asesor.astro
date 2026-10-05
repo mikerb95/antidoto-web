@@ -1,7 +1,8 @@
 ---
 // Chat con IA: resuelve dudas de los servicios y deja listo el mensaje de WhatsApp para el
 // equipo, que es quien confirma todo. Solo existe si el build trae PUBLIC_API_URL; la API decide
-// si responde (clave y tope de gasto del día) y, si no, el chat ofrece solo WhatsApp.
+// si responde (clave y tope de gasto del día) y, si no, el chat ofrece solo WhatsApp. Sin la
+// variable queda la burbuja de WhatsApp sola, un enlace sin JS.
 // Lógica pura en src/lib/asesor.ts; la API en api/src/asesor/.
 import { t, rutas, type Locale, type Pagina } from '../i18n/ui';
 import { SITE, waLink } from '../data/site';
@@ -10,9 +11,12 @@ import { obtenerServicios, servicioPath } from '../data/servicios';
 interface Props {
   locale: Locale;
   pagina: Pagina | null;
+  /** Mensaje de WhatsApp propio de la página (por defecto, el general). */
+  mensaje?: string;
 }
-const { locale, pagina } = Astro.props;
+const { locale, pagina, mensaje } = Astro.props;
 const a = t(locale).asesor;
+const wa = waLink(mensaje ?? t(locale).waDefault);
 const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
 // Ruta de cada página de servicio -> su clave, para que "¿cuánto para 30?" se entienda.
 const servicios = Object.fromEntries((await obtenerServicios()).map((s) => [servicioPath(s, locale), s.id]));
@@ -32,6 +36,7 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
     data-pagina={pagina ?? ''}
     data-servicios={JSON.stringify(servicios)}
     data-wa={SITE.whatsapp}
+    data-mensaje={mensaje ?? t(locale).waDefault}
     data-cotizador={rutas.contacto[locale]}
   >
     <!-- Burbuja doble, como la de codebymike.net (pedido de Mike, 03/10/2026): el verde y el logo
@@ -47,7 +52,7 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
     </button>
 
     <div class="menu" id="asesor-menu" hidden data-menu>
-      <a class="opcion opcion-wa" href={waLink(t(locale).waDefault)} target="_blank" rel="noopener" data-opcion-wa>
+      <a class="opcion opcion-wa" href={wa} target="_blank" rel="noopener" data-opcion-wa>
         <span class="opcion-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d={WA_GLOBO} /><path d={WA_TELEFONO} /></svg></span>
         <span class="opcion-texto"><span class="opcion-t">{a.opcionWhatsapp}</span><span class="opcion-n">{a.opcionWhatsappNota}</span></span>
       </a>
@@ -90,9 +95,17 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
 
       <p class="pie">
         <span>{a.aviso}</span>
-        <a href={waLink(t(locale).waDefault)} target="_blank" rel="noopener">{a.soloWhatsapp}</a>
+        <a href={wa} target="_blank" rel="noopener">{a.soloWhatsapp}</a>
       </p>
     </section>
+  </div>
+)}
+{!api && (
+  <div class="asesor">
+    <a class="fab fab-solo" href={wa} target="_blank" rel="noopener" aria-label={a.opcionWhatsapp}>
+      <svg class="fab-wa" viewBox="0 0 24 24" aria-hidden="true"><path d={WA_GLOBO} /><path d={WA_TELEFONO} /></svg>
+      <span class="fab-etiqueta">{a.etiqueta}</span>
+    </a>
   </div>
 )}
 
@@ -187,7 +200,7 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
     function aviso(texto: string) {
       const li = pintar({ rol: 'asesor', texto });
       li.classList.add('aviso-msg');
-      li.append(boton(enlaceWhatsapp(d.wa!, ui[locale].waDefault), a.soloWhatsapp, true));
+      li.append(boton(enlaceWhatsapp(d.wa!, d.mensaje!), a.soloWhatsapp, true));
       bajar();
     }
 
@@ -336,16 +349,13 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
 </script>
 
 <style>
-  /* El botón queda abajo a la derecha; el menú y el chat cuelgan encima de él. */
+  /* El botón queda abajo a la derecha; el menú y el chat cuelgan encima de él. Con
+     view-transition-name propio queda quieto al pasar de página, como la nav. */
   .asesor {
     --fondo: calc(16px + env(safe-area-inset-bottom, 0px));
-    position: fixed; right: 16px; bottom: var(--fondo); z-index: 40;
+    position: fixed; right: 16px; bottom: var(--fondo); z-index: 40; view-transition-name: asesor;
     display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 12px;
     font-family: var(--font-sans);
-  }
-  /* En las páginas internas, la barra de WhatsApp ocupa el borde inferior en móvil. */
-  @media (max-width: 760px) {
-    :global(body:has(.barra-wa)) .asesor { --fondo: calc(84px + env(safe-area-inset-bottom, 0px)); }
   }
 
   .punto { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--color-antidote); flex: none; }
@@ -360,6 +370,8 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
     transition: filter var(--t-fast) ease;
   }
   .fab:hover { filter: brightness(1.08); }
+  /* Sin la IA: solo el globo de WhatsApp, centrado en un círculo de 48 px. */
+  .fab-solo { padding: 0 12px; text-decoration: none; }
   .fab:focus-visible { outline: 3px solid var(--color-whatsapp); outline-offset: 3px; }
   .fab-wa { width: 24px; height: 24px; flex: none; fill: currentColor; }
   .fab-etiqueta {
