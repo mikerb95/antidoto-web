@@ -111,18 +111,8 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
 
 <script>
   import { ui } from '../i18n/ui';
-  import {
-    CLAVE_ALMACEN,
-    MAX_PREGUNTAS,
-    cuerpoPregunta,
-    enlaceCotizador,
-    enlaceWhatsapp,
-    leerHistorial,
-    paginaDe,
-    preguntasHechas,
-    textoPlano,
-    type Mensaje,
-  } from '../lib/asesor';
+  import { enlaceCotizador, enlaceWhatsapp, paginaDe, textoPlano, type Mensaje } from '../lib/asesor';
+  import { EVENTO_ABRIR, EVENTO_HISTORIAL, disponible, guardarHistorial, leerGuardado, preguntarAsesor } from '../lib/conversacion';
 
   const raiz = document.querySelector<HTMLElement>('[data-asesor]');
   if (raiz) {
@@ -141,30 +131,10 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
     const campo = raiz.querySelector<HTMLTextAreaElement>('[data-campo]')!;
     const enviar = raiz.querySelector<HTMLButtonElement>('[data-enviar]')!;
 
-    // sessionStorage puede no existir o lanzar (modo privado, datos bloqueados): el chat sigue
-    // funcionando, solo que no recuerda la conversación al cambiar de página.
-    const leer = () => {
-      try {
-        return leerHistorial(sessionStorage.getItem(CLAVE_ALMACEN));
-      } catch {
-        return [];
-      }
-    };
-    const guardar = () => {
-      try {
-        sessionStorage.setItem(CLAVE_ALMACEN, JSON.stringify(historial));
-      } catch {}
-    };
-
-    let historial: Mensaje[] = leer();
-    let disponible: Promise<boolean> | null = null;
+    // El historial es el mismo del facilitador del mundo pixel (src/lib/conversacion.ts).
+    let historial: Mensaje[] = leerGuardado();
     let ocupado = false;
-
-    const consultar = () =>
-      (disponible ??= fetch(`${d.api}/v1/asesor`)
-        .then((r) => (r.ok ? r.json() : { disponible: false }))
-        .then((j: { disponible?: boolean }) => j.disponible === true)
-        .catch(() => false));
+    const consultar = () => disponible(d.api!);
 
     const bajar = () => (lista.scrollTop = lista.scrollHeight);
 
@@ -213,10 +183,8 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
     async function preguntar(texto: string) {
       texto = texto.trim().slice(0, 500);
       if (!texto || ocupado) return;
-      if (preguntasHechas(historial) >= MAX_PREGUNTAS) return aviso(a.limite);
       sugerencias.hidden = true;
-      const pregunta: Mensaje = { rol: 'usuario', texto };
-      pintar(pregunta);
+      pintar({ rol: 'usuario', texto });
       campo.value = '';
       ajustar();
       const escribiendo = document.createElement('li');
@@ -228,40 +196,25 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
       lista.append(escribiendo);
       bajar();
       bloquear(true);
-      try {
-        if (!(await consultar())) throw new Error('no_disponible');
-        const r = await fetch(`${d.api}/v1/asesor`, {
-          method: 'POST',
-          // text/plain: sin preflight de CORS en cada pregunta.
-          headers: { 'content-type': 'text/plain;charset=UTF-8' },
-          body: JSON.stringify(cuerpoPregunta(locale, pagina, [...historial, pregunta])),
-        });
-        const j = (await r.json().catch(() => ({}))) as {
-          ok?: boolean;
-          error?: string;
-          texto?: string;
-          whatsapp?: string | null;
-          contacto?: { servicio: string | null } | null;
-        };
-        if (!r.ok || !j.ok || !j.texto) throw new Error(j.error ?? String(r.status));
-        const respuesta: Mensaje = { rol: 'asesor', texto: j.texto, whatsapp: j.whatsapp ?? null, contacto: j.contacto ?? null };
-        historial = [...historial, pregunta, respuesta];
-        guardar();
-        escribiendo.remove();
-        pintar(respuesta);
-      } catch (e) {
-        escribiendo.remove();
-        // La pregunta sin respuesta se queda en pantalla pero no en el historial.
-        const motivo = e instanceof Error ? e.message : '';
-        if (motivo === 'no_disponible') {
-          disponible = Promise.resolve(false);
-          aviso(a.noDisponible);
-        } else aviso(motivo === 'limite' ? a.limite : a.error);
-      } finally {
-        bloquear(false);
-        bajar();
-        campo.focus({ preventScroll: true });
-      }
+      // La pregunta sin respuesta se queda en pantalla pero no en el historial.
+      const r = await preguntarAsesor({ api: d.api!, locale, pagina, texto, origen: 'panel' });
+      escribiendo.remove();
+      if (r.ok) {
+        historial = leerGuardado();
+        pintar(r.respuesta);
+      } else aviso(r.motivo === 'no_disponible' ? a.noDisponible : r.motivo === 'limite' ? a.limite : a.error);
+      bloquear(false);
+      bajar();
+      campo.focus({ preventScroll: true });
+    }
+
+    /** Repinta la conversación (la cambió el facilitador del mundo pixel). */
+    function repintar() {
+      historial = leerGuardado();
+      lista.querySelectorAll('li:not(:first-child)').forEach((li) => li.remove());
+      historial.forEach(pintar);
+      sugerencias.hidden = historial.length > 0;
+      bajar();
     }
 
     function ajustar() {
@@ -321,7 +274,7 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
     raiz.querySelector('[data-reiniciar]')!.addEventListener('click', () => {
       if (ocupado) return;
       historial = [];
-      guardar();
+      guardarHistorial([], 'panel');
       lista.querySelectorAll('li:not(:first-child)').forEach((li) => li.remove());
       sugerencias.hidden = false;
       campo.focus();
@@ -333,6 +286,10 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
       const b = (e.target as HTMLElement).closest('button');
       if (b) preguntar(b.textContent ?? '');
     });
+    addEventListener(EVENTO_HISTORIAL, (e) => {
+      if ((e as CustomEvent<{ origen: string }>).detail?.origen !== 'panel') repintar();
+    });
+    addEventListener(EVENTO_ABRIR, () => mostrar(true));
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       preguntar(campo.value);
