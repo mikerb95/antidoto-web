@@ -28,7 +28,7 @@ El sitio ya tiene páginas e índices reales: líneas y ofertas, soluciones por 
 - [ ] Prueba de accesibilidad del mega menú con lector de pantalla (NVDA y VoiceOver). La de solo teclado ya se hizo (05/10/2026): en escritorio, Tab, Enter, Esc y el foco al cerrar funcionan; en móvil, el Tab después de abrir Menú salía del panel y se corrigió poniendo el botón antes del panel en el DOM. También capturas con movimiento reducido de las páginas nuevas. Hasta ahora solo se verificó con capturas en 1440 y 390 px.
 - [x] (05/10/2026: 68,6 KB gzip y LCP de 0,7 a 1,7 s) Medir el JS inicial y el LCP de las páginas nuevas (línea, oferta, solución) contra el presupuesto. Solo se sumó el script de la nav, pero no se midió con las importaciones dinámicas.
 - [ ] Cuando haya varios casos o artículos: filtros como páginas propias en el portafolio (hoy son anclas) y búsqueda estática con Pagefind para el blog.
-- [ ] Imagen OG por tipo de página (línea, oferta, caso, artículo). Hoy todas comparten `og/antidoto-og.jpg`.
+- [x] Imagen OG propia de cada línea, oferta y solución, en los dos idiomas (05/10/2026): se generan en el build (`src/lib/og.ts`). Cuando haya casos y artículos, sumarlos en `src/pages/og/[locale]/[nombre].jpg.ts` con su foto propia.
 - [ ] Los avisos de colección vacía de `casos` y `blog` en el build desaparecen con el primer caso o artículo. No son errores.
 
 ### Para validar con el cliente (los escribí yo a partir del brief)
@@ -113,7 +113,7 @@ La solución es lanzar el rediseño. Si el lanzamiento se demora, al menos hay q
 - [ ] Más sustancia en cada página de servicio. Hoy las internas tienen entre 240 y 350 palabras. Faltan: qué incluye, para quién es, formatos, duración, casos y preguntas frecuentes del servicio. Es lo que más pesa para que Google y los chats citen a Antídoto en búsquedas como "formaciones vivenciales para empresas en Colombia".
 - [ ] Sede y ciudades. Con eso se agrega `address` al JSON-LD de la organización (`src/data/schema.ts`), se completa la respuesta de la FAQ de la home que hoy va entre corchetes y se crea el perfil de Google Business para las búsquedas locales.
 - [ ] Respuestas finales de la FAQ (`src/data/faq.ts`). El JSON-LD `FAQPage` ya existe en `/preguntas-frecuentes/` y en cada línea, y omite las respuestas que siguen entre corchetes: se completará solo al llenarlas. Google ya casi no lo muestra como resultado enriquecido, pero sí sirve para que los asistentes de IA entiendan el contenido.
-- [ ] Una imagen OG por servicio (1200 × 630). Hoy todas las páginas comparten `og/antidoto-og.jpg`. Mejora cómo se ven los enlaces en WhatsApp, LinkedIn y los chats.
+- [x] (05/10/2026, ver Técnico) Una imagen OG por servicio (1200 × 630). Antes todas las páginas compartían `og/antidoto-og.jpg`. Mejora cómo se ven los enlaces en WhatsApp, LinkedIn y los chats.
 - [ ] Opcional: un correo con el dominio propio en lugar de `antidoto.colombia@outlook.com`. Da más confianza a quien llega por primera vez.
 
 ### Decidido no hacer

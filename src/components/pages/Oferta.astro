@@ -16,6 +16,7 @@ import { preguntas, TEMAS_FAQ, type TemaFaq } from '../../data/faq';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { tp } from '../../i18n/paginas';
 import { waLink } from '../../data/site';
+import { ogRuta } from '../../lib/og-rutas';
 import { grafo, migasSchema, ofertaSchema, faqSchema } from '../../data/schema';
 
 interface Props {
@@ -59,6 +60,7 @@ const perfiles = s.inicio.paraQuien.perfiles;
   alternates={{ es: ofertaPath(linea, oferta, 'es'), en: ofertaPath(linea, oferta, 'en') }}
   waMessage={msg}
   jsonLd={jsonLd}
+  og={{ ruta: ogRuta('oferta', oferta.id, locale), alt: `${txt.title}, ${lineaTxt.title} | Antídoto` }}
   scroll="suave"
 >
   <CabeceraPagina locale={locale} migas={migas} kicker={lineaTxt.title} titulo={txt.title} lead={txt.lead} imagen={linea.image} alt={lineaTxt.alt} vt={`oferta-${oferta.id}-title`}>

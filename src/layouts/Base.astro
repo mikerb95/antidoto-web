@@ -20,6 +20,8 @@ interface Props {
   /** Mensaje de WhatsApp de la burbuja de contacto (por defecto, el general). */
   waMessage?: string;
   jsonLd?: Record<string, unknown>;
+  /** Imagen para compartir propia (src/lib/og-rutas.ts) y su texto alternativo; por defecto, la general. */
+  og?: { ruta: string; alt: string };
   noindex?: boolean;
   /** Sin URL propia (el 404 responde en cualquier ruta): sin canonical, hreflang ni og:url. */
   sinCanonical?: boolean;
@@ -30,10 +32,11 @@ interface Props {
   /** Sin referente al salir (páginas con un token en la URL). */
   sinReferente?: boolean;
 }
-const { locale, pagina, title, description, alternates, waMessage, jsonLd, noindex = false, sinCanonical = false, scroll = 'nativo', novedadesPie = pagina !== 'inicio', sinReferente = false } = Astro.props;
+const { locale, pagina, title, description, alternates, waMessage, jsonLd, og, noindex = false, sinCanonical = false, scroll = 'nativo', novedadesPie = pagina !== 'inicio', sinReferente = false } = Astro.props;
 const s = t(locale);
 const canonical = new URL(alternates[locale], SITE.url).href;
-const ogImage = new URL('/og/antidoto-og.jpg', SITE.url).href;
+const ogImage = new URL(og?.ruta ?? '/og/antidoto-og.jpg', SITE.url).href;
+const ogAlt = og?.alt ?? s.ogAlt;
 const otro = otroIdioma(locale);
 ---
 <!doctype html>
@@ -76,12 +79,12 @@ const otro = otroIdioma(locale);
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={s.ogAlt} />
+    <meta property="og:image:alt" content={ogAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
-    <meta name="twitter:image:alt" content={s.ogAlt} />
+    <meta name="twitter:image:alt" content={ogAlt} />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body data-scroll={scroll}>

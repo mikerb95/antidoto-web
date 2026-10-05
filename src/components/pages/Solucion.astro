@@ -10,6 +10,7 @@ import { obtenerOfertas, obtenerCasos, ofertaPath, casoPath } from '../../data/c
 import { SOLUCIONES, solucionPath, type Solucion } from '../../data/soluciones';
 import { CLIENTES } from '../../data/clientes';
 import { grafo, migasSchema } from '../../data/schema';
+import { ogRuta } from '../../lib/og-rutas';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { tp } from '../../i18n/paginas';
 
@@ -42,6 +43,7 @@ const migas: Array<[string, string]> = [
   description={lead}
   alternates={{ es: solucionPath(solucion, 'es'), en: solucionPath(solucion, 'en') }}
   jsonLd={grafo(migasSchema(migas))}
+  og={{ ruta: ogRuta('solucion', solucion.clave, locale), alt: `${titulo} | Antídoto` }}
   scroll="suave"
 >
   <CabeceraPagina locale={locale} migas={migas} kicker={s.nav.soluciones} titulo={titulo} lead={lead}>

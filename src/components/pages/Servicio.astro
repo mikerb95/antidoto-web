@@ -17,6 +17,7 @@ import { preguntas, TEMAS_FAQ, type TemaFaq } from '../../data/faq';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { tp } from '../../i18n/paginas';
 import { waLink } from '../../data/site';
+import { ogRuta } from '../../lib/og-rutas';
 import { grafo, migasSchema, servicioSchema, faqSchema } from '../../data/schema';
 
 interface Props {
@@ -57,6 +58,7 @@ const perfiles = s.inicio.paraQuien.perfiles;
   alternates={{ es: servicioPath(servicio, 'es'), en: servicioPath(servicio, 'en') }}
   waMessage={msg}
   jsonLd={jsonLd}
+  og={{ ruta: ogRuta('linea', servicio.id, locale), alt: `${txt.title} | Antídoto` }}
   scroll="suave"
 >
   <CabeceraPagina locale={locale} migas={migas} titulo={txt.title} lead={txt.lead} imagen={servicio.image} alt={txt.alt} vt={`servicio-${servicio.id}-title`}>
