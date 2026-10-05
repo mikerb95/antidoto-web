@@ -134,15 +134,60 @@ export function conPausa(l: Lienzo) {
   pausa?.addEventListener('click', () => l.set('pausado', pausa.getAttribute('aria-pressed') === 'true'));
 }
 
+/** Botón o enlace de la burbuja: WhatsApp, cotizador o "Seguir en el chat". */
+export interface Accion {
+  texto: string;
+  href?: string;
+  externo?: boolean;
+  alClic?: () => void;
+}
+
+/**
+ * Pone texto, enlace y acciones en una burbuja (.burbuja-pixel). Todo lo que viene del asesor de IA
+ * entra con textContent: es dato, no HTML.
+ */
+export function llenarBurbuja(raiz: HTMLElement, t: string, href?: string, acciones: Accion[] = []) {
+  const el = raiz.querySelector<HTMLElement>('[data-burbuja]');
+  const texto = raiz.querySelector<HTMLElement>('[data-burbuja-texto]');
+  const enlace = raiz.querySelector<HTMLAnchorElement>('[data-burbuja-enlace]');
+  const caja = raiz.querySelector<HTMLElement>('[data-burbuja-acciones]');
+  if (!el || !texto) return;
+  texto.textContent = t;
+  texto.scrollTop = 0;
+  if (enlace) {
+    enlace.hidden = !href;
+    if (href) enlace.href = href;
+  }
+  if (caja) {
+    caja.replaceChildren(
+      ...acciones.map((a) => {
+        const b = a.href ? document.createElement('a') : document.createElement('button');
+        b.className = 'burbuja-pixel-accion';
+        b.textContent = a.texto;
+        if (b instanceof HTMLAnchorElement) {
+          b.href = a.href!;
+          if (a.externo) {
+            b.target = '_blank';
+            b.rel = 'noopener';
+          }
+        } else b.type = 'button';
+        if (a.alClic) b.addEventListener('click', a.alClic);
+        return b;
+      }),
+    );
+    caja.hidden = acciones.length === 0;
+  }
+  el.classList.toggle('larga', acciones.length > 0 || t.length > 120);
+  el.classList.remove('oculta');
+}
+
 /**
  * Burbuja de chat (.burbuja-pixel) sobre la cabeza del que habla, recortada dentro de la ventana y
  * con la punta en su sitio aunque la caja se corra.
  */
 export function crearBurbuja(raiz: HTMLElement, ventana: HTMLElement) {
   const el = raiz.querySelector<HTMLElement>('[data-burbuja]');
-  const texto = raiz.querySelector<HTMLElement>('[data-burbuja-texto]');
-  const enlace = raiz.querySelector<HTMLAnchorElement>('[data-burbuja-enlace]');
-  if (!el || !texto) throw new Error('falta la burbuja');
+  if (!el || !raiz.querySelector('[data-burbuja-texto]')) throw new Error('falta la burbuja');
   let ultimo: { p: Pt; k: number } | null = null;
   const colocar = (p: Pt, k: number) => {
     ultimo = { p, k };
@@ -160,13 +205,8 @@ export function crearBurbuja(raiz: HTMLElement, ventana: HTMLElement) {
     el.style.setProperty('--cola', `calc(50% + ${x - cx}px)`);
   };
   return {
-    mostrar(t: string, p: Pt, k: number, href?: string) {
-      texto.textContent = t;
-      if (enlace) {
-        enlace.hidden = !href;
-        if (href) enlace.href = href;
-      }
-      el.classList.remove('oculta');
+    mostrar(t: string, p: Pt, k: number, href?: string, acciones: Accion[] = []) {
+      llenarBurbuja(raiz, t, href, acciones);
       colocar(p, k);
     },
     mover: colocar,

@@ -9,6 +9,7 @@
 // el lienzo es más ancho que la pantalla y se ve la franja del medio, donde pasa el juego.
 import poster from '../../assets/pixel/sala@2x.png?url';
 import { Sala } from '../../lib/pixel/escenas/sala';
+import PreguntaPixel from './PreguntaPixel.astro';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -35,6 +36,7 @@ const y = (cabeza.y / escena.height) * 100;
       <p class="lead">{h.lead}</p>
       <p class="juego">{h.juego}</p>
       <a class="boton boton-cian" href={`${rutas.contacto[locale]}?servicio=formaciones&oferta=equipos`} data-magnetico>{h.cotizar}</a>
+      <PreguntaPixel locale={locale} id="pregunta-sala" />
     </div>
   </div>
 
@@ -42,7 +44,7 @@ const y = (cabeza.y / escena.height) * 100;
     <div class="lienzos" style={`--x: ${x}%; --y: ${y}%`}>
       <img class="poster" src={poster} alt={h.label} width="1280" height="624" loading="lazy" decoding="async" data-sala-poster />
       <canvas class="lienzo" hidden aria-hidden="true" data-sala-lienzo></canvas>
-      <p class="burbuja-pixel" data-burbuja><span class="burbuja-pixel-texto" data-burbuja-texto>{lineas[quieto.linea]}</span></p>
+      <p class="burbuja-pixel" data-burbuja><span class="burbuja-pixel-texto" data-burbuja-texto data-lenis-prevent>{lineas[quieto.linea]}</span><span class="burbuja-pixel-acciones" hidden data-burbuja-acciones></span></p>
     </div>
     <figcaption class="sr">
       {h.dice}:

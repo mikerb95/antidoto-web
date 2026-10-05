@@ -117,6 +117,8 @@ export const ui = {
       limite: 'Llegaste al máximo de preguntas de esta conversación. Sigue con el equipo por WhatsApp.',
       aviso: 'Respuestas generadas con IA. No escribas datos personales aquí.',
       reiniciar: 'Empezar de nuevo',
+      // El facilitador del mundo pixel responde con el mismo asesor (src/lib/motion/pregunta.ts).
+      facilitador: { campo: 'Pregúntale al facilitador', placeholder: 'Pregúntale algo al facilitador', enviar: 'Preguntar', pensando: 'Déjame pensar', seguir: 'Seguir en el chat' },
     },
 
     estado: 'Atendiendo',
@@ -583,6 +585,7 @@ export const ui = {
       limite: "You've reached the question limit for this conversation. Continue with the team on WhatsApp.",
       aviso: "AI-generated answers. Don't write personal details here.",
       reiniciar: 'Start over',
+      facilitador: { campo: 'Ask the facilitator', placeholder: 'Ask the facilitator anything', enviar: 'Ask', pensando: 'Let me think', seguir: 'Continue in the chat' },
     },
 
     estado: 'Available',

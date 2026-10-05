@@ -5,6 +5,7 @@
 import { pieza } from './core';
 import { crearBurbuja, crearLienzo } from './lienzo';
 import type { Pt } from '../pixel/iso';
+import type { Hablante } from './pregunta';
 
 /** Lo que el paseo necesita de la sala. */
 export interface ControlSala {
@@ -17,6 +18,8 @@ export interface ControlSala {
   esperar(): void;
   /** El facilitador llegó al borde de la sala: desde aquí lo dibuja la escena. */
   recibir(): void;
+  /** El facilitador como asesor: el juego se detiene mientras responde. */
+  hablante: Hablante;
 }
 
 export function iniciarSala(raiz: HTMLElement, alListo?: (c: ControlSala) => void) {
@@ -39,11 +42,20 @@ export function iniciarSala(raiz: HTMLElement, alListo?: (c: ControlSala) => voi
         const [{ PixelBuffer }, { Sala }] = await Promise.all([import('../pixel/buffer.ts'), import('../pixel/escenas/sala.ts')]);
         const burbuja = crearBurbuja(raiz, ventana);
         let k = 1;
+        let charla = false;
         const sala = new Sala({
           di: (quien, linea) => burbuja.mostrar(lineas[linea] ?? '', sala.cabeza(quien), lz.escala()),
-          calla: () => burbuja.ocultar(),
+          calla: () => !charla && burbuja.ocultar(),
         });
-        const lz = crearLienzo({ lienzo, ventana, buf: new PixelBuffer(sala.width, sala.height), escena: sala, alAjustar: () => burbuja.recolocar() });
+        const lz = crearLienzo({
+          lienzo,
+          ventana,
+          buf: new PixelBuffer(sala.width, sala.height),
+          escena: sala,
+          // Conversando, la burbuja sigue al facilitador (puede venir entrando).
+          alCuadro: () => charla && burbuja.mover(sala.cabeza(0), lz.escala()),
+          alAjustar: () => burbuja.recolocar(),
+        });
         burbuja.ocultar();
         lz.pintar();
         lienzo.hidden = false;
@@ -88,6 +100,25 @@ export function iniciarSala(raiz: HTMLElement, alListo?: (c: ControlSala) => voi
             io.disconnect();
             sala.llegar(true);
             lz.pintar();
+          },
+          hablante: {
+            pensar: (t) => {
+              charla = true;
+              io.disconnect();
+              sala.charla('piensa');
+              burbuja.mostrar(t, sala.cabeza(0), lz.escala());
+              lz.pintar();
+            },
+            decir: (t, acciones) => {
+              sala.charla('explica');
+              burbuja.mostrar(t, sala.cabeza(0), lz.escala(), undefined, acciones);
+            },
+            soltar: () => {
+              if (!charla) return;
+              charla = false;
+              sala.charla(null);
+              burbuja.ocultar();
+            },
           },
         });
       };

@@ -119,6 +119,7 @@ export class Sala {
   private t = 0;
   private pantalla = { encendida: false, revela: null as number | null };
   private eventos: EventosSala;
+  private enCharla = false;
 
   constructor(eventos: EventosSala = {}) {
     this.eventos = eventos;
@@ -168,6 +169,19 @@ export class Sala {
     for (let n = 1; n < 6; n++) this.gente[n].tl.push(poseTo(this.gente[n].a, SENALA, 0.3, 'feliz'), { dur: 1.2 }, poseTo(this.gente[n].a, STAND, 0.3, 'normal'));
     this.push({ hasta: () => this.quietos() });
     this.jugar();
+  }
+
+  /**
+   * Alguien le pregunta al facilitador (el asesor de IA): el juego se detiene donde va, él se
+   * queda pensando o explicando y, al soltar, el juego sigue. Si aún no había llegado, entra.
+   */
+  charla(estado: 'piensa' | 'explica' | null) {
+    if (estado && !this.presente) this.llegar(false);
+    this.enCharla = estado !== null;
+    const f = this.gente[0];
+    if (estado === 'piensa') f.tl.push(poseTo(f.a, DUDA, 0.3, 'normal'));
+    else if (estado === 'explica') f.tl.push(poseTo(f.a, EXPLICA, 0.3, 'feliz'));
+    else f.tl.push(poseTo(f.a, STAND, 0.3, 'normal'));
   }
 
   /** Estado del PNG quieto: la primera ronda, todos votaron y se revela la mentira. */
@@ -284,7 +298,7 @@ export class Sala {
   update(dt: number) {
     this.t += dt;
     for (const p of this.gente) p.tl.update(dt);
-    for (let guarda = 0; guarda < 20; guarda++) {
+    for (let guarda = 0; guarda < 20 && !this.enCharla; guarda++) {
       if (!this.paso) {
         const sig = this.cola.shift();
         if (!sig) break;

@@ -32,6 +32,10 @@ const pose = (p: Partial<Pose>): Pose => ({ ...STAND, ...p });
 const SENALA = pose({ armN: 96, foreN: 84, armF: -4, foreF: 6, headTilt: -6 });
 const SALUDA = pose({ armN: 150, foreN: 150, armF: -6, foreF: 4 });
 const AGACHA = pose({ lean: 10, thighN: 50, shinN: -30, thighF: 30, shinF: -40, armN: 30, foreN: 40, armF: 20, foreF: 30 });
+/** Mano en el mentón: está pensando la respuesta. */
+const PIENSA = pose({ armN: 150, foreN: -10, armF: -6, foreF: 4, headTilt: -10 });
+/** Brazos abiertos al explicar. */
+const EXPLICA = pose({ armN: 70, foreN: 40, armF: 50, foreF: 30, headTilt: -4 });
 const SALTO = pose({ lean: 6, thighN: 40, shinN: -50, thighF: -20, shinF: -30, armN: 150, foreN: 170, armF: 140, foreF: 160 });
 
 /** Dónde se para el facilitador para hablar de cada línea (clave del servicio) y hacia dónde mira. */
@@ -92,6 +96,27 @@ export class Estudio {
       poseTo(this.a, clave === 'centro' ? SALUDA : SENALA, 0.35, 'feliz'),
       act(() => alLlegar?.()),
     );
+  }
+
+  /**
+   * Alguien le pregunta (el asesor de IA): deja lo que estaba haciendo, se queda donde está y
+   * piensa. Si había salido en el paseo, aparece en el centro.
+   */
+  atender() {
+    this.tl.clear();
+    if (!this.dentro) {
+      const c = arte.iso.P(PUNTOS.centro.i, PUNTOS.centro.j);
+      Object.assign(this.a, { x: c.x, y: c.y, facing: -1 });
+      this.dentro = true;
+    }
+    this.a.walking = false;
+    this.tl.push(poseTo(this.a, PIENSA, 0.3, 'normal'));
+  }
+
+  /** Responde: abre los brazos para explicar. */
+  responder() {
+    this.tl.clear();
+    this.tl.push(poseTo(this.a, EXPLICA, 0.3, 'feliz'));
   }
 
   /** Camina al borde del piso, toma impulso y salta fuera del recuadro. */

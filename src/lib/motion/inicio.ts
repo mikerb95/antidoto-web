@@ -13,6 +13,7 @@ import { llenar } from './llenar';
 import { iniciarEstudio, type ControlEstudio } from './estudio';
 import { iniciarSala, type ControlSala } from './sala';
 import { iniciarPaseo } from './paseo';
+import { hablanteQuieto, iniciarPregunta } from './pregunta';
 
 gsap.registerPlugin(SplitText);
 
@@ -394,6 +395,14 @@ export function iniciarInicio() {
   if (sala) iniciarSala(sala, (c) => (ctrlSala = c));
   const paseo = document.querySelector<HTMLAnchorElement>('[data-paseo]');
   if (paseo) iniciarPaseo(paseo, () => ctrlEstudio, () => ctrlSala);
+  // Preguntarle al facilitador (solo con PUBLIC_API_URL). Sin escena animada responde la burbuja quieta.
+  document.querySelectorAll<HTMLFormElement>('[data-pregunta]').forEach((form) => {
+    const enEstudio = form.closest('[data-estudio]') !== null;
+    const raiz = form.closest<HTMLElement>('[data-estudio], [data-sala]');
+    if (!raiz) return;
+    const quieto = hablanteQuieto(raiz);
+    iniciarPregunta(form, () => (enEstudio ? (ctrlEstudio as ControlEstudio | null)?.hablante : (ctrlSala as ControlSala | null)?.hablante) ?? quieto);
+  });
   const r = document.querySelector<HTMLElement>('[data-resultados]');
   if (r) resultados(r);
   document.querySelectorAll<HTMLElement>('main section:not([data-hero]) .resaltado').forEach((r) => dosis(r, 'asomar'));

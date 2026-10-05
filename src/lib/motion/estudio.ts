@@ -6,6 +6,7 @@
 import { pieza } from './core';
 import { conPausa, crearBurbuja, crearLienzo } from './lienzo';
 import type { Pt } from '../pixel/iso';
+import type { Hablante } from './pregunta';
 
 interface Linea {
   punto: string;
@@ -25,6 +26,8 @@ export interface ControlEstudio {
   salir(): Promise<{ pies: Pt; escala: number }>;
   /** Vuelve a entrar por la puerta y retoma el guion. */
   volver(): void;
+  /** El facilitador como asesor: responde lo que le pregunten (src/lib/motion/pregunta.ts). */
+  hablante: Hablante;
 }
 
 const duracion = (texto: string) => Math.min(7, Math.max(3.5, texto.length / 14));
@@ -59,7 +62,7 @@ export function iniciarEstudio(raiz: HTMLElement, alListo?: (c: ControlEstudio) 
         // Guion: la bienvenida ya está en pantalla (es la del PNG); después, una línea tras otra.
         let idx = 1;
         let hablando = duracion(guion.hola);
-        let modo: 'guion' | 'paseo' = 'guion';
+        let modo: 'guion' | 'paseo' | 'charla' = 'guion';
         let retenido = false;
         const siguiente = () => {
           burbuja.ocultar();
@@ -76,6 +79,8 @@ export function iniciarEstudio(raiz: HTMLElement, alListo?: (c: ControlEstudio) 
           buf: new PixelBuffer(escena.width, escena.height),
           escena,
           alCuadro: (dt) => {
+            // Conversando, la burbuja sigue la cabeza (puede estar volviendo a su sitio).
+            if (modo === 'charla') burbuja.mover(escena.speaker(), lz.escala());
             if (modo !== 'guion' || hablando <= 0 || retenido) return;
             hablando -= dt;
             if (hablando <= 0) siguiente();
@@ -108,12 +113,32 @@ export function iniciarEstudio(raiz: HTMLElement, alListo?: (c: ControlEstudio) 
               };
               escena.salir();
             }),
-          volver: () =>
+          volver: () => {
+            if (modo === 'charla') return;
             escena.volver(() => {
               modo = 'guion';
               idx = 1;
               hablando = 0.01;
-            }),
+            });
+          },
+          hablante: {
+            pensar: (t) => {
+              modo = 'charla';
+              escena.atender();
+              burbuja.mostrar(t, escena.speaker(), lz.escala());
+              lz.pintar();
+            },
+            decir: (t, acciones) => {
+              escena.responder();
+              burbuja.mostrar(t, escena.speaker(), lz.escala(), undefined, acciones);
+            },
+            soltar: () => {
+              if (modo !== 'charla') return;
+              burbuja.ocultar();
+              modo = 'guion';
+              hablando = 0.01;
+            },
+          },
         });
       };
       const cargar = () =>

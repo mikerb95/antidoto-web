@@ -12,6 +12,7 @@ import poster1x from '../../assets/pixel/estudio.png?url';
 import poster2x from '../../assets/pixel/estudio@2x.png?url';
 import { Estudio, PUNTOS } from '../../lib/pixel/escenas/estudio';
 import { obtenerServicios, servicioPath } from '../../data/servicios';
+import PreguntaPixel from './PreguntaPixel.astro';
 import { t, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -40,9 +41,9 @@ const y = (cabeza.y / escena.height) * 100;
     </picture>
     <canvas class="lienzo" hidden aria-hidden="true" data-estudio-lienzo></canvas>
     <p class="burbuja-pixel" style={`--x: ${x}%; --y: ${y}%`} data-burbuja>
-      <span class="burbuja-pixel-texto" data-burbuja-texto>{e.hola}</span>
+      <span class="burbuja-pixel-texto" data-burbuja-texto data-lenis-prevent>{e.hola}</span>
       <a class="burbuja-pixel-enlace" hidden data-burbuja-enlace>{e.verLinea}</a>
-    </p>
+    <span class="burbuja-pixel-acciones" hidden data-burbuja-acciones></span></p>
     <figcaption class="sr">
       {e.dice}:
       <ul>
@@ -52,6 +53,7 @@ const y = (cabeza.y / escena.height) * 100;
       </ul>
     </figcaption>
   </figure>
+  <PreguntaPixel locale={locale} id="pregunta-estudio" />
   <a class="boton boton-cian paseo" href="#sala" data-paseo>
     {e.boton}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M6 13l6 6 6-6"></path></svg>

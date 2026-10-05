@@ -1,0 +1,41 @@
+---
+// Campo para preguntarle al facilitador del mundo pixel (estudio del hero y sala de la actividad).
+// Responde el mismo asesor de IA de la burbuja flotante, con el historial compartido
+// (src/lib/conversacion.ts); la respuesta sale en la burbuja del facilitador
+// (src/lib/motion/pregunta.ts). Como el chat, solo existe si el build trae PUBLIC_API_URL.
+import { t, rutas, type Locale } from '../../i18n/ui';
+import { SITE } from '../../data/site';
+
+interface Props {
+  locale: Locale;
+  /** Id único del campo en la página. */
+  id: string;
+}
+const { locale, id } = Astro.props;
+const a = t(locale).asesor;
+const f = a.facilitador;
+const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+---
+{api && (
+  <form class="pregunta-pixel" data-pregunta data-api={api} data-wa={SITE.whatsapp} data-mensaje={t(locale).waDefault} data-cotizador={rutas.contacto[locale]}>
+    <label class="sr" for={id}>{f.campo}</label>
+    <input id={id} type="text" name="pregunta" maxlength="500" autocomplete="off" placeholder={f.placeholder} required data-pregunta-campo />
+    <button type="submit" aria-label={f.enviar} title={f.enviar} data-pregunta-enviar>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    </button>
+    <p class="sr" aria-live="polite" data-pregunta-voz></p>
+    <p class="aviso">{a.aviso}</p>
+  </form>
+)}
+
+<style>
+  .pregunta-pixel { position: relative; width: 100%; max-width: 420px; display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 6px 8px; }
+  input { min-height: 44px; padding: 0 16px; border: 2px solid var(--color-ink); border-radius: 12px; background: var(--color-paper); color: var(--color-ink); font: 500 15px/1.2 var(--font-sans); box-shadow: 0 3px 0 rgb(15 24 29 / 0.25); }
+  input::placeholder { color: var(--color-slate); }
+  input:focus-visible { outline: 3px solid var(--color-antidote); outline-offset: 2px; }
+  button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 2px solid var(--color-ink); border-radius: 12px; background: var(--color-antidote); color: var(--color-ink); cursor: pointer; box-shadow: 0 3px 0 rgb(15 24 29 / 0.25); }
+  button:disabled { opacity: 0.6; cursor: wait; }
+  button svg { width: 20px; height: 20px; }
+  .aviso { grid-column: 1 / -1; margin: 0; font-size: 12px; opacity: 0.8; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+</style>
