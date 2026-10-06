@@ -1,0 +1,21 @@
+{
+  // Panel en el navegador: DOM y JSX de Preact. Comparte tipos y constantes con la API
+  // (src/dominio.ts, src/permisos.ts, src/contratos.ts) sin arrastrar drizzle.
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "types": ["vite/client"],
+    "paths": { "@api/*": ["../src/*"] }
+  },
+  "include": ["src", "test", "vite.config.ts"]
+}

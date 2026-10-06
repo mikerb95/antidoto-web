@@ -130,8 +130,9 @@ const pag = (href: string) => (href === actual ? 'page' : undefined);
         </ul>
         <!-- Plataforma de misiones (otro sitio, solo en español): para quien ya tiene un código. -->
         <a class="mision" href={PORTAL.url} hreflang="es" aria-label={s.portalNavLabel}>{s.portalNav}<span class="sale" aria-hidden="true">↗</span></a>
-        <a class="idioma" href={alternateHref} hreflang={otro} lang={otro} aria-label={s.switchLangLabel}>
-          <span class="actual-idioma">{locale.toUpperCase()}</span><span aria-hidden="true">/</span><span>{otro.toUpperCase()}</span>
+        <!-- El nombre accesible empieza por lo que se ve (WCAG 2.5.3), para quien navega con la voz. -->
+        <a class="idioma" href={alternateHref} hreflang={otro} aria-label={`${locale.toUpperCase()} / ${otro.toUpperCase()}: ${s.switchLangLabel}`}>
+          <span class="actual-idioma">{locale.toUpperCase()}</span><span aria-hidden="true">/</span><span lang={otro}>{otro.toUpperCase()}</span>
         </a>
       </nav>
       <a class="boton boton-cian cotizar" href={rutas.contacto[locale]}>{s.navQuote}</a>

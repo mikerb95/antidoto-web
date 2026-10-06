@@ -64,7 +64,7 @@ describe('correos', () => {
     expect(c.html).not.toContain('<script>');
     expect(c.html).toContain('&lt;script&gt;');
     expect(c.html).toContain('Acme &amp; Co');
-    expect(c.html).toContain('https://api.test/admin/#00000000-0000-4000-8000-000000000000');
+    expect(c.html).toContain('https://api.test/admin/solicitudes/00000000-0000-4000-8000-000000000000');
     expect(c.html).toContain('https://wa.me/573001112233');
     expect(c.responderA).toBe('a@b.co');
   });

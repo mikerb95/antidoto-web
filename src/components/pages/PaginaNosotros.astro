@@ -49,10 +49,10 @@ const seguir: Array<[string, string, string]> = [
         </div>
       </article>
       <div class="lado">
-        <dl class="datos">
+        <div class="datos">
           <p class="et">{p.nosotros.datosTitulo}</p>
-          {datos.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
-        </dl>
+          <dl>{datos.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+        </div>
         <div class="licencia">
           <p class="lic-t">{eq.licencia}</p>
           <p class="pendiente">{eq.licenciaDatos}</p>
@@ -145,6 +145,7 @@ const seguir: Array<[string, string, string]> = [
   .lado { display: flex; flex-direction: column; gap: 20px; }
   .datos { margin: 0; padding: 24px; border-radius: 24px; background: var(--color-ink); color: var(--color-paper); display: grid; }
   .datos .et { color: var(--color-glow); margin-bottom: 8px; }
+  .datos dl { margin: 0; }
   .datos div { padding: 12px 0; border-top: 1px solid rgb(255 255 255 / 0.14); }
   dt { font-size: 13px; color: var(--color-fg-soft); }
   dd { margin: 0; font-size: 17px; }

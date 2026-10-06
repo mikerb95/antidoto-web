@@ -126,7 +126,7 @@ export function correoLeadEquipo(lead: Lead, appUrl: string): Omit<Correo, 'para
     ['Origen', [lead.utmSource, lead.utmMedium, lead.utmCampaign].filter(Boolean).join(' / ') || lead.referente || 'Directo'],
     ['Página', lead.pagina],
   ];
-  const enlace = `${appUrl}/admin/#${lead.id}`;
+  const enlace = `${appUrl}/admin/solicitudes/${lead.id}`;
   const wa = lead.telefono ? `https://wa.me/${lead.telefono.replace(/\D/g, '')}` : null;
   return {
     asunto: `Nuevo lead: ${servicio} · ${quien}`,
@@ -185,7 +185,7 @@ export function correoSeguimiento(pendientes: Lead[], appUrl: string, horas: num
   const lista = pendientes.map((l) => {
     const quien = l.empresa ? `${l.nombre} (${l.empresa})` : (l.nombre ?? 'Sin nombre');
     const dias = Math.floor((Date.now() - l.creado) / 86_400_000);
-    return { quien, servicio: NOMBRE_SERVICIO[l.servicio].es, hace: dias ? `hace ${dias} d` : 'hoy', href: `${appUrl}/admin/#${l.id}` };
+    return { quien, servicio: NOMBRE_SERVICIO[l.servicio].es, hace: dias ? `hace ${dias} d` : 'hoy', href: `${appUrl}/admin/solicitudes/${l.id}` };
   });
   return {
     asunto: n === 1 ? `1 lead sin respuesta después de ${horas} h` : `${n} leads sin respuesta después de ${horas} h`,
@@ -193,7 +193,7 @@ export function correoSeguimiento(pendientes: Lead[], appUrl: string, horas: num
       'Leads sin respuesta',
       `<p style="margin:0 0 8px">Estos leads siguen en "nuevo" después de ${horas} horas:</p><ul style="padding-left:18px">${lista
         .map((l) => `<li style="margin:6px 0"><a href="${escapar(l.href)}" style="color:#0C5C7D">${escapar(l.quien)}</a> · ${escapar(l.servicio)} · ${escapar(l.hace)}</li>`)
-        .join('')}</ul>${boton(`${appUrl}/admin/`, 'Abrir la bandeja')}`,
+        .join('')}</ul>${boton(`${appUrl}/admin/`, 'Abrir el panel')}`,
     ),
     texto: `Leads en "nuevo" después de ${horas} horas:\n\n${lista.map((l) => `- ${l.quien} · ${l.servicio} · ${l.hace}\n  ${l.href}`).join('\n')}`,
   };
