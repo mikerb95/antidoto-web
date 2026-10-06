@@ -22,7 +22,7 @@ const por = (e: string) => REQUISITOS_NO_FUNCIONALES.filter((r) => r.estado === 
   {calidades.map((c) => (
     <section>
       <h2>{c}</h2>
-      <div class="tabla-wrap">
+      <div class="tabla-wrap" tabindex="0" role="region" aria-label={`Requisitos: ${c}`}>
         <table class="tabla">
           <thead><tr><th>ID</th><th>Requisito</th><th>Criterio medible</th><th>Prioridad</th><th>Estado</th><th>Evidencia</th></tr></thead>
           <tbody>

@@ -42,7 +42,7 @@ const externo = (e: string) => /^https?:/.test(e);
       </ul>
 
       <h3>Decisiones que salieron de aquí</h3>
-      <div class="tabla-wrap">
+      <div class="tabla-wrap" tabindex="0" role="region" aria-label={`Decisiones de ${inv.id}`}>
         <table class="tabla">
           <thead><tr><th>Decisión</th><th>Por qué</th><th>Dónde quedó</th></tr></thead>
           <tbody>

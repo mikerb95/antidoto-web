@@ -31,7 +31,7 @@ const rango = (a: string, b: string) => (a === b ? fecha(a) : `${fecha(a)} a ${f
   </ol>
 
   <h2>Tablero</h2>
-  <div class="tablero">
+  <div class="tablero" tabindex="0" role="region" aria-label="Tablero">
     {columnas.map((c) => {
       const items = TARJETAS.filter((t) => t.columna === c);
       return (

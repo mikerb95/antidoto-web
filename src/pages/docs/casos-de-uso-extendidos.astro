@@ -9,7 +9,7 @@ import { HISTORIAS } from '../../data/docs/historias';
   <p class="lead">{CASOS_DE_USO.length} casos de uso con precondiciones, flujo principal, flujos alternos, postcondiciones y reglas de negocio, enlazados a sus requisitos y a las historias que los cubren.</p>
 
   <h2>Actores</h2>
-  <div class="tabla-wrap">
+  <div class="tabla-wrap" tabindex="0" role="region" aria-label="Actores">
     <table class="tabla">
       <thead><tr><th>Actor</th><th>Descripción</th></tr></thead>
       <tbody>{ACTORES.map((a) => <tr><td><strong>{a.nombre}</strong></td><td>{a.descripcion}</td></tr>)}</tbody>

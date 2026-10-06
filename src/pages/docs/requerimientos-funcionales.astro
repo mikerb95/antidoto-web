@@ -23,7 +23,7 @@ const por = (e: string) => REQUISITOS_FUNCIONALES.filter((r) => r.estado === e).
     return (
       <section>
         <h2>{m}</h2>
-        <div class="tabla-wrap">
+        <div class="tabla-wrap" tabindex="0" role="region" aria-label={`Requisitos: ${m}`}>
           <table class="tabla">
             <thead><tr><th>ID</th><th>Requisito</th><th>Prioridad</th><th>Estado</th><th>Evidencia</th></tr></thead>
             <tbody>
