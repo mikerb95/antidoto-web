@@ -1,13 +1,13 @@
 // Acceso del equipo al admin con enlace mágico por correo: sin contraseñas que filtrar ni
 // recuperar. Los tokens nunca se guardan en claro (solo su SHA-256), el enlace sirve una vez
 // y vence rápido, y las sesiones se pueden revocar una a una o todas.
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { enlaces, sesiones, usuarios, type Usuario } from './db/schema';
 import { enviar, correoEnlaceAcceso } from './correo';
 import { dentroDelLimite } from './limite';
 import type { Env } from './env';
-import { ahora, sha256, token, json, escapar, HORA, DIA } from './util';
+import { ahora, sha256, token, json, escapar, uuid, HORA, DIA } from './util';
 
 export const COOKIE = '__Host-antidoto';
 export const MINUTOS_ENLACE = 15;
@@ -17,6 +17,8 @@ export const ENLACES_POR_HORA = 5;
 export interface Sesion {
   usuario: Usuario;
   hash: string;
+  /** Id público de la sesión (null en sesiones anteriores a la migración 0005 que no se rellenaron). */
+  id: string | null;
 }
 
 const leerCookie = (req: Request, nombre: string): string | null => {
@@ -100,6 +102,7 @@ export async function entrar(req: Request, db: DrizzleD1Database): Promise<Respo
   const secretoSesion = token();
   await db.insert(sesiones).values({
     hash: await sha256(secretoSesion),
+    id: uuid(),
     usuarioId: u.id,
     creada: t,
     expira: t + DIAS_SESION * DIA,
@@ -126,7 +129,29 @@ export async function sesionActual(req: Request, db: DrizzleD1Database): Promise
     .where(and(eq(sesiones.hash, hash), isNull(sesiones.revocada), gt(sesiones.expira, t), eq(usuarios.activo, true)));
   if (!fila) return null;
   if (t - fila.s.ultimoUso > HORA) await db.update(sesiones).set({ ultimoUso: t }).where(eq(sesiones.hash, hash));
-  return { usuario: fila.u, hash };
+  return { usuario: fila.u, hash, id: fila.s.id };
+}
+
+/** GET /admin/api/yo/sesiones: las sesiones abiertas de quien pregunta, la actual marcada. */
+export async function listarSesiones(db: DrizzleD1Database, sesion: Sesion): Promise<Response> {
+  const t = ahora();
+  const filas = await db
+    .select({ id: sesiones.id, creada: sesiones.creada, ultimoUso: sesiones.ultimoUso, expira: sesiones.expira, userAgent: sesiones.userAgent, hash: sesiones.hash })
+    .from(sesiones)
+    .where(and(eq(sesiones.usuarioId, sesion.usuario.id), isNull(sesiones.revocada), gt(sesiones.expira, t)))
+    .orderBy(desc(sesiones.ultimoUso));
+  return json({ sesiones: filas.map(({ hash, ...f }) => ({ ...f, actual: hash === sesion.hash })) });
+}
+
+/** POST /admin/api/yo/sesiones/<id>/revocar: solo las propias; la de otra persona responde 404. */
+export async function revocarSesion(db: DrizzleD1Database, sesion: Sesion, id: string): Promise<Response> {
+  const r = await db
+    .update(sesiones)
+    .set({ revocada: ahora() })
+    .where(and(eq(sesiones.id, id), eq(sesiones.usuarioId, sesion.usuario.id), isNull(sesiones.revocada)))
+    .returning({ id: sesiones.id });
+  if (!r.length) return json({ error: 'no existe' }, 404);
+  return listarSesiones(db, sesion);
 }
 
 export async function salir(db: DrizzleD1Database, sesion: Sesion, todas: boolean): Promise<Response> {

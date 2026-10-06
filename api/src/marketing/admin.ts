@@ -141,8 +141,7 @@ export async function suprimir(db: DrizzleD1Database, c: Contacto): Promise<void
   ]);
 }
 
-export async function suprimirContacto(id: string, db: DrizzleD1Database, sesion: Sesion): Promise<Response> {
-  if (sesion.usuario.rol !== 'admin') return json({ error: 'rol' }, 403);
+export async function suprimirContacto(id: string, db: DrizzleD1Database): Promise<Response> {
   const [c] = await db.select().from(contactos).where(eq(contactos.id, id));
   if (!c) return json({ error: 'no existe' }, 404);
   await suprimir(db, c);

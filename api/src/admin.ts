@@ -117,7 +117,6 @@ export async function editarLead(id: string, req: Request, db: DrizzleD1Database
  * contacto también se suprime: la supresión es de la persona, no de un formulario.
  */
 export async function anonimizarLead(id: string, db: DrizzleD1Database, sesion: Sesion): Promise<Response> {
-  if (sesion.usuario.rol !== 'admin') return json({ error: 'rol' }, 403);
   const [lead] = await db.select().from(leads).where(eq(leads.id, id));
   if (!lead) return json({ error: 'no existe' }, 404);
   if (lead.anonimizado) return verLead(id, db);
@@ -222,17 +221,17 @@ export async function exportarCsv(db: DrizzleD1Database): Promise<Response> {
   });
 }
 
-// Equipo: solo el rol admin agrega o desactiva personas.
+// Equipo: listar lo puede cualquier sesión (para asignar responsables); agregar y editar exige
+// el permiso equipo.gestionar, que aplica el ruteo (src/rutas/equipo.ts).
 export async function listarUsuarios(db: DrizzleD1Database): Promise<Response> {
   return json({ usuarios: await db.select().from(usuarios).orderBy(usuarios.creado) });
 }
 
-export async function crearUsuario(req: Request, db: DrizzleD1Database, sesion: Sesion): Promise<Response> {
-  if (sesion.usuario.rol !== 'admin') return json({ error: 'rol' }, 403);
+export async function crearUsuario(req: Request, db: DrizzleD1Database): Promise<Response> {
   const d = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const email = typeof d.email === 'string' ? d.email.trim().toLowerCase() : '';
   const nombre = typeof d.nombre === 'string' ? d.nombre.trim().slice(0, 120) : '';
-  const rol = ROLES.includes(d.rol as (typeof ROLES)[number]) ? (d.rol as (typeof ROLES)[number]) : 'equipo';
+  const rol = ROLES.includes(d.rol as (typeof ROLES)[number]) ? (d.rol as (typeof ROLES)[number]) : 'comercial';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || !nombre) return json({ errores: ['email', 'nombre'] }, 422);
   const [existe] = await db.select().from(usuarios).where(eq(usuarios.email, email));
   if (existe) return json({ error: 'existe' }, 409);
@@ -241,13 +240,14 @@ export async function crearUsuario(req: Request, db: DrizzleD1Database, sesion: 
 }
 
 export async function editarUsuario(id: string, req: Request, db: DrizzleD1Database, sesion: Sesion): Promise<Response> {
-  if (sesion.usuario.rol !== 'admin') return json({ error: 'rol' }, 403);
   if (id === sesion.usuario.id) return json({ error: 'propio' }, 409);
   const d = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const set: Partial<typeof usuarios.$inferInsert> = {};
   if (typeof d.activo === 'boolean') set.activo = d.activo;
   if (ROLES.includes(d.rol as (typeof ROLES)[number])) set.rol = d.rol as (typeof ROLES)[number];
+  if (typeof d.nombre === 'string' && d.nombre.trim()) set.nombre = d.nombre.trim().slice(0, 120);
   if (!Object.keys(set).length) return json({ errores: ['vacio'] }, 422);
-  await db.update(usuarios).set(set).where(eq(usuarios.id, id));
+  const r = await db.update(usuarios).set(set).where(eq(usuarios.id, id)).returning({ id: usuarios.id });
+  if (!r.length) return json({ error: 'no existe' }, 404);
   return listarUsuarios(db);
 }
