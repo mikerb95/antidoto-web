@@ -2,16 +2,10 @@
 import { and, desc, eq, gte, inArray, like, lt, or, sql } from 'drizzle-orm';
 import { leads, contactos, campanas, gastoAsesor, usuarios } from '../db/schema';
 import { ajustesAsesor, hoyBogota } from '../asesor/presupuesto';
-import { puede, type Permiso } from '../permisos';
+import { puede } from '../permisos';
 import { ahora, json, DIA, HORA } from '../util';
 import type { Ctx } from './contexto';
 
-/** Bloques extra de Inicio que suman otros módulos (conversaciones, proyectos...). */
-export type BloqueInicio = (c: Ctx) => Promise<Record<string, unknown> | null>;
-const BLOQUES: BloqueInicio[] = [];
-export const sumarBloqueInicio = (b: BloqueInicio) => BLOQUES.push(b);
-
-export type Buscador = (c: Ctx, patron: string) => Promise<Resultado[]>;
 export interface Resultado {
   tipo: string;
   id: string;
@@ -19,8 +13,6 @@ export interface Resultado {
   detalle?: string | null;
   href: string;
 }
-const BUSCADORES: { permiso: Permiso; buscar: Buscador }[] = [];
-export const sumarBuscador = (permiso: Permiso, buscar: Buscador) => BUSCADORES.push({ permiso, buscar });
 
 const POR_TIPO = 5;
 
@@ -86,7 +78,6 @@ async function inicio(c: Ctx): Promise<Response> {
     );
   }
 
-  for (const b of BLOQUES) tareas.push(b(c).then((x) => void (x && Object.assign(r, x))));
   await Promise.all(tareas);
   return json(r);
 }
@@ -137,6 +128,5 @@ async function buscar(c: Ctx): Promise<Response> {
       .limit(POR_TIPO)
       .then((f) => f.map((u) => ({ tipo: 'usuario', id: u.id, titulo: u.nombre, detalle: u.email, href: '/admin/equipo' }))),
   );
-  for (const b of BUSCADORES) if (puede(rol, b.permiso)) grupos.push(b.buscar(c, patron));
   return json({ resultados: (await Promise.all(grupos)).flat() });
 }

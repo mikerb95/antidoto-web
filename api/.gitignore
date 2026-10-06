@@ -1,6 +1,5 @@
 node_modules/
 .wrangler/
 .dev.vars
-src/admin-ui.ts
 src/asesor/publico.gen.ts
 dist-admin/

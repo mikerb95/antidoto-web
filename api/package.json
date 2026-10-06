@@ -9,14 +9,15 @@
     "migraciones:generar": "drizzle-kit generate",
     "migraciones:local": "wrangler d1 migrations apply antidoto --local",
     "migraciones:remoto": "wrangler d1 migrations apply antidoto --remote",
-    "check": "tsc --noEmit && tsc --noEmit -p test",
+    "check": "tsc --noEmit && tsc --noEmit -p test && tsc --noEmit -p admin",
     "test": "vitest run",
-    "ui": "node scripts/empaquetar-ui.mjs",
-    "predev": "npm run ui && npm run conocimiento",
-    "predeploy": "npm run ui && npm run conocimiento",
-    "precheck": "npm run ui && npm run conocimiento",
-    "pretest": "npm run ui && npm run conocimiento",
-    "conocimiento": "node scripts/empaquetar-conocimiento.mjs"
+    "predev": "npm run admin:build && npm run conocimiento",
+    "predeploy": "npm run admin:build && npm run conocimiento",
+    "precheck": "npm run admin:build && npm run conocimiento",
+    "pretest": "npm run admin:build && npm run conocimiento",
+    "conocimiento": "node scripts/empaquetar-conocimiento.mjs",
+    "admin:build": "vite build --config admin/vite.config.ts",
+    "admin:watch": "vite build --config admin/vite.config.ts --watch"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.3"

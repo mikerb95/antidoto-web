@@ -8,7 +8,6 @@ import { Cabecera, Cifra, Cifras, FalloCarga, Insignia, Tarjeta, Cargando, Vacio
 import { Medidor } from '../ui/graficas';
 import { TONO_ESTADO } from './Solicitudes';
 import { TONO_CAMPANA } from './Campanas';
-import type { ComponentChildren } from 'preact';
 
 export interface DatosInicio {
   leads?: {
@@ -22,9 +21,6 @@ export interface DatosInicio {
   asesor?: { configurado: boolean; activo: boolean; tope: number; gastoHoy: number } | null;
   [bloque: string]: unknown;
 }
-
-/** Bloques que suman las fases siguientes (conversaciones, proyectos...), en orden. */
-export const BLOQUES_INICIO: { cifras?: (d: DatosInicio) => ComponentChildren; tarjetas?: (d: DatosInicio) => ComponentChildren }[] = [];
 
 const saludo = () => {
   const h = Number(new Intl.DateTimeFormat('es-CO', { timeZone: 'America/Bogota', hour: 'numeric', hour12: false }).format(Date.now()));
@@ -65,7 +61,6 @@ function Contenido({ d }: { d: DatosInicio }) {
         {leads && <Cifra etiqueta="Esta semana" valor={numero(leads.semana)} nota="solicitudes nuevas" href="/admin/solicitudes" />}
         {leads && <Cifra etiqueta="En curso" valor={numero(leads.abiertos)} nota="nuevas, contactadas o cotizadas" href="/admin/metricas" />}
         {novedades && <Cifra etiqueta="Lista de novedades" valor={numero(novedades.activos)} nota="contactos activos" href="/admin/contactos?estado=activo" />}
-        {BLOQUES_INICIO.map((b) => b.cifras?.(d))}
       </Cifras>
 
       <div class="rejilla-inicio">
@@ -129,7 +124,6 @@ function Contenido({ d }: { d: DatosInicio }) {
             </ul>
           </Tarjeta>
         )}
-        {BLOQUES_INICIO.map((b) => b.tarjetas?.(d))}
       </div>
     </>
   );

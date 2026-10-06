@@ -11,7 +11,7 @@
 //   POST /auth/enlace               pide el enlace de acceso por correo
 //   GET|POST /auth/entrar           abre la sesión con el enlace
 //   POST /auth/salir[?todas=1]      cierra la sesión (o todas las del usuario)
-//   GET  /admin/                    bandeja (HTML + /admin/app.js + /admin/app.css)
+//   GET  /admin/*                   panel en Preact (dist-admin/, binding ASSETS; ver src/panel.ts)
 //   /admin/api/*                    API del panel, con sesión y permisos por rol (src/rutas/)
 import { drizzle } from 'drizzle-orm/d1';
 import type { Env } from './env';
@@ -28,23 +28,13 @@ import type { Ctx, Modulo } from './rutas/contexto';
 import { rutasLeads } from './rutas/leads';
 import { rutasMarketing } from './rutas/marketing';
 import { rutasEquipo } from './rutas/equipo';
+import { rutasInicio } from './rutas/inicio';
 import { rutaAsesor } from './asesor/ruta';
-import { ADMIN_HTML, ADMIN_JS, ADMIN_CSS } from './admin-ui';
+import { esRutaPanel, servirPanel } from './panel';
 import { json } from './util';
 
-// El admin no se incrusta en otros sitios ni carga nada de fuera.
-const SEGURIDAD = {
-  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
-  'x-content-type-options': 'nosniff',
-  'referrer-policy': 'no-referrer',
-  'x-frame-options': 'DENY',
-};
-
 // Rutas del panel por módulo (src/rutas/), todas con sesión. Cada una exige su permiso.
-const MODULOS: Modulo[] = [rutasEquipo, rutasLeads, rutasMarketing];
-
-const estatico = (cuerpo: string, tipo: string) =>
-  new Response(cuerpo, { headers: { 'content-type': `${tipo}; charset=utf-8`, 'cache-control': 'no-cache', ...SEGURIDAD } });
+const MODULOS: Modulo[] = [rutasEquipo, rutasInicio, rutasLeads, rutasMarketing];
 
 export async function manejar(req: Request, env: Env, diferir: (p: Promise<unknown>) => void): Promise<Response> {
   const url = new URL(req.url);
@@ -94,9 +84,7 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
   if (ruta === '/salud') return json({ ok: true });
 
   if (ruta === '/admin') return Response.redirect(`${url.origin}/admin/`, 301);
-  if (ruta === '/admin/' && metodo === 'GET') return estatico(ADMIN_HTML, 'text/html');
-  if (ruta === '/admin/app.js') return estatico(ADMIN_JS, 'text/javascript');
-  if (ruta === '/admin/app.css') return estatico(ADMIN_CSS, 'text/css');
+  if (esRutaPanel(ruta) && (metodo === 'GET' || metodo === 'HEAD')) return servirPanel(req, env, ruta);
 
   if (ruta === '/auth/entrar' && metodo === 'GET') return paginaEntrar(req);
 

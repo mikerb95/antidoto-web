@@ -1,5 +1,7 @@
 export interface Env {
   DB: D1Database;
+  /** Archivos del panel (dist-admin/). Falta en las pruebas que no lo inyectan. */
+  ASSETS?: Fetcher;
   ENTORNO: string;
   ORIGENES: string;
   MAIL_FROM: string;

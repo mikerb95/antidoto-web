@@ -7,7 +7,7 @@ import { enlaces, sesiones, usuarios, type Usuario } from './db/schema';
 import { enviar, correoEnlaceAcceso } from './correo';
 import { dentroDelLimite } from './limite';
 import type { Env } from './env';
-import { ahora, sha256, token, json, escapar, uuid, HORA, DIA } from './util';
+import { ahora, sha256, token, json, uuid, HORA, DIA } from './util';
 
 export const COOKIE = '__Host-antidoto';
 export const MINUTOS_ENLACE = 15;
@@ -67,15 +67,14 @@ export async function pedirEnlace(req: Request, env: Env, db: DrizzleD1Database,
 }
 
 /**
- * GET /auth/entrar: no consume el enlace, solo muestra un botón. Los filtros de correo (Outlook
- * Safe Links, por ejemplo) abren los enlaces para revisarlos y gastarían el de un solo uso.
+ * GET /auth/entrar: no consume el enlace. Redirige al panel con el token en el fragmento
+ * (#t=...), donde un botón hace el POST. Los filtros de correo (Outlook Safe Links, por ejemplo)
+ * abren los enlaces para revisarlos y gastarían el de un solo uso; el fragmento, además, no
+ * viaja al servidor ni queda en el Referer.
  */
 export function paginaEntrar(req: Request): Response {
   const t = new URL(req.url).searchParams.get('t') ?? '';
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Entrar · Antídoto</title><link rel="stylesheet" href="/admin/app.css"></head>
-<body class="entrar"><main class="caja"><p class="marca">Antídoto</p><h1>Entrar a la bandeja</h1>
-<form method="post" action="/auth/entrar"><input type="hidden" name="t" value="${escapar(t)}"><button class="btn" type="submit">Entrar</button></form></main></body></html>`;
-  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  return new Response(null, { status: 303, headers: { location: `/admin/entrar#t=${encodeURIComponent(t)}`, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' } });
 }
 
 /** POST /auth/entrar: gasta el enlace y abre la sesión. */
