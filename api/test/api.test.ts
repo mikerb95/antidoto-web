@@ -173,7 +173,9 @@ describe('bandeja', () => {
     await post('/auth/enlace', { body: JSON.stringify({ email: 'DUEÑA@antidoto.co' }), headers: { 'content-type': 'application/json' } }, '');
     const t = new URL(correos[0]!.text.match(/https:\/\/\S+/)![0]).searchParams.get('t')!;
     const pagina = await llamar(`/auth/entrar?t=${encodeURIComponent(t)}`);
-    expect(await pagina.text()).toContain('method="post"');
+    // El GET no gasta el enlace: lleva al panel con el token en el fragmento (no viaja al servidor).
+    expect(pagina.status).toBe(303);
+    expect(pagina.headers.get('location')).toBe(`/admin/entrar#t=${encodeURIComponent(t)}`);
     const r1 = await post('/auth/entrar', { body: new URLSearchParams({ t }) }, '');
     expect(r1.headers.get('location')).toBe('/admin/');
     const r2 = await post('/auth/entrar', { body: new URLSearchParams({ t }) }, '');

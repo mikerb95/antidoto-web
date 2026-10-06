@@ -12,11 +12,11 @@ export function Boton({
   class: clase,
   type = 'button',
   ...resto
-}: { variante?: Variante; chico?: boolean } & JSX.HTMLAttributes<HTMLButtonElement>) {
+}: { variante?: Variante; chico?: boolean } & JSX.ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button type={type} class={`btn btn-${variante}${chico ? ' btn-chico' : ''}${clase ? ` ${clase}` : ''}`} {...resto} />;
 }
 
-export function BotonEnlace({ variante = 'secundario', chico, class: clase, ...resto }: { variante?: Variante; chico?: boolean } & JSX.HTMLAttributes<HTMLAnchorElement>) {
+export function BotonEnlace({ variante = 'secundario', chico, class: clase, ...resto }: { variante?: Variante; chico?: boolean } & JSX.AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <a class={`btn btn-${variante}${chico ? ' btn-chico' : ''}${clase ? ` ${clase}` : ''}`} {...resto} />;
 }
 
@@ -96,7 +96,7 @@ export function Campo({ etiqueta, ayuda, error, children, ancho }: { etiqueta: C
   );
 }
 
-export function Casilla({ children, ...resto }: { children: ComponentChildren } & JSX.HTMLAttributes<HTMLInputElement>) {
+export function Casilla({ children, ...resto }: { children: ComponentChildren } & JSX.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label class="casilla">
       <input type="checkbox" {...resto} />
