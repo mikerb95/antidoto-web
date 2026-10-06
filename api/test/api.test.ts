@@ -152,7 +152,7 @@ describe('bandeja', () => {
     const t = Date.now();
     await env.DB.batch([
       env.DB.prepare("insert into usuarios (id, email, nombre, rol, activo, creado) values ('11111111-1111-4111-8111-111111111111', 'dueña@antidoto.co', 'Dueña', 'admin', 1, ?)").bind(t),
-      env.DB.prepare("insert into usuarios (id, email, nombre, rol, activo, creado) values ('22222222-2222-4222-8222-222222222222', 'equipo@antidoto.co', 'Equipo', 'equipo', 1, ?)").bind(t),
+      env.DB.prepare("insert into usuarios (id, email, nombre, rol, activo, creado) values ('22222222-2222-4222-8222-222222222222', 'equipo@antidoto.co', 'Equipo', 'comercial', 1, ?)").bind(t),
     ]);
     const r = await enviarLead(lead({ nombre: '=Malicioso', email: 'x@y.co' }), '192.0.2.50');
     leadId = ((await r.json()) as { id: string }).id;
