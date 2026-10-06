@@ -237,9 +237,13 @@ function Editor({ c, audiencia, alGuardar }: { c: TCampana | null; audiencia: nu
           </Campo>
           <div class="fila-campos">
             <Campo etiqueta="Idioma">
-              <select name="locale" defaultValue={c?.locale ?? 'es'}>
-                <option value="es">Español</option>
-                <option value="en">Inglés</option>
+              <select name="locale">
+                <option value="es" selected={(c?.locale ?? 'es') === 'es'}>
+                  Español
+                </option>
+                <option value="en" selected={c?.locale === 'en'}>
+                  Inglés
+                </option>
               </select>
             </Campo>
           </div>

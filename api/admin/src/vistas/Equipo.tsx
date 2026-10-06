@@ -112,9 +112,11 @@ export default function Equipo() {
                   <input name="email" type="email" required />
                 </Campo>
                 <Campo etiqueta="Rol">
-                  <select name="rol" defaultValue="comercial">
+                  <select name="rol">
                     {LISTA_ROLES.map((r) => (
-                      <option value={r}>{ROLES[r].nombre}</option>
+                      <option value={r} selected={r === 'comercial'}>
+                        {ROLES[r].nombre}
+                      </option>
                     ))}
                   </select>
                 </Campo>
