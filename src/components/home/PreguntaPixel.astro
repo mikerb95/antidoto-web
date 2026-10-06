@@ -36,6 +36,7 @@ const api = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
   button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 2px solid var(--color-ink); border-radius: 12px; background: var(--color-antidote); color: var(--color-ink); cursor: pointer; box-shadow: 0 3px 0 rgb(15 24 29 / 0.25); }
   button:disabled { opacity: 0.6; cursor: wait; }
   button svg { width: 20px; height: 20px; }
-  .aviso { grid-column: 1 / -1; margin: 0; font-size: 12px; opacity: 0.8; }
+  /* Fondo propio: en el hero va sobre la foto y sin él no da el contraste de AA. */
+  .aviso { grid-column: 1 / -1; justify-self: start; margin: 0; padding: 3px 10px; border-radius: 8px; background: rgb(15 24 29 / 0.78); color: var(--color-paper); font-size: 12px; line-height: 1.45; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>
