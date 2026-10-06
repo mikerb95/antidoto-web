@@ -59,10 +59,10 @@ export default function Campanas() {
                   <th scope="col" class="num">
                     Enviados
                   </th>
-                  <th scope="col" class="num">
+                  <th scope="col" class="num ocultar-movil">
                     Abren
                   </th>
-                  <th scope="col" class="num">
+                  <th scope="col" class="num ocultar-movil">
                     Clics
                   </th>
                   <th scope="col" class="num">
@@ -89,8 +89,8 @@ export default function Campanas() {
                         <Insignia tono={TONO_CAMPANA[c.estado]!}>{ESTADOS_CAMPANA[c.estado]}</Insignia>
                       </td>
                       <td class="num">{st?.destinatarios ? `${st.enviados} de ${st.destinatarios}` : ''}</td>
-                      <td class="num">{st?.enviados ? pct(st.abiertos, st.enviados) : ''}</td>
-                      <td class="num">{st?.enviados ? pct(st.clics, st.enviados) : ''}</td>
+                      <td class="num ocultar-movil">{st?.enviados ? pct(st.abiertos, st.enviados) : ''}</td>
+                      <td class="num ocultar-movil">{st?.enviados ? pct(st.clics, st.enviados) : ''}</td>
                       <td class="num suave">{fecha(c.iniciada || c.programada || c.creada, c.estado === 'programada')}</td>
                     </tr>
                   );

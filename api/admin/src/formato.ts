@@ -27,12 +27,12 @@ export const cuenta = (n: number | null | undefined, uno: string, varios: string
 
 /** "hace 3 h", "hace 2 d": para listas donde importa lo reciente. */
 export function hace(ms: number, ahora = Date.now()): string {
-  const min = Math.round((ahora - ms) / 60_000);
+  const min = Math.floor((ahora - ms) / 60_000);
   if (min < 1) return 'ahora';
   if (min < 60) return `hace ${min} min`;
-  const h = Math.round(min / 60);
+  const h = Math.floor(min / 60);
   if (h < 24) return `hace ${h} h`;
-  const d = Math.round(h / 24);
+  const d = Math.floor(h / 24);
   return d < 31 ? `hace ${d} d` : fecha(ms);
 }
 

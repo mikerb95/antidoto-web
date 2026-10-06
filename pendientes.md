@@ -9,7 +9,7 @@ Revisión pendiente tras actualizar `src/data/docs/`.
 - [x] Reflejar en el kanban y en los requisitos el sitio multipágina: K-34 hecho, RF-01, RF-05, RF-11 (parcial: faltan casos) y RF-47 actualizados. RF-48 sigue parcial por las respuestas pendientes.
 - [ ] Activar el asesor en producción: secret `ANTHROPIC_API_KEY` y prueba con la API real (preguntas trampa de la receta `chat-ia`). Cubre RF-39 y HU-30.
 - [x] Medir de nuevo el rendimiento (LCP y JS inicial) con el hero actual, el asesor y las secciones nuevas (05/10/2026, cifras en CLAUDE.md, dentro del presupuesto). Falta confirmarlo con PageSpeed Insights sobre la URL publicada. Cubre RNF-01 a RNF-03.
-- [ ] Auditoría de accesibilidad formal posterior al rediseño. Cubre RNF-06.
+- [x] (06/10/2026) Auditoría automática de accesibilidad con axe en las 103 páginas, a 1440 y 390 px y con movimiento reducido. Quedó sin violaciones de WCAG 2.2 AA después de corregir: el nombre del enlace de idioma y del de LinkedIn (2.5.3), el enlace a la política en el pie sin subrayado, el contraste de los pasos del cotizador y del aviso de IA sobre la foto del hero, el `<dl>` de Nosotros y las tablas de `/docs/` con scroll que no se alcanzaba con teclado. Lo que falta es la prueba con lector de pantalla (abajo). Cubre RNF-06.
 - [ ] Pasar la CSP de Report-Only a enforcement tras revisar la consola. Cubre RNF-12.
 - [ ] Decidir con el dueño si `/docs/` debe seguir desplegándose con el sitio público o quedarse solo en desarrollo.
 

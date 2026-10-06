@@ -1768,6 +1768,10 @@ kbd {
 
 /* Pantallas angostas ------------------------------------------------------- */
 @media (max-width: 1180px) {
+  .contenido:has(.dividido.con-lateral) .barra-filtros,
+  .contenido:has(.dividido.con-lateral) .cabecera-acciones {
+    display: none;
+  }
   .dividido.con-lateral {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1839,6 +1843,22 @@ kbd {
   .datos-fila {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
+  }
+  .cifras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .cifra {
+    padding: 14px;
+  }
+  .cifra-valor {
+    font-size: 22px;
+  }
+  .ocultar-movil {
+    display: none;
+  }
+  .lf-enlace {
+    padding: 10px 16px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

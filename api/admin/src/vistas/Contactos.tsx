@@ -76,7 +76,7 @@ export default function Contactos({ params }: { params: string[] }) {
                   <tr>
                     <th scope="col">Contacto</th>
                     <th scope="col">Estado</th>
-                    <th scope="col">Intereses</th>
+                    <th scope="col" class="ocultar-movil">Intereses</th>
                     <th scope="col" class="num">
                       Desde
                     </th>
@@ -94,7 +94,7 @@ export default function Contactos({ params }: { params: string[] }) {
                       <td>
                         <Insignia tono={TONO_CONTACTO[c.estado]!}>{ESTADOS_CONTACTO[c.estado]}</Insignia>
                       </td>
-                      <td class="suave texto-chico">{c.intereses.map((i) => SERVICIOS[i]).join(', ')}</td>
+                      <td class="suave texto-chico ocultar-movil">{c.intereses.map((i) => SERVICIOS[i]).join(', ')}</td>
                       <td class="num suave" title={fecha(c.creado, true)}>
                         {hace(c.creado)}
                       </td>

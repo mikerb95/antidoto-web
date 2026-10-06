@@ -82,7 +82,7 @@ export default function Solicitudes({ params }: { params: string[] }) {
                 <thead>
                   <tr>
                     <th scope="col">Quién</th>
-                    <th scope="col">Servicio</th>
+                    <th scope="col" class="ocultar-movil">Servicio</th>
                     <th scope="col">Estado</th>
                     <th scope="col" class="num">
                       Llegó
@@ -98,7 +98,7 @@ export default function Solicitudes({ params }: { params: string[] }) {
                         </a>
                         {l.empresa && <span class="fila-sub">{l.empresa}</span>}
                       </td>
-                      <td>{SERVICIOS[l.servicio]}</td>
+                      <td class="ocultar-movil">{SERVICIOS[l.servicio]}</td>
                       <td>
                         <Insignia tono={TONO_ESTADO[l.estado]}>{ESTADOS[l.estado]}</Insignia>
                       </td>
