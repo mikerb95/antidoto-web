@@ -12,20 +12,22 @@
 //   GET|POST /auth/entrar           abre la sesión con el enlace
 //   POST /auth/salir[?todas=1]      cierra la sesión (o todas las del usuario)
 //   GET  /admin/                    bandeja (HTML + /admin/app.js + /admin/app.css)
-//   /admin/api/*                    API de la bandeja, con sesión
+//   /admin/api/*                    API del panel, con sesión y permisos por rol (src/rutas/)
 import { drizzle } from 'drizzle-orm/d1';
 import type { Env } from './env';
 import { crearLead } from './leads';
 import { origenPermitido, cabecerasCors } from './cors';
-import { pedirEnlace, paginaEntrar, entrar, sesionActual, salir, mismoOrigen } from './auth';
-import { listarLeads, verLead, editarLead, anonimizarLead, metricas, exportarCsv, listarUsuarios, crearUsuario, editarUsuario } from './admin';
+import { pedirEnlace, paginaEntrar, entrar, sesionActual, mismoOrigen } from './auth';
 import { seguimiento } from './seguimiento';
 import { crearSuscripcion, confirmar, baja, preferencias, datosPreferencias } from './marketing/suscripciones';
 import { listarPublicas, verPublica } from './marketing/publico';
 import { recordatorios, invitaciones } from './marketing/automaticos';
 import { webhookResend } from './marketing/webhook';
 import { procesarEnvios, arrancarProgramadas, decidirPruebas } from './marketing/envios';
-import * as mk from './marketing/admin';
+import type { Ctx, Modulo } from './rutas/contexto';
+import { rutasLeads } from './rutas/leads';
+import { rutasMarketing } from './rutas/marketing';
+import { rutasEquipo } from './rutas/equipo';
 import { rutaAsesor } from './asesor/ruta';
 import { ADMIN_HTML, ADMIN_JS, ADMIN_CSS } from './admin-ui';
 import { json } from './util';
@@ -37,6 +39,9 @@ const SEGURIDAD = {
   'referrer-policy': 'no-referrer',
   'x-frame-options': 'DENY',
 };
+
+// Rutas del panel por módulo (src/rutas/), todas con sesión. Cada una exige su permiso.
+const MODULOS: Modulo[] = [rutasEquipo, rutasLeads, rutasMarketing];
 
 const estatico = (cuerpo: string, tipo: string) =>
   new Response(cuerpo, { headers: { 'content-type': `${tipo}; charset=utf-8`, 'cache-control': 'no-cache', ...SEGURIDAD } });
@@ -105,68 +110,10 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
   if (ruta === '/auth/salir' || ruta.startsWith('/admin/api/') || ruta === '/admin/leads.csv') {
     const sesion = await sesionActual(req, db);
     if (!sesion) return json({ error: 'sesion' }, 401);
-
-    if (ruta === '/auth/salir' && metodo === 'POST') return salir(db, sesion, url.searchParams.has('todas'));
-    if (ruta === '/admin/leads.csv' && metodo === 'GET') return exportarCsv(db);
-    if (ruta === '/admin/api/yo') {
-      const { id, email, nombre, rol } = sesion.usuario;
-      return json({ id, email, nombre, rol });
-    }
-    if (ruta === '/admin/api/leads' && metodo === 'GET') return listarLeads(url, db);
-    if (ruta === '/admin/api/metricas' && metodo === 'GET') return metricas(url, db);
-    if (ruta === '/admin/api/usuarios' && metodo === 'GET') return listarUsuarios(db);
-    if (ruta === '/admin/api/usuarios' && metodo === 'POST') return crearUsuario(req, db, sesion);
-
-    const lead = ruta.match(/^\/admin\/api\/leads\/([0-9a-f-]{36})(\/anonimizar)?$/);
-    if (lead) {
-      const id = lead[1]!;
-      if (lead[2] && metodo === 'POST') return anonimizarLead(id, db, sesion);
-      if (!lead[2] && metodo === 'GET') return verLead(id, db);
-      if (!lead[2] && metodo === 'PATCH') return editarLead(id, req, db, sesion);
-    }
-    const usuario = ruta.match(/^\/admin\/api\/usuarios\/([0-9a-f-]{36})$/);
-    if (usuario && metodo === 'PATCH') return editarUsuario(usuario[1]!, req, db, sesion);
-
-    // Email marketing
-    if (ruta === '/admin/api/marketing' && metodo === 'GET') return mk.metricasMarketing(url, db);
-    if (ruta === '/admin/api/contactos/importar' && metodo === 'POST') return mk.importarContactos(req, db);
-    if (ruta === '/admin/api/contactos' && metodo === 'GET') return mk.listarContactos(url, db);
-    if (ruta === '/admin/api/contactos' && metodo === 'POST') return mk.invitarContacto(req, env, db, appUrl);
-    const contacto = ruta.match(/^\/admin\/api\/contactos\/([0-9a-f-]{36})(\/baja|\/suprimir)?$/);
-    if (contacto) {
-      const [, id, accion] = contacto as unknown as [string, string, string | undefined];
-      if (!accion && metodo === 'GET') return mk.verContacto(id, db);
-      if (accion === '/baja' && metodo === 'POST') return mk.bajaContacto(id, db);
-      if (accion === '/suprimir' && metodo === 'POST') return mk.suprimirContacto(id, db, sesion);
-    }
-    if (ruta === '/admin/api/campanas' && metodo === 'GET') return mk.listarCampanas(db);
-    if (ruta === '/admin/api/campanas' && metodo === 'POST') return mk.crearCampana(req, db, sesion);
-    const campana = ruta.match(/^\/admin\/api\/campanas\/([0-9a-f-]{36})(\/vista|\/prueba|\/enviar|\/cancelar|\/programar|\/desprogramar|\/duplicar)?$/);
-    if (campana) {
-      const [, id, accion] = campana as unknown as [string, string, string | undefined];
-      if (!accion && metodo === 'GET') return mk.verCampana(id, db);
-      if (!accion && metodo === 'PATCH') return mk.editarCampana(id, req, db);
-      if (!accion && metodo === 'DELETE') return mk.borrarCampana(id, db);
-      if (accion === '/vista' && metodo === 'GET') return mk.vistaCampana(id, env, db, appUrl);
-      if (accion === '/prueba' && metodo === 'POST') return mk.probarCampana(id, env, db, sesion, appUrl);
-      if (accion === '/enviar' && metodo === 'POST') return mk.enviarCampana(id, req, env, db, appUrl, diferir);
-      if (accion === '/cancelar' && metodo === 'POST') return mk.cancelarCampana(id, db);
-      if (accion === '/programar' && metodo === 'POST') return mk.programarCampana(id, req, env, db, appUrl);
-      if (accion === '/desprogramar' && metodo === 'POST') return mk.desprogramarCampana(id, db);
-      if (accion === '/duplicar' && metodo === 'POST') return mk.duplicarCampana(id, db, sesion);
-    }
-    if (ruta === '/admin/api/plantillas' && metodo === 'GET') return mk.listarPlantillas(db);
-    if (ruta === '/admin/api/plantillas' && metodo === 'POST') return mk.crearPlantilla(req, db, sesion);
-    const plantilla = ruta.match(/^\/admin\/api\/plantillas\/([0-9a-f-]{36})$/);
-    if (plantilla && metodo === 'DELETE') return mk.borrarPlantilla(plantilla[1]!, db);
-    if (ruta === '/admin/api/automaticos' && metodo === 'GET') return mk.listarAutomaticos(db);
-    const auto = ruta.match(/^\/admin\/api\/automaticos\/([a-z]+:(?:es|en))(\/vista|\/prueba)?$/);
-    if (auto) {
-      const [, clave, accion] = auto as unknown as [string, string, string | undefined];
-      if (!accion && metodo === 'PUT') return mk.guardarAutomatico(clave, req, db, sesion);
-      if (!accion && metodo === 'DELETE') return mk.restaurarAutomatico(clave, db);
-      if (accion === '/vista' && metodo === 'GET') return mk.vistaAutomatico(clave, env, db, appUrl);
-      if (accion === '/prueba' && metodo === 'POST') return mk.probarAutomatico(clave, env, db, sesion, appUrl);
+    const ctx: Ctx = { req, url, ruta, metodo, env, db, sesion, appUrl, diferir };
+    for (const modulo of MODULOS) {
+      const res = await modulo(ctx);
+      if (res) return res;
     }
   }
 
