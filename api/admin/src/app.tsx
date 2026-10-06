@@ -116,7 +116,7 @@ function Marco({ yo, ruta }: { yo: Yo; ruta: string }) {
           ) : !permitida ? (
             <Vacio titulo="Tu rol no tiene acceso a esta sección">Pídele a una persona con rol Admin que te dé acceso si lo necesitas.</Vacio>
           ) : (
-            Vista && <Vista key={encontrada.r.nav + ruta} params={encontrada.m!.slice(1).filter(Boolean) as string[]} />
+            Vista && <Vista key={encontrada.r.patron.source} params={encontrada.m!.slice(1).filter(Boolean) as string[]} />
           )}
         </main>
       </div>
