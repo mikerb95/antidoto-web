@@ -8,6 +8,7 @@ import { Cabecera, Cifra, Cifras, FalloCarga, Insignia, Tarjeta, Cargando, Vacio
 import { Medidor } from '../ui/graficas';
 import { TONO_ESTADO } from './Solicitudes';
 import { TONO_CAMPANA } from './Campanas';
+import { dia } from './Proyectos';
 
 export interface DatosInicio {
   leads?: {
@@ -18,7 +19,8 @@ export interface DatosInicio {
     recientes: { id: string; nombre: string | null; empresa: string | null; servicio: ServicioId; estado: Estado; creado: number; anonimizado: number | null }[];
   };
   novedades?: { activos: number; enCurso: { id: string; asunto: string; estado: string; programada: number | null }[] };
-  asesor?: { configurado: boolean; activo: boolean; tope: number; gastoHoy: number } | null;
+  proyectos?: { activos: number; hoy: string; proximos: { id: string; titulo: string; vence: string; estado: string; proyectoId: string; proyecto: string; codigo: string }[] };
+  asesor?: { configurado: boolean; activo: boolean; tope: number; gastoHoy: number; conversacionesHoy: number; preguntasHoy: number; derivacionesHoy: number } | null;
   [bloque: string]: unknown;
 }
 
@@ -45,7 +47,7 @@ export default function Inicio() {
 }
 
 function Contenido({ d }: { d: DatosInicio }) {
-  const { leads, novedades, asesor } = d;
+  const { leads, novedades, asesor, proyectos } = d;
   return (
     <>
       <Cifras>
@@ -60,6 +62,8 @@ function Contenido({ d }: { d: DatosInicio }) {
         )}
         {leads && <Cifra etiqueta="Esta semana" valor={numero(leads.semana)} nota="solicitudes nuevas" href="/admin/solicitudes" />}
         {leads && <Cifra etiqueta="En curso" valor={numero(leads.abiertos)} nota="nuevas, contactadas o cotizadas" href="/admin/metricas" />}
+        {asesor && <Cifra etiqueta="Chat con IA hoy" valor={numero(asesor.conversacionesHoy)} nota={`conversaciones, ${asesor.derivacionesHoy} derivadas al equipo`} href="/admin/conversaciones" />}
+        {proyectos && <Cifra etiqueta="Proyectos activos" valor={numero(proyectos.activos)} nota={proyectos.proximos.length ? `${proyectos.proximos.length} entregables esta semana` : 'sin entregables esta semana'} href="/admin/proyectos" />}
         {novedades && <Cifra etiqueta="Lista de novedades" valor={numero(novedades.activos)} nota="contactos activos" href="/admin/contactos?estado=activo" />}
       </Cifras>
 
@@ -87,8 +91,28 @@ function Contenido({ d }: { d: DatosInicio }) {
           </Tarjeta>
         )}
 
+        {proyectos && proyectos.proximos.length > 0 && (
+          <Tarjeta titulo="Entregables de la semana" acciones={<a href="/admin/proyectos">Ver proyectos</a>} sinRelleno>
+            <ul class="lista-filas">
+              {proyectos.proximos.map((e) => (
+                <li>
+                  <a href={`/admin/proyectos/${e.proyectoId}`} class="lf-enlace">
+                    <span class="lf-principal">
+                      <span class="lf-titulo">{e.titulo}</span>
+                      <span class="lf-sub">
+                        {e.codigo} · {e.proyecto}
+                      </span>
+                    </span>
+                    <span class={`lf-meta${e.vence < proyectos.hoy ? ' vencido' : ''}`}>{e.vence < proyectos.hoy ? 'Vencido' : dia(e.vence)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Tarjeta>
+        )}
+
         {asesor !== undefined && (
-          <Tarjeta titulo="Chat con IA" acciones={<a href="/admin/ajustes">Ajustes</a>}>
+          <Tarjeta titulo="Gasto del chat con IA" acciones={<a href="/admin/conversaciones?vista=metricas">Ver métricas</a>}>
             {asesor === null ? (
               <p class="suave">No se pudo leer el gasto de hoy. Mientras tanto, el chat no responde (falla cerrado).</p>
             ) : !asesor.configurado ? (

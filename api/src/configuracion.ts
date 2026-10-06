@@ -13,10 +13,33 @@ const numero = (min: number, max: number): Validador => (v) => {
 };
 const booleano: Validador = (v) => (typeof v === 'boolean' ? { ok: true, valor: v } : { ok: false });
 
+/** URL https o ruta del propio sitio (/video/hero.mp4). */
+const esUrl = (v: unknown): v is string => typeof v === 'string' && v.length <= 500 && (/^https:\/\/[^\s]+$/.test(v) || /^\/[\w./-]+$/.test(v));
+
+/** Nombre del regalo de bienvenida por idioma (src/data/site.ts: REGALO_NOVEDADES). El enlace va en el correo de bienvenida. */
+const regalo: Validador = (v) => {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return { ok: false };
+  const o = v as Record<string, unknown>;
+  const texto = (x: unknown) => typeof x === 'string' && x.trim().length > 0 && x.length <= 120;
+  return texto(o.es) && texto(o.en) ? { ok: true, valor: { es: (o.es as string).trim(), en: (o.en as string).trim() } } : { ok: false };
+};
+
+/** Video del hero (src/data/site.ts: VIDEO_HERO): MP4 obligatorio y WebM opcional. */
+const video: Validador = (v) => {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return { ok: false };
+  const o = v as Record<string, unknown>;
+  if (!esUrl(o.mp4) || !/\.mp4(\?.*)?$/.test(o.mp4)) return { ok: false };
+  if (o.webm !== undefined && o.webm !== '' && (!esUrl(o.webm) || !/\.webm(\?.*)?$/.test(o.webm))) return { ok: false };
+  return { ok: true, valor: o.webm ? { mp4: o.mp4, webm: o.webm } : { mp4: o.mp4 } };
+};
+
 /** Claves conocidas. El tope del chat no tiene defecto aquí: si falta, manda ASESOR_TOPE_DIARIO_USD. */
 export const AJUSTES = {
   'asesor.tope_diario_usd': { validar: numero(0, 20), defecto: null as number | null },
   'asesor.activo': { validar: booleano, defecto: true },
+  /** Lo lee el build del sitio (/v1/ajustes): cambia al publicar. */
+  'sitio.regalo_novedades': { validar: regalo, defecto: null as { es: string; en: string } | null },
+  'sitio.video_hero': { validar: video, defecto: null as { mp4: string; webm?: string } | null },
 } satisfies Record<string, { validar: Validador; defecto: unknown }>;
 export type ClaveAjuste = keyof typeof AJUSTES;
 export const CLAVES_AJUSTE = Object.keys(AJUSTES) as ClaveAjuste[];

@@ -1,5 +1,5 @@
 # API de Antídoto: leads del cotizador, bandeja en el admin y avisos de seguimiento.
-# Secrets (wrangler secret put): RESEND_API_KEY, SAL_IP, RESEND_WEBHOOK_SECRET, ANTHROPIC_API_KEY. Ver api/README.md.
+# Secrets (wrangler secret put): RESEND_API_KEY, SAL_IP, RESEND_WEBHOOK_SECRET, ANTHROPIC_API_KEY, GITHUB_DISPATCH_TOKEN. Ver api/README.md.
 name = "antidoto-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
@@ -20,6 +20,17 @@ database_name = "antidoto"
 # El workflow de despliegue crea la base si no existe y escribe aquí su id.
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migraciones"
+
+# Imágenes del contenido del sitio (blog, casos, clientes) que sube el equipo desde el panel.
+# El workflow de despliegue crea el bucket si no existe.
+[[r2_buckets]]
+binding = "MEDIOS"
+bucket_name = "antidoto-medios"
+
+# Archivos de los entregables de proyectos. Privado: el Worker los sirve solo con sesión.
+[[r2_buckets]]
+binding = "ARCHIVOS"
+bucket_name = "antidoto-archivos"
 
 # Cada 5 minutos salen los lotes de campañas; cada hora, además, el aviso de leads sin respuesta.
 [triggers]
@@ -43,3 +54,6 @@ SITIO_URL = "https://antidotocolombia.com"
 HORAS_SEGUIMIENTO = "24"
 # Tope de gasto diario del chat con IA (USD). Si no se puede leer el gasto, el chat no responde.
 ASESOR_TOPE_DIARIO_USD = "1"
+# Repositorio del sitio: publicar desde el panel dispara sus workflows (secret GITHUB_DISPATCH_TOKEN).
+GITHUB_REPO = "mikerb95/antidoto-web"
+GITHUB_REF = "main"

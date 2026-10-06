@@ -2,7 +2,8 @@
 // El sitio lo envía con fetch keepalive (text/plain, sin preflight) justo antes de abrir WhatsApp,
 // así que la respuesta casi nunca se lee: el cotizador funciona igual si esto falla.
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { leads, consentimientos, eventos, type Lead } from './db/schema';
+import { eq } from 'drizzle-orm';
+import { leads, consentimientos, eventos, conversaciones, type Lead } from './db/schema';
 import { validarLead } from './validar';
 import { enviar, correoLeadEquipo, correoLeadCliente } from './correo';
 import { suscribir } from './marketing/suscripciones';
@@ -52,6 +53,8 @@ export async function crearLead(
     primeraRespuesta: null,
     avisoSeguimiento: null,
     anonimizado: null,
+    organizacionId: null,
+    proyectoId: null,
     ipHash,
   };
 
@@ -68,6 +71,8 @@ export async function crearLead(
       revocado: null,
     }),
     db.insert(eventos).values({ id: uuid(), leadId: lead.id, creado: t, tipo: 'creado', detalle: null, autor: null }),
+    // La conversación del chat queda ligada a la solicitud (la persona autorizó el tratamiento).
+    ...(lead.conversacionId ? [db.update(conversaciones).set({ leadId: lead.id }).where(eq(conversaciones.id, lead.conversacionId))] : []),
   ]);
 
   // Los correos salen después de responder; si Resend falla, el lead ya quedó guardado.

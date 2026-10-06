@@ -1,23 +1,48 @@
 # API de Antídoto
 
-Worker de Cloudflare con base D1 (SQLite) y Drizzle. Fase 1 de la lógica de negocio: las solicitudes del cotizador se guardan como leads, el equipo las gestiona en una bandeja y el sistema avisa lo que se queda sin respuesta.
+Worker de Cloudflare con base D1 (SQLite), Drizzle y dos buckets R2. Guarda las solicitudes del cotizador, las conversaciones del chat con IA, el contenido que el equipo publica en el sitio y los proyectos con sus clientes. Sirve el panel de administración (`/admin/`) y el portal de proyectos para clientes (`/portal/`).
 
 ## Qué hace
 
-- **Leads:** `POST /v1/leads` recibe lo que arma el cotizador de `/contacto/`, solo si la persona marca la autorización de datos. Valida los campos y tiene trampa para bots, tiempo mínimo y límite de 5 envíos por IP y hora. Guarda el lead, la prueba del consentimiento (versión, texto, fecha y hash de IP) y avisa por correo al equipo y a quien pidió la cotización.
-- **Bandeja** (`/admin/`): lista con filtros por estado, servicio y búsqueda. Estados: nuevo, contactado, cotizado, ganado y perdido. Cada lead tiene valor estimado, motivo de pérdida, notas, historial con autor y botones para responder por WhatsApp, correo o teléfono. Se puede exportar a CSV.
-- **Métricas:** solicitudes por estado, servicio, origen (UTM o dominio) y mes; tasa de cierre, mediana de horas hasta la primera respuesta y valor ganado.
-- **Seguimiento:** un cron horario avisa una vez por lead cuando sigue en "nuevo" después de `HORAS_SEGUIMIENTO` (24 por defecto), y limpia enlaces y sesiones vencidos.
-- **Acceso del equipo:** enlace mágico por correo. El enlace es de un solo uso y vence en 15 minutos. El GET no lo gasta, así que los filtros de Outlook no lo queman. La sesión se revoca y dura 30 días en una cookie `__Host-`, `HttpOnly`, `SameSite=Lax`. Los tokens se guardan solo como SHA-256. Roles: `admin` (gestiona el equipo y suprime datos) y `equipo`.
-- **Ley 1581:** supresión de datos desde la bandeja. Borra lo personal, revoca la autorización y conserva solo servicio, fechas y estado para las métricas.
+- **Leads:** `POST /v1/leads` recibe lo que arma el cotizador de `/contacto/`, solo si la persona marca la autorización de datos. Valida los campos y tiene trampa para bots, tiempo mínimo y límite de 5 envíos por IP y hora. Guarda el lead, la prueba del consentimiento (versión, texto, fecha y hash de IP) y avisa por correo al equipo y a quien pidió la cotización. Si la persona habló con el chat en la misma visita, el lead queda ligado a esa conversación.
+- **Seguimiento:** un cron horario avisa una vez por lead cuando sigue en "nuevo" después de `HORAS_SEGUIMIENTO` (24 por defecto), limpia enlaces y sesiones vencidos y borra las conversaciones de más de 90 días.
+- **Ley 1581:** supresión de datos desde el panel (solo admin). Borra lo personal del lead, revoca la autorización, suprime su suscripción, su conversación del chat y su contacto en las organizaciones, y conserva solo servicio, fechas y estado para las métricas.
 
 Si la API falla o no está configurada, el cotizador sigue abriendo WhatsApp igual (fail-open).
+
+### Panel de administración
+
+Preact y Vite en `admin/` (sin router ni librerías de estado: unos 15 KB gzip de base y cada pantalla se carga aparte). Vite lo construye en `dist-admin/` (`npm run admin:build`) y el Worker lo sirve con el binding `ASSETS` (`src/panel.ts`) y una CSP estricta: nada en línea ni de otros dominios. Todas las rutas de la interfaz devuelven el mismo `index.html`; los enlaces viejos de la bandeja (`/admin/#<id>`) llevan a las rutas nuevas.
+
+- **Acceso:** enlace mágico por correo, de un solo uso y que vence en 15 minutos. `GET /auth/entrar?t=` no lo gasta: redirige a `/admin/entrar#t=…` (el token va en el fragmento, que no viaja al servidor) y un botón hace el POST. Sesión de 30 días en una cookie `__Host-antidoto`, `HttpOnly`, `SameSite=Lax`. Los tokens se guardan solo como SHA-256. Cada persona ve y cierra sus sesiones en *Mi cuenta*.
+- **Roles** (`src/permisos.ts`): admin, comercial, producción, contenido y solo lectura. La API aplica la matriz en cada ruta (`src/rutas/`); el panel solo esconde lo que no se puede usar. Suprimir datos, gestionar el equipo, los ajustes, la auditoría y publicar en producción son solo de admin. El valor de los proyectos solo lo ven admin y comercial.
+- **Auditoría** (`src/auditoria.ts`): cada cambio que sale bien queda con quién, qué y cuándo, sin datos personales en el detalle.
+- **Ajustes** (`src/configuracion.ts`): encender o apagar el chat, su tope diario, el regalo por suscribirse y el video del hero (estos dos los lee el build del sitio en `GET /v1/ajustes`).
+- **Pantallas:** Inicio (lo que pide atención según el rol), Solicitudes, Conversaciones, Proyectos, Organizaciones, Campañas, Contactos, Contenido, Métricas, Equipo, Ajustes, Auditoría y Sistema. Ctrl+K busca en todo lo que el rol puede ver.
+- **Exportaciones:** solicitudes, contactos, conversaciones (sin el texto) y proyectos, en CSV protegido contra fórmulas.
+- **Sistema** (`src/rutas/sistema.ts`): qué servicios están configurados (sin mostrar secretos), última corrida de cada cron, última publicación y filas por tabla.
+
+### Contenido del sitio
+
+El equipo publica artículos del blog, casos, vacantes, preguntas frecuentes y clientes desde el panel (`src/contenido/esquemas.ts` declara los campos y la validación de cada tipo; el panel arma el formulario con eso). Los servicios, las ofertas y los textos de interfaz siguen en el código.
+
+- **Borrador y copia publicada:** guardar deja un borrador (puede ir incompleto) y la versión anterior en el historial (las últimas 20, restaurables). Publicar exige todo en los dos idiomas y una dirección que no use otra entrada, y guarda una foto aparte: editar algo publicado no cambia el sitio hasta volver a publicarlo. Lo que alguna vez salió en el sitio se archiva, no se borra.
+- **Imágenes:** PNG, JPEG o WebP de hasta 8 MB, validadas por sus primeros bytes (nunca SVG), en el bucket `MEDIOS` (`src/archivos.ts`). Se sirven en `/v1/medios/<id>`.
+- **Lectura pública:** `GET /v1/contenido?tipo=` devuelve solo lo publicado, con las URL de sus imágenes. El build del sitio lo lee con el cargador de `../src/lib/cms/`, que baja las imágenes para que `astro:assets` las optimice.
+- **Publicar el sitio** (`src/publicacion.ts`): el sitio es estático, así que publicar es volver a construirlo. La vista previa de Cloudflare Pages se sube por carga directa y no tiene deploy hook, así que el Worker dispara el workflow de GitHub (`preview.yml`, o `deploy.yml` para producción, solo admin). Varios pedidos en 2 minutos se juntan en uno y el cron reintenta los que fallen. Necesita `GITHUB_DISPATCH_TOKEN` y `GITHUB_REPO`.
+
+### Proyectos y portal de clientes
+
+- **Proyectos** (`src/rutas/proyectos.ts`): una solicitud ganada se convierte en proyecto con su organización (se reutiliza si ya existe con el mismo nombre) y su contacto. Arranca con las etapas de la plantilla de su línea (`src/proyectos/plantillas.ts`) y suma tareas, entregables con estados de revisión y versiones, archivos y una bitácora. Lo que el cliente ve va marcado como visible. No duplica la plataforma de misiones: el proyecto solo guarda su enlace.
+- **Archivos:** bucket privado `ARCHIVOS`, hasta 50 MB por archivo. Solo se descargan con sesión, siempre como adjunto y con `nosniff`.
+- **Organizaciones:** ficha con contactos, proyectos, solicitudes, conversaciones del chat que llevaron a cotizar y accesos al portal.
+- **Portal** (`src/portal/`, interfaz en `admin/src/portal/`): el cliente entra con su propio enlace mágico (otra tabla, otros enlaces, otras sesiones y la cookie `__Host-antidoto-cliente` con `SameSite=Strict`), ve solo los proyectos de su organización y lo marcado como visible, descarga los archivos, aprueba los entregables o pide cambios y comenta. El equipo da y quita accesos desde la ficha de la organización (permiso `portal.gestionar`). Cuando un entregable visible pasa a revisión les llega un correo; cuando el cliente aprueba, pide cambios o comenta, le llega al responsable. Mientras no haya control del DNS comparte origen con el panel; conviene moverlo a `portal.antidotocolombia.com`.
 
 ### Email marketing
 
 - **Suscripción:** desde el formulario del pie del sitio o con la segunda casilla del cotizador ("Quiero recibir novedades"). Es una autorización aparte de la del lead, con su propio texto y versión en `src/data/consentimiento.json`.
-- **Doble confirmación:** la persona recibe un correo y queda `activo` solo cuando confirma. El GET de la página no confirma, así que los filtros de correo no la activan solos. El equipo puede invitar a alguien desde la bandeja; su autorización se registra cuando confirma.
-- **Campañas** (bandeja > Campañas):
+- **Doble confirmación:** la persona recibe un correo y queda `activo` solo cuando confirma. El GET de la página no confirma, así que los filtros de correo no la activan solos. El equipo puede invitar a alguien desde el panel; su autorización se registra cuando confirma.
+- **Campañas** (panel > Campañas):
   - Asunto, texto de vista previa y mensaje en un formato simple (títulos, negrita, listas, botones, imágenes y `{{nombre}}`), con vista previa del correo real.
   - Audiencia por idioma y, si quieres, por servicios de interés.
   - Prueba a tu correo.
@@ -35,13 +60,13 @@ Si la API falla o no está configurada, el cotizador sigue abriendo WhatsApp igu
 - **Supresión:** un admin borra el correo, el nombre y la organización del contacto, y se revoca su autorización.
 - **Páginas en el sitio:** los enlaces de confirmar, baja y preferencias apuntan a la API (así sirven los correos viejos y la baja de un clic), pero su GET redirige a `/novedades/preferencias/` del sitio (`SITIO_URL`). Ahí los botones son formularios normales que hacen POST a la API, y la API vuelve al sitio con el resultado. La baja de un clic de RFC 8058 (cuerpo `List-Unsubscribe=One-Click`) responde 200 sin redirigir.
 - **Preferencias y pausa:** desde cualquier correo la persona elige temas, idioma o una pausa de 1, 3 o 6 meses. Quien está en pausa no entra en la audiencia.
-- **Correos automáticos** (bandeja > Campañas > Correos automáticos):
+- **Correos automáticos** (panel > Campañas > Correos automáticos):
   - Bienvenida al confirmar, editable en español e inglés, con vista previa y prueba. `{{sitio}}` es la URL del sitio. Si hay regalo (una guía), su enlace va aquí y su nombre en `REGALO_NOVEDADES` del sitio.
   - Un solo recordatorio a quien se suscribió en el sitio y no confirmó en 48 horas (no a los invitados).
-- **Importar CSV** (bandeja > Contactos): cada persona nueva queda pendiente y recibe una invitación; el cron las manda por lotes. Quien ya estaba, incluido quien se dio de baja, no se toca.
+- **Importar CSV** (panel > Contactos): cada persona nueva queda pendiente y recibe una invitación; el cron las manda por lotes. Quien ya estaba, incluido quien se dio de baja, no se toca.
 - **Campañas avanzadas:** programar el envío, prueba A/B de asunto (una muestra se parte en A y B; pasadas las horas elegidas el resto recibe la de más clics, o más aperturas), plantillas y duplicar.
 - **Archivo público:** las campañas marcadas como públicas se listan en `/novedades/` del sitio (`GET /v1/novedades`). Cada correo tiene versión web (`/v1/novedades/<id>`), que es también el "Ver en el navegador" del correo.
-- **Métricas de la lista** (bandeja > Métricas): altas, confirmaciones y bajas por semana, activos y en pausa, confirmación por origen (home, pie, cotizador, importados...) y apertura de las campañas. La ficha de cada lead dice si está suscrito y qué abrió.
+- **Métricas de la lista** (panel > Métricas): altas, confirmaciones y bajas por semana, activos y en pausa, confirmación por origen (home, pie, cotizador, importados...) y apertura de las campañas. La ficha de cada lead dice si está suscrito y qué abrió.
 
 ### Chat con IA
 
@@ -52,7 +77,9 @@ Un asistente en todas las páginas indexables del sitio (`src/components/Asesor.
 - **Sin precios:** Antídoto no publica tarifas, así que no hay herramienta de cálculo y la guardia de cifras (`guardia.ts`) rechaza cualquier cifra de dinero. Con una cifra hay un reintento; si insiste, sale un texto de respaldo que manda a WhatsApp.
 - **Herramientas:** `preparar_whatsapp` (el servidor arma el mensaje en primera persona; si el modelo cuela una cifra o un dato de contacto, ese campo se descarta) y `pedir_contacto` (enlace al cotizador con `?servicio=`, donde la persona deja sus datos con autorización).
 - **Historial:** lo guarda el navegador en `sessionStorage` y lo reenvía; el servidor solo toma texto, con roles alternados y largos acotados. Teléfonos y correos se tapan antes de llegar al modelo.
-- **Costo:** tope diario en USD (`ASESOR_TOPE_DIARIO_USD`, 1 por defecto) en la tabla `gasto_asesor`, por día de Bogotá. **Falla cerrado:** sin clave o si no se puede leer el gasto, el chat no responde y ofrece solo WhatsApp. Además, 60 preguntas por IP y hora, 30 por conversación, 700 tokens por respuesta y 4 llamadas al modelo por pregunta. El prompt mide unos 2.300 tokens, por debajo del mínimo de caché de Haiku: cada pregunta cuesta unos US$0,005.
+- **Conversaciones guardadas** (`guardado.ts`, panel > Conversaciones): el sitio manda un id de conversación de la pestaña (UUID v4) y el origen (burbuja o facilitador). Cada pregunta guarda solo su turno (pregunta y respuesta, con teléfonos y correos tapados, herramientas, respaldo, tokens y costo) con un índice único, así que un reintento no duplica y un historial alterado no reescribe lo guardado. El tope de 30 preguntas lo cuenta el servidor. Guardar falla abierto. Se borran a los 90 días (cron horario); el visitante las borra con "empezar de nuevo" (`POST /v1/asesor/borrar`) y admin desde el panel. Si en la misma visita la persona cotiza con la autorización marcada, el lead queda ligado a su conversación. Los contadores del día (`gasto_asesor`) no llevan datos personales y sobreviven al borrado. Los temas de cada pregunta se clasifican por palabras clave (`temas.ts`), sin modelo.
+- **Lo publicado en el panel:** las preguntas frecuentes y los clientes publicados desde el panel se suman a lo empaquetado (`publicado.ts`, 5 minutos en memoria); una pregunta del panel con la misma clave reemplaza a la del sitio.
+- **Costo:** tope diario en USD (el de panel > Ajustes o, si no hay, `ASESOR_TOPE_DIARIO_USD`, 1 por defecto) en la tabla `gasto_asesor`, por día de Bogotá. **Falla cerrado:** sin clave, apagado desde Ajustes o si no se puede leer el gasto, el chat no responde y ofrece solo WhatsApp. Además, 60 preguntas por IP y hora, 30 por conversación, 700 tokens por respuesta y 4 llamadas al modelo por pregunta. El prompt mide unos 2.300 tokens, por debajo del mínimo de caché de Haiku: cada pregunta cuesta unos US$0,005.
 - **Aviso al equipo:** cuando el asesor prepara WhatsApp o lleva al cotizador, sale un correo a `MAIL_EQUIPO` con el resumen (sin datos personales), máximo 2 por IP y hora.
 
 ## Local
@@ -64,20 +91,20 @@ cp .dev.vars.ejemplo .dev.vars                 # ENTORNO=local: acepta localhost
 npm run migraciones:local
 npx wrangler d1 execute antidoto --local --command \
   "insert into usuarios (id,email,nombre,rol,activo,creado) values ('$(uuidgen)','tu@correo.com','Tu nombre','admin',1,$(date +%s)000)"
-npm run dev                                    # http://localhost:8787/admin/
+npm run dev                                    # construye el panel y abre http://localhost:8787/admin/
 ```
 
-Sin `RESEND_API_KEY`, el enlace de acceso sale en la consola de `wrangler dev`. Para que el sitio envíe leads a esta API, levanta el sitio con `PUBLIC_API_URL=http://localhost:8787 npm run build && npm run preview`.
+Sin `RESEND_API_KEY`, el enlace de acceso sale en la consola de `wrangler dev`. Para cambiar el panel mientras corre la API, deja `npm run admin:watch` en otra terminal: Vite reconstruye `dist-admin/` y `wrangler dev` sirve lo nuevo (con la CSP y la cookie reales). Para que el sitio envíe leads a esta API, levanta el sitio con `PUBLIC_API_URL=http://localhost:8787 npm run build && npm run preview`; ese build también lee el contenido publicado en el panel (en local, si la API no responde, solo avisa).
 
-Para el chat con IA, agrega `ANTHROPIC_API_KEY` a `.dev.vars`. Para probarlo sin gastar, apunta `ANTHROPIC_URL` a un Claude falso (solo se respeta con `ENTORNO=local`).
+Para el chat con IA, agrega `ANTHROPIC_API_KEY` a `.dev.vars`. Para probarlo sin gastar, apunta `ANTHROPIC_URL` a un Claude falso (solo se respeta con `ENTORNO=local`). En local, R2 es una carpeta de `.wrangler/`.
 
-- `npm test`: pruebas unitarias y de punta a punta contra una D1 local (miniflare).
-- `npm run check`: tipos.
-- Cambios de esquema: edita `src/db/schema.ts`, corre `npm run migraciones:generar` y versiona la migración nueva.
+- `npm test`: pruebas de la API (de punta a punta contra una D1 y un R2 locales con miniflare) y del panel (componentes en happy-dom).
+- `npm run check`: tipos del Worker, de las pruebas y del panel.
+- Cambios de esquema: edita `src/db/schema.ts`, corre `npm run migraciones:generar`, revisa el SQL (en D1 no se recrean tablas con llaves foráneas: ver `0005_cimientos.sql`) y versiona la migración nueva.
 
 ## Producción
 
-1. **Token de Cloudflare:** al token de `CLOUDFLARE_API_TOKEN` agrégale los permisos *Workers Scripts: Edit*, *D1: Edit* y *Account Settings: Read* (hoy solo tiene Pages; el primer despliegue falló por eso).
+1. **Token de Cloudflare:** al token de `CLOUDFLARE_API_TOKEN` agrégale los permisos *Workers Scripts: Edit*, *D1: Edit*, *Workers R2 Storage: Edit* y *Account Settings: Read* (hoy solo tiene Pages; el primer despliegue falló por eso). El workflow crea los buckets `antidoto-medios` y `antidoto-archivos` si no existen.
 2. **Correo:** crea una cuenta en Resend, verifica el dominio `antidotocolombia.com` (registros DNS en Hostinger) y guarda la clave como secret `RESEND_API_KEY` en GitHub. Si el remitente va a ser otro, cambia `MAIL_FROM` en `wrangler.toml`.
    - **DMARC:** Resend crea SPF y DKIM, pero Gmail y Yahoo exigen además un registro DMARC a quien envía en volumen. Empieza con `_dmarc.antidotocolombia.com TXT "v=DMARC1; p=none; rua=mailto:<correo>"` y súbelo a `quarantine` cuando los informes salgan limpios.
    - **Subdominio para campañas (recomendado):** verifica también un subdominio (por ejemplo `news.antidotocolombia.com`) y usa `MAIL_FROM_NOVEDADES = "Antídoto <novedades@news.antidotocolombia.com>"`. Así la reputación de las campañas no afecta los enlaces de acceso ni los avisos de leads, y el seguimiento de clics (que reescribe enlaces) no toca los correos de acceso.
@@ -86,29 +113,35 @@ Para el chat con IA, agrega `ANTHROPIC_API_KEY` a `.dev.vars`. Para probarlo sin
    - **Sitio:** `SITIO_URL` (en `wrangler.toml`) es el sitio al que redirigen confirmar, baja y preferencias.
 3. **Sal de IP:** guarda un texto aleatorio largo como secret `SAL_IP` (por ejemplo `openssl rand -base64 32`).
 4. **Webhook de Resend (métricas de campañas):** en Resend > Webhooks crea uno hacia `<URL de la API>/v1/resend/webhook` con los eventos `email.delivered`, `email.opened`, `email.clicked`, `email.bounced` y `email.complained`, y guarda su *signing secret* (`whsec_…`) como secret `RESEND_WEBHOOK_SECRET`. Para contar aperturas y clics, activa el seguimiento de aperturas y clics del dominio en Resend. Las campañas salen de `MAIL_FROM_NOVEDADES` (en `wrangler.toml`).
-5. **Chat con IA:** crea una clave en la consola de Claude, ponle un límite de gasto mensual allá también y guárdala como secret `ANTHROPIC_API_KEY` en GitHub. El tope diario se cambia en `ASESOR_TOPE_DIARIO_USD` de `wrangler.toml`. Antes de abrirlo al público, prueba las preguntas trampa de la skill `chat-ia` (`references/pruebas.md`).
-6. **Desplegar:** en Actions, corre *API (Cloudflare Worker)*. También corre solo en cada push a `main` que toque `api/`. La primera vez crea la base D1 y, siempre, aplica las migraciones. La URL queda en el resumen del job.
-7. **Conectar el sitio:** guarda esa URL como variable `PUBLIC_API_URL` en GitHub (Variables, no Secrets). El build del sitio la usa para activar el paso de contacto del cotizador, y la API la usa para los enlaces de los correos. Lo ideal es un dominio propio (`api.antidotocolombia.com`) apuntado al Worker.
-8. **Primer admin:**
+5. **Chat con IA:** crea una clave en la consola de Claude, ponle un límite de gasto mensual allá también y guárdala como secret `ANTHROPIC_API_KEY` en GitHub. El tope diario se cambia en panel > Ajustes (o en `ASESOR_TOPE_DIARIO_USD` de `wrangler.toml`, que es el valor por defecto). Antes de abrirlo al público, prueba las preguntas trampa de la skill `chat-ia` (`references/pruebas.md`).
+6. **Publicar desde el panel:** crea en GitHub un token *fine-grained* solo para este repositorio, con el permiso *Actions: Read and write* y con vencimiento, y guárdalo como secret `GITHUB_DISPATCH_TOKEN`. `GITHUB_REPO` y `GITHUB_REF` están en `wrangler.toml`.
+7. **Desplegar:** en Actions, corre *API (Cloudflare Worker)*. También corre solo en cada push a `main` que toque `api/`. La primera vez crea la base D1 y, siempre, aplica las migraciones. La URL queda en el resumen del job.
+8. **Conectar el sitio:** guarda esa URL como variable `PUBLIC_API_URL` en GitHub (Variables, no Secrets). El build del sitio la usa para activar el paso de contacto del cotizador, y la API la usa para los enlaces de los correos. Lo ideal es un dominio propio (`api.antidotocolombia.com`) apuntado al Worker.
+9. **Primer admin:**
 
    ```sh
    npx wrangler d1 execute antidoto --remote --command \
      "insert into usuarios (id,email,nombre,rol,activo,creado) values ('<uuid>','antidoto.colombia@outlook.com','María Paula','admin',1,<epoch ms>)"
    ```
 
-   Desde ahí, las demás personas se agregan en la bandeja, en *Equipo*.
+   Desde ahí, las demás personas se agregan en el panel, en *Equipo*, cada una con su rol.
 
 ## Estructura
 
-- `src/index.ts`: rutas y cabeceras de seguridad.
-- `src/leads.ts`: alta de leads.
-- `src/validar.ts`: validación pura del cotizador.
-- `src/auth.ts`: enlace mágico y sesiones.
-- `src/admin.ts`: bandeja, métricas, CSV y equipo.
-- `src/seguimiento.ts`: cron.
+- `src/index.ts`: rutas públicas, acceso y cron; las del panel van por módulos en `src/rutas/` (cada uno exige su permiso).
+- `src/panel.ts`: archivos del panel y del portal (binding `ASSETS`) con su CSP.
+- `src/leads.ts` y `src/validar.ts`: alta y validación de leads.
+- `src/auth.ts`: enlace mágico y sesiones del equipo. `src/portal/`: acceso y API del portal de clientes.
+- `src/permisos.ts`, `src/auditoria.ts`, `src/configuracion.ts`: roles, bitácora y ajustes.
+- `src/dominio.ts`: catálogos sin dependencias que comparten el Worker, el esquema y el panel.
+- `src/admin.ts`: leads, métricas, CSV y equipo.
+- `src/rutas/`: `leads`, `marketing`, `equipo` (cuenta, ajustes, auditoría), `inicio` (resumen y buscador), `conversaciones`, `contenido`, `proyectos`, `accesos` (portal), `sistema` y `exportar`.
+- `src/contenido/`: esquemas del contenido editable y lecturas públicas para el build. `src/archivos.ts`: validación de imágenes. `src/publicacion.ts`: publicar el sitio.
+- `src/proyectos/plantillas.ts`: etapas por línea.
+- `src/seguimiento.ts`: cron de leads sin respuesta.
 - `src/correo.ts`: Resend y plantillas.
-- `src/marketing/`: suscripciones, confirmación, baja y preferencias (`suscripciones.ts`), enlaces de los correos (`enlaces.ts`), formato de campañas (`render.ts`), motor de envío con programación y prueba A/B (`envios.ts`), bienvenida, recordatorio e invitaciones (`automaticos.ts`), archivo público (`publico.ts`), webhook de Resend (`webhook.ts`) y API de la bandeja (`admin.ts`).
-- `src/asesor/`: chat con IA. Prompt (`prompt.ts`), conocimiento (`conocimiento.ts`), herramientas, bucle con el modelo inyectado (`bucle.ts`), guardia de cifras, costo y tope diario (`costo.ts`, `presupuesto.ts`), llamada a la API de Claude con `fetch` (`motor.ts`) y ruta (`ruta.ts`).
+- `src/marketing/`: suscripciones, confirmación, baja y preferencias (`suscripciones.ts`), enlaces de los correos (`enlaces.ts`), formato de campañas (`render.ts`), motor de envío con programación y prueba A/B (`envios.ts`), bienvenida, recordatorio e invitaciones (`automaticos.ts`), archivo público (`publico.ts`), webhook de Resend (`webhook.ts`) y API del panel (`admin.ts`).
+- `src/asesor/`: chat con IA. Prompt (`prompt.ts`), conocimiento (`conocimiento.ts` y lo publicado en el panel en `publicado.ts`), herramientas, bucle con el modelo inyectado (`bucle.ts`), guardia de cifras, costo y tope diario (`costo.ts`, `presupuesto.ts`), conversaciones guardadas (`guardado.ts`), temas (`temas.ts`), llamada a la API de Claude con `fetch` (`motor.ts`) y ruta (`ruta.ts`).
 - `src/db/schema.ts`: modelo de datos. Migraciones en `migraciones/`.
-- `src/admin-ui/`: interfaz de la bandeja (HTML, CSS y JS propios, sin dependencias). `scripts/empaquetar-ui.mjs` la mete en el Worker antes de `dev`, `deploy`, `check` y `test`.
+- `admin/`: panel y portal en Preact (`index.html` y `portal.html`), con pruebas en `admin/test/`.
 - El texto de la autorización vive en `../src/data/consentimiento.ts` y lo comparten el sitio y la API.

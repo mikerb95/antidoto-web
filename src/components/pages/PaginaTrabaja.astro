@@ -1,6 +1,8 @@
 ---
 // Trabaja con nosotros: alianzas (consultoras, corredores, aseguradoras y agencias) y talento.
-// Sin formulario propio: la alianza va por WhatsApp y la hoja de vida por correo.
+// Sin formulario propio: la alianza va por WhatsApp y la hoja de vida por correo. Las vacantes se
+// publican desde el panel (src/lib/cms/); sin vacantes queda la caja pendiente.
+import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import CabeceraPagina from '../CabeceraPagina.astro';
 import WhatsappIcon from '../WhatsappIcon.astro';
@@ -8,6 +10,7 @@ import { t, rutas, type Locale } from '../../i18n/ui';
 import { tp } from '../../i18n/paginas';
 import { SITE, waLink } from '../../data/site';
 import { grafo, migasSchema } from '../../data/schema';
+import { obtenerVacantes } from '../../data/contenido';
 
 interface Props {
   locale: Locale;
@@ -22,6 +25,10 @@ const migas: Array<[string, string]> = [
   [s.nav.nosotros, rutas.nosotros[locale]],
   [s.nav.trabaja, rutas.trabaja[locale]],
 ];
+const vacantes = await Promise.all(
+  (await obtenerVacantes(locale)).map(async (v) => ({ ...v.data, Contenido: v.body?.trim() ? (await render(v)).Content : null })),
+);
+const fechaCierre = (f: string) => new Intl.DateTimeFormat(locale === 'es' ? 'es-CO' : 'en-US', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${f}T00:00:00Z`));
 ---
 <Base locale={locale} pagina="trabaja" title={title} description={description} alternates={rutas.trabaja} jsonLd={grafo(migasSchema(migas))} waMessage={h.aliadosWa}>
   <CabeceraPagina locale={locale} migas={migas} titulo={h.titulo} lead={h.lead} />
@@ -37,11 +44,37 @@ const migas: Array<[string, string]> = [
       <article class="caja" aria-labelledby="talento-t">
         <h2 id="talento-t">{h.talentoTitulo[0]}<span class="resaltado">{h.talentoTitulo[1]}</span></h2>
         <p>{h.talentoLead}</p>
-        <p class="pendiente">{h.vacantesPendiente}</p>
+        {!vacantes.length && <p class="pendiente">{h.vacantesPendiente}</p>}
         <a class="boton boton-tinta boton-grande" href={`mailto:${SITE.email}?subject=${encodeURIComponent(h.talentoAsunto)}`}>{h.talentoCta}</a>
       </article>
     </div>
   </section>
+
+  {vacantes.length > 0 && (
+    <section class="bloque bloque-mist" aria-labelledby="vacantes-t">
+      <div class="wrap">
+        <h2 id="vacantes-t" class="titulo-seccion">{h.vacantesTitulo[0]}<span class="resaltado">{h.vacantesTitulo[1]}</span></h2>
+        <ul class="vacantes" data-entra>
+          {vacantes.map((v) => (
+            <li class="vacante" id={v.slug}>
+              <details>
+                <summary>
+                  <span class="v-titulo">{v.title}</span>
+                  <span class="v-meta">{[h.modalidad[v.modalidad], v.ciudad, h.vinculo[v.vinculo]].filter(Boolean).join(' · ')}</span>
+                </summary>
+                <div class="v-cuerpo">
+                  <p class="v-lead">{v.lead}</p>
+                  {v.Contenido && <div class="prosa"><v.Contenido /></div>}
+                  {v.cierre && <p class="v-cierre">{h.cierre} {fechaCierre(v.cierre)}.</p>}
+                  <a class="boton boton-tinta" href={`mailto:${SITE.email}?subject=${encodeURIComponent(`${h.asuntoVacante}: ${v.title}`)}`}>{h.postularme}</a>
+                </div>
+              </details>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
 </Base>
 
 <style>
@@ -57,5 +90,17 @@ const migas: Array<[string, string]> = [
   .caja .boton { align-self: flex-start; margin-top: auto; }
   .caja .pendiente { margin: 0; }
   .oscura :focus-visible { outline-color: var(--color-antidote); }
+  .vacantes { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+  .vacantes li::before { content: none; }
+  .vacante { display: block; border-radius: 20px; background: var(--color-paper); border: 1px solid var(--color-line-soft); }
+  .vacante summary { display: grid; gap: 4px; padding: 20px 24px; min-height: 44px; cursor: pointer; list-style: none; }
+  .vacante summary::-webkit-details-marker { display: none; }
+  .vacante summary:hover .v-titulo { color: var(--color-deep); }
+  .v-titulo { font-family: var(--font-display); font-size: 22px; line-height: 1.2; }
+  .v-meta { color: var(--color-slate); font-size: 15px; }
+  .v-cuerpo { display: grid; gap: 16px; padding: 0 24px 24px; }
+  .v-lead { margin: 0; font-size: 17px; }
+  .v-cierre { margin: 0; color: var(--color-slate); }
+  .v-cuerpo .boton { justify-self: start; }
   @media (max-width: 860px) { .dos { grid-template-columns: 1fr; } }
 </style>

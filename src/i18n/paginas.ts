@@ -124,6 +124,12 @@ export const paginas = {
       talentoAsunto: 'Hoja de vida para Antídoto',
       talentoCta: 'Enviar hoja de vida',
       vacantesPendiente: '[VACANTES ABIERTAS, si las hay]',
+      vacantesTitulo: ['Vacantes ', 'abiertas'],
+      modalidad: { presencial: 'Presencial', hibrida: 'Híbrida', remota: 'Remota' },
+      vinculo: { completo: 'Tiempo completo', medio: 'Medio tiempo', proyecto: 'Por proyecto' },
+      cierre: 'Recibimos hojas de vida hasta el',
+      postularme: 'Postularme',
+      asuntoVacante: 'Postulación',
     },
 
     faq: {
@@ -314,6 +320,12 @@ export const paginas = {
       talentoAsunto: 'Resume for Antídoto',
       talentoCta: 'Send your resume',
       vacantesPendiente: '[OPEN POSITIONS, if any]',
+      vacantesTitulo: ['Open ', 'positions'],
+      modalidad: { presencial: 'On site', hibrida: 'Hybrid', remota: 'Remote' },
+      vinculo: { completo: 'Full time', medio: 'Part time', proyecto: 'Per project' },
+      cierre: 'We accept resumes until',
+      postularme: 'Apply',
+      asuntoVacante: 'Application',
     },
 
     faq: {

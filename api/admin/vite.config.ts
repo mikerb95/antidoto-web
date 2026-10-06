@@ -19,5 +19,7 @@ export default defineConfig({
     // Nada en línea: la CSP solo deja cargar archivos del mismo origen.
     assetsInlineLimit: 0,
     modulePreload: { polyfill: false },
+    // Dos páginas con los mismos componentes: el panel del equipo y el portal de clientes.
+    rollupOptions: { input: { panel: fileURLToPath(new URL('index.html', import.meta.url)), portal: fileURLToPath(new URL('portal.html', import.meta.url)) } },
   },
 });

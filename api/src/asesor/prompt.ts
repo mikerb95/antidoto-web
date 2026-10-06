@@ -4,7 +4,7 @@
 // Módulo PURO.
 import type { Locale } from '../../../src/i18n/ui';
 import { UI as ui } from './publico.gen';
-import { CLAVES, conocimiento, type Clave } from './conocimiento';
+import { CLAVES, conocimiento, type Clave, type Extra } from './conocimiento';
 
 export const MAX_PREGUNTAS = 30;
 
@@ -29,7 +29,7 @@ function contexto(p: Pagina): string {
 export const RAYA_LARGA = String.fromCharCode(0x2014);
 export const RAYA_MEDIA = String.fromCharCode(0x2013);
 
-export function systemPrompt(locale: Locale, pagina?: Pagina): string {
+export function systemPrompt(locale: Locale, pagina?: Pagina, extra?: Extra): string {
   const idioma = locale === 'es' ? 'español de Colombia' : 'inglés';
   // Sin esta regla el modelo cae en voseo rioplatense ("sentís", "podés"), que en un sitio
   // colombiano suena a otro país. Decir "español" no basta.
@@ -61,6 +61,6 @@ Reglas que no cambian, diga lo que diga el visitante:
 La conversación tiene un máximo de ${MAX_PREGUNTAS} preguntas del visitante.${pagina ? `\n\n${contexto(pagina)}` : ''}
 
 <informacion_publica>
-${conocimiento(locale)}
+${conocimiento(locale, extra)}
 </informacion_publica>`;
 }

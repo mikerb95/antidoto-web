@@ -2,17 +2,23 @@
 //   POST /v1/leads                  público (solo orígenes del sitio): guarda un lead
 //   POST /v1/suscripciones          público (solo orígenes del sitio): suscripción a novedades
 //   GET|POST /v1/asesor             público (solo orígenes del sitio): chat con IA (src/asesor/)
+//   POST /v1/asesor/borrar          público (solo orígenes del sitio): el visitante borra su conversación
 //   GET|POST /v1/suscripcion/confirmar|baja|preferencias?t=   por token: el GET lleva a la página
 //                                   del sitio y el POST hace la acción (la baja de un clic, también)
 //   GET  /v1/suscripcion/datos?t=   público (solo orígenes del sitio): datos para la página de preferencias
 //   GET  /v1/novedades[?locale=]    archivo público de campañas (JSON)
 //   GET  /v1/novedades/<id>         versión web de una campaña enviada
 //   POST /v1/resend/webhook         eventos de Resend, firmados con Svix
+//   GET  /v1/contenido?tipo=        contenido publicado desde el panel, para el build del sitio
+//   GET  /v1/medios/<id>            imágenes de ese contenido (R2)
+//   GET  /v1/ajustes                ajustes del sitio (regalo de bienvenida, video del hero)
 //   POST /auth/enlace               pide el enlace de acceso por correo
 //   GET|POST /auth/entrar           abre la sesión con el enlace
 //   POST /auth/salir[?todas=1]      cierra la sesión (o todas las del usuario)
 //   GET  /admin/*                   panel en Preact (dist-admin/, binding ASSETS; ver src/panel.ts)
 //   /admin/api/*                    API del panel, con sesión y permisos por rol (src/rutas/)
+//   GET  /portal/*                  portal de proyectos para clientes (misma app de Vite, portal.html)
+//   /portal/auth/*, /portal/api/*   acceso y API del portal, con su propia sesión (src/portal/)
 import { drizzle } from 'drizzle-orm/d1';
 import type { Env } from './env';
 import { crearLead } from './leads';
@@ -29,12 +35,23 @@ import { rutasLeads } from './rutas/leads';
 import { rutasMarketing } from './rutas/marketing';
 import { rutasEquipo } from './rutas/equipo';
 import { rutasInicio } from './rutas/inicio';
-import { rutaAsesor } from './asesor/ruta';
-import { esRutaPanel, servirPanel } from './panel';
+import { rutasConversaciones } from './rutas/conversaciones';
+import { rutasContenido } from './rutas/contenido';
+import { rutasProyectos } from './rutas/proyectos';
+import { contenidoPublicado, servirMedio, ajustesSitio } from './contenido/publico';
+import { reintentarPublicaciones } from './publicacion';
+import { rutaAsesor, rutaBorrar } from './asesor/ruta';
+import { limpiarConversaciones } from './asesor/guardado';
+import { esRutaPanel, esRutaPortal, servirPanel } from './panel';
+import { pedirEnlaceCliente, paginaEntrarCliente, entrarCliente, sesionCliente } from './portal/auth';
+import { rutasPortal } from './portal/rutas';
+import { rutasAccesos } from './rutas/accesos';
+import { rutasSistema, anotarCron } from './rutas/sistema';
+import { rutasExportar } from './rutas/exportar';
 import { json } from './util';
 
 // Rutas del panel por módulo (src/rutas/), todas con sesión. Cada una exige su permiso.
-const MODULOS: Modulo[] = [rutasEquipo, rutasInicio, rutasLeads, rutasMarketing];
+const MODULOS: Modulo[] = [rutasEquipo, rutasInicio, rutasLeads, rutasMarketing, rutasConversaciones, rutasContenido, rutasProyectos, rutasAccesos, rutasSistema, rutasExportar];
 
 export async function manejar(req: Request, env: Env, diferir: (p: Promise<unknown>) => void): Promise<Response> {
   const url = new URL(req.url);
@@ -52,12 +69,12 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
     return ruta === '/v1/leads' ? crearLead(req, env, db, appUrl, diferir, cors) : crearSuscripcion(req, env, db, appUrl, cors, diferir);
   }
 
-  if (ruta === '/v1/asesor') {
+  if (ruta === '/v1/asesor' || ruta === '/v1/asesor/borrar') {
     const origen = req.headers.get('origin');
     if (!origenPermitido(origen, env, env.ENTORNO === 'local')) return json({ ok: false, error: 'origen' }, 403);
     const cors = cabecerasCors(origen!);
     if (metodo === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'access-control-allow-methods': 'GET, POST, OPTIONS' } });
-    return rutaAsesor(req, env, db, diferir, cors);
+    return ruta === '/v1/asesor' ? rutaAsesor(req, env, db, diferir, cors) : rutaBorrar(req, db, cors);
   }
 
   // Lecturas públicas para el sitio: CORS solo para sus orígenes.
@@ -70,6 +87,12 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
     if (!origen || !Object.keys(cors).length) return json({ ok: false, error: 'origen' }, 403);
     return datosPreferencias(req, db, cors);
   }
+  // Contenido publicado para el build del sitio (sin CORS restringido: es público).
+  if (metodo === 'GET' && ruta === '/v1/contenido') return contenidoPublicado(url, db, appUrl);
+  if (metodo === 'GET' && ruta === '/v1/ajustes') return ajustesSitio(db);
+  const medio = ruta.match(/^\/v1\/medios\/([0-9a-f-]{36})$/);
+  if (medio && metodo === 'GET') return servirMedio(medio[1]!, env, db);
+
   const publica = ruta.match(/^\/v1\/novedades\/([0-9a-f-]{36})$/);
   if (publica && metodo === 'GET') return verPublica(publica[1]!, env, db);
 
@@ -85,6 +108,10 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
 
   if (ruta === '/admin') return Response.redirect(`${url.origin}/admin/`, 301);
   if (esRutaPanel(ruta) && (metodo === 'GET' || metodo === 'HEAD')) return servirPanel(req, env, ruta);
+  if (ruta === '/portal') return Response.redirect(`${url.origin}/portal/`, 301);
+  // El portal usa los archivos del panel (/admin/assets/) con su propia página de entrada.
+  if (esRutaPortal(ruta) && (metodo === 'GET' || metodo === 'HEAD')) return servirPanel(req, env, ruta, 'portal.html');
+  if (ruta === '/portal/auth/entrar' && metodo === 'GET') return paginaEntrarCliente(req);
 
   if (ruta === '/auth/entrar' && metodo === 'GET') return paginaEntrar(req);
 
@@ -93,6 +120,13 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
   if (cambia && !mismoOrigen(req)) return json({ error: 'origen' }, 403);
 
   if (ruta === '/auth/enlace' && metodo === 'POST') return pedirEnlace(req, env, db, appUrl);
+  if (ruta === '/portal/auth/enlace' && metodo === 'POST') return pedirEnlaceCliente(req, env, db, appUrl);
+  if (ruta === '/portal/auth/entrar' && metodo === 'POST') return entrarCliente(req, db);
+  if (ruta === '/portal/auth/salir' || ruta.startsWith('/portal/api/')) {
+    const sesion = await sesionCliente(req, db);
+    if (!sesion) return json({ error: 'sesion' }, 401);
+    return rutasPortal({ req, ruta, metodo, env, db, sesion, appUrl, diferir });
+  }
   if (ruta === '/auth/entrar' && metodo === 'POST') return entrar(req, db);
 
   if (ruta === '/auth/salir' || ruta.startsWith('/admin/api/') || ruta === '/admin/leads.csv') {
@@ -130,14 +164,25 @@ export default {
           const decididas = await decidirPruebas(env, db);
           const r = await procesarEnvios(env, db);
           const inv = await invitaciones(env, db, appUrl);
+          const pub = await reintentarPublicaciones(db, env).catch((e) => (console.error('[publicacion] reintentos', e), 0));
+          await anotarCron(db, 'cinco', { programadas: arrancadas, pruebasAb: decididas, enviados: r.enviados, fallidos: r.fallidos, invitaciones: inv, publicaciones: pub });
           if (arrancadas + decididas + r.enviados + r.fallidos + inv)
             console.log(`[envios] ${arrancadas} programadas arrancadas, ${decididas} pruebas A/B decididas, ${r.enviados} enviados, ${r.fallidos} fallidos, ${inv} invitaciones`);
         })(),
       );
     }
     if (evento.cron === '0 * * * *') {
-      ctx.waitUntil(seguimiento(env, db).then((r) => console.log(`[seguimiento] ${r.avisados} leads avisados`)));
-      ctx.waitUntil(recordatorios(env, db, appUrl).then((n) => n && console.log(`[recordatorios] ${n} enviados`)));
+      ctx.waitUntil(
+        (async () => {
+          const [s, rec, borradas] = await Promise.all([
+            seguimiento(env, db).catch((e) => (console.error('[seguimiento]', e), { avisados: -1 })),
+            recordatorios(env, db, appUrl).catch((e) => (console.error('[recordatorios]', e), -1)),
+            limpiarConversaciones(db, Date.now()).catch((e) => (console.error('[asesor] limpieza de conversaciones', e), -1)),
+          ]);
+          if (s.avisados || rec || borradas) console.log(`[hora] ${s.avisados} leads avisados, ${rec} recordatorios, ${borradas} conversaciones vencidas borradas`);
+          await anotarCron(db, 'hora', { leadsAvisados: s.avisados, recordatorios: rec, conversacionesBorradas: borradas });
+        })(),
+      );
     }
   },
 } satisfies ExportedHandler<Env>;

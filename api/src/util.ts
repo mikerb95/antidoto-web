@@ -1,5 +1,6 @@
 export const ahora = () => Date.now();
-export const HORA = 60 * 60 * 1000;
+export const MINUTO = 60 * 1000;
+export const HORA = 60 * MINUTO;
 export const DIA = 24 * HORA;
 
 export const uuid = () => crypto.randomUUID();

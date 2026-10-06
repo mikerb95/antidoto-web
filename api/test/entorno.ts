@@ -11,6 +11,8 @@ export async function crearEntorno() {
   // claves): las pruebas fijan sus propias variables para dar lo mismo en cualquier PC y en CI.
   const env: Env = {
     DB: proxy.env.DB,
+    MEDIOS: proxy.env.MEDIOS,
+    ARCHIVOS: proxy.env.ARCHIVOS,
     ENTORNO: 'produccion',
     ORIGENES: 'https://antidotocolombia.com,https://antidoto-web.pages.dev',
     MAIL_FROM: 'Antídoto <hola@antidotocolombia.com>',

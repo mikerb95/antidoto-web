@@ -1,9 +1,10 @@
 // Una vuelta de conversación del asesor: valida lo que manda el navegador, llama al modelo,
 // ejecuta sus herramientas y pasa la respuesta por la guardia de cifras antes de devolverla.
 //
-// El servidor no guarda la conversación: el navegador reenvía el historial en cada pregunta.
-// Por eso del historial solo se toma texto, con roles alternados y largos acotados, y los datos
-// de contacto que haya escrito la persona se tapan antes de mandarlo al modelo.
+// El navegador reenvía el historial en cada pregunta (el servidor guarda solo el turno nuevo,
+// ver guardado.ts). Por eso del historial solo se toma texto, con roles alternados y largos
+// acotados, y los datos de contacto que haya escrito la persona se tapan antes de mandarlo al
+// modelo.
 //
 // El modelo se inyecta (`Dependencias`) para probar el bucle sin red.
 // Módulo PURO.
@@ -39,7 +40,12 @@ export interface Entrada {
   locale: Locale;
   pagina?: Pagina;
   mensajes: { rol: 'usuario' | 'asesor'; texto: string }[];
+  /** Id de la conversación (UUID v4 del navegador). Sin él no se guarda nada (sitio viejo). */
+  conversacion?: string;
+  origen?: 'panel' | 'facilitador';
 }
+
+export const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 export type ErrorEntrada = { error: 'formato' | 'limite' };
 
@@ -48,7 +54,9 @@ export function validarEntrada(cuerpo: unknown): Entrada | ErrorEntrada {
   const formato = { error: 'formato' } as const;
   if (!cuerpo || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) return formato;
   const o = cuerpo as Record<string, unknown>;
-  if (Object.keys(o).some((k) => !['locale', 'pagina', 'mensajes'].includes(k))) return formato;
+  if (Object.keys(o).some((k) => !['locale', 'pagina', 'mensajes', 'conversacion', 'origen'].includes(k))) return formato;
+  if (o.conversacion !== undefined && (typeof o.conversacion !== 'string' || !UUID_V4.test(o.conversacion))) return formato;
+  if (o.origen !== undefined && o.origen !== 'panel' && o.origen !== 'facilitador') return formato;
   if (o.locale !== 'es' && o.locale !== 'en') return formato;
   if (o.pagina !== undefined && !(PAGINAS as readonly unknown[]).includes(o.pagina)) return formato;
   if (!Array.isArray(o.mensajes) || o.mensajes.length === 0) return formato;
@@ -65,7 +73,13 @@ export function validarEntrada(cuerpo: unknown): Entrada | ErrorEntrada {
     mensajes.push({ rol: rol as 'usuario' | 'asesor', texto: limpio });
   }
   if (mensajes.at(-1)!.rol !== 'usuario') return formato;
-  return { locale: o.locale, pagina: o.pagina as Pagina | undefined, mensajes };
+  return {
+    locale: o.locale,
+    pagina: o.pagina as Pagina | undefined,
+    mensajes,
+    ...(o.conversacion ? { conversacion: o.conversacion as string } : {}),
+    ...(o.origen ? { origen: o.origen as 'panel' | 'facilitador' } : {}),
+  };
 }
 
 export interface Dependencias {
@@ -82,6 +96,8 @@ export interface Respuesta {
   contacto: { servicio: Clave | null } | null;
   /** Servicio del que se habla, si el modelo lo indicó en alguna herramienta. */
   servicio: Clave | null;
+  /** Herramientas que se ejecutaron bien en esta vuelta, en orden. */
+  herramientas: string[];
   uso: Uso;
   /** Por qué se devolvió el texto de respaldo en vez de la respuesta del modelo. */
   respaldo: 'guardia' | 'negativa' | 'vueltas' | null;
@@ -144,12 +160,13 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
   let necesidad: string | null = null;
   let contacto: Respuesta['contacto'] = null;
   let servicio: Clave | null = null;
+  const herramientas: string[] = [];
   let reintentoGuardia = false;
   // Texto escrito junto a una llamada a herramienta. El modelo suele dar la respuesta completa
   // en el mismo mensaje en que pide preparar WhatsApp, y después cierra sin decir nada más: si
   // ese texto se descartara, se perdería justo la respuesta.
   let previo: string[] = [];
-  const cerrar = (texto: string, respaldo: Respuesta['respaldo']): Respuesta => ({ texto, whatsapp, necesidad, contacto, servicio, uso, respaldo });
+  const cerrar = (texto: string, respaldo: Respuesta['respaldo']): Respuesta => ({ texto, whatsapp, necesidad, contacto, servicio, herramientas, uso, respaldo });
 
   for (let vuelta = 0; vuelta < MAX_LLAMADAS; vuelta++) {
     const r = await deps.llamarModelo(mensajes);
@@ -165,6 +182,7 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
         role: 'user',
         content: usos.map((u): Bloque => {
           const s = ejecutar(u, e.locale);
+          if (!s.error) herramientas.push(u.name);
           if (s.whatsapp) ({ whatsapp, necesidad } = s.whatsapp);
           if (s.contacto) contacto = s.contacto;
           if (s.servicio) servicio = s.servicio;

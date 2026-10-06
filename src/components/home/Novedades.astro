@@ -5,7 +5,7 @@
 // si el build trae PUBLIC_API_URL y se muestra cuando el script la conecta (src/lib/novedades.ts,
 // iniciado desde Footer.astro).
 import { t, rutaPolitica, rutaNovedades, type Locale } from '../../i18n/ui';
-import { REGALO_NOVEDADES } from '../../data/site';
+import { obtenerAjustes } from '../../data/contenido';
 import { NOVEDADES, NOVEDADES_VERSION } from '../../data/consentimiento';
 import { obtenerServicios } from '../../data/servicios';
 
@@ -15,7 +15,8 @@ interface Props {
   origen?: 'inicio' | 'archivo';
 }
 const { locale, origen = 'inicio' } = Astro.props;
-const regalo = REGALO_NOVEDADES?.[locale];
+// Regalo de bienvenida: el de Ajustes del panel o, si no hay, el de src/data/site.ts.
+const regalo = (await obtenerAjustes()).regaloNovedades?.[locale];
 const s = t(locale);
 const h = s.inicio.novedades;
 const servicios = await obtenerServicios();

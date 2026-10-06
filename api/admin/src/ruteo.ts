@@ -39,15 +39,15 @@ export function ponerQuery(cambios: Record<string, string | number | null | unde
   avisar();
 }
 
-/** Intercepta clics en enlaces internos del panel. Se llama una vez al arrancar. */
-export function interceptarEnlaces(): void {
+/** Intercepta clics en enlaces internos de la app (/admin/ o /portal/). Se llama una vez al arrancar. */
+export function interceptarEnlaces(base = '/admin/'): void {
   window.addEventListener('popstate', avisar);
   document.addEventListener('click', (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const a = (e.target as Element | null)?.closest?.('a');
     if (!a || a.target || a.hasAttribute('download')) return;
     const url = new URL(a.href, location.href);
-    if (url.origin !== location.origin || !url.pathname.startsWith('/admin/') || url.pathname.startsWith('/admin/api/') || url.pathname.endsWith('.csv')) return;
+    if (url.origin !== location.origin || !url.pathname.startsWith(base) || url.pathname.startsWith(`${base}api/`) || url.pathname.endsWith('.csv')) return;
     e.preventDefault();
     navegar(url.pathname + url.search);
   });

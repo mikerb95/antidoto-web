@@ -29,7 +29,13 @@ export function sinPendientes(s: string): string | null {
   return limpio || null;
 }
 
-export function conocimiento(locale: Locale): string {
+/** Preguntas y clientes publicados desde el panel (src/asesor/publicado.ts): se suman a los del sitio. */
+export interface Extra {
+  faq: readonly { clave: string; es: readonly [string, string]; en: readonly [string, string] }[];
+  clientes: readonly string[];
+}
+
+export function conocimiento(locale: Locale, extra?: Extra): string {
   const s = ui[locale];
   const i = s.inicio;
   const es = locale === 'es';
@@ -77,7 +83,11 @@ export function conocimiento(locale: Locale): string {
     return [`- ${perfil[0]}: ${perfil[1]}${extra} ${L.pagina}: ${SITE.url}${rutas.soluciones[locale]}${sol.slug[locale]}/`];
   }).join('\n');
 
-  const faq = FAQ_PUBLICA.map((q) => q[locale])
+  // Lo publicado en el panel pisa a la pregunta del sitio con la misma clave, como en el build.
+  const delPanel = new Map((extra?.faq ?? []).map((q) => [q.clave, q]));
+  const preguntas = [...FAQ_PUBLICA.filter((q) => !delPanel.has(q.clave)), ...delPanel.values()];
+  const clientes = [...new Set([...CLIENTES_PUBLICOS, ...(extra?.clientes ?? [])])];
+  const faq = preguntas.map((q) => q[locale])
     .map(([p, r]) => `- ${p} ${sinPendientes(r) ?? L.pend}${sinPendientes(r) && TIENE_PENDIENTE.test(r) ? ` (${L.pend})` : ''}`)
     .join('\n');
 
@@ -112,7 +122,7 @@ ${s.fundadoraNombre}, ${s.fundadoraCargo}. ${s.fundadoraBio}
 ${s.historia.map(([a, t, d]) => `- ${a}: ${t}. ${d}`).join('\n')}
 
 ## ${L.clientes}
-${CLIENTES_PUBLICOS.join(', ')}.
+${clientes.join(', ')}.
 
 ## ${L.faq}
 ${L.pagina}: ${SITE.url}${rutas.faq[locale]}

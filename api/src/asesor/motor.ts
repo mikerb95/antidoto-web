@@ -8,6 +8,7 @@ import type { MensajeApi, RespuestaApi } from './bucle';
 import { MODELO } from './costo';
 import { definiciones } from './herramientas';
 import { systemPrompt, type Pagina } from './prompt';
+import type { Extra } from './conocimiento';
 
 const URL_API = 'https://api.anthropic.com/v1/messages';
 /** Hay alguien mirando el chat: un solo reintento y 25 s por llamada. */
@@ -21,9 +22,9 @@ export class ErrorModelo extends Error {
 }
 
 /** Crea la función que llama al modelo para una conversación. */
-export function llamador(clave: string, locale: Locale, pagina: Pagina | undefined, url = URL_API, hacerFetch: typeof fetch = fetch) {
+export function llamador(clave: string, locale: Locale, pagina: Pagina | undefined, url = URL_API, hacerFetch: typeof fetch = fetch, extra?: Extra) {
   // Caché en el prompt de sistema y en la última herramienta: es lo fijo de cada pregunta.
-  const system = [{ type: 'text', text: systemPrompt(locale, pagina), cache_control: { type: 'ephemeral' } }];
+  const system = [{ type: 'text', text: systemPrompt(locale, pagina, extra), cache_control: { type: 'ephemeral' } }];
   const tools = definiciones().map((d, i, todas) => (i === todas.length - 1 ? { ...d, cache_control: { type: 'ephemeral' } } : d));
 
   return async (messages: MensajeApi[]): Promise<RespuestaApi> => {

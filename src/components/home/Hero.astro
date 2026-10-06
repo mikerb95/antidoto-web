@@ -17,7 +17,7 @@ import grabacion from '../../assets/fotos/grabacion.jpg';
 import catering from '../../assets/fotos/catering-buffet.jpg';
 import grupo from '../../assets/fotos/grupo-aire-libre.jpg';
 import { t, rutas, type Locale } from '../../i18n/ui';
-import { VIDEO_HERO } from '../../data/site';
+import { obtenerAjustes } from '../../data/contenido';
 
 interface Props {
   locale: Locale;
@@ -26,7 +26,8 @@ const { locale } = Astro.props;
 const s = t(locale);
 const h = s.inicio;
 
-const VIDEO = VIDEO_HERO;
+// Video del hero: el de Ajustes del panel o, si no hay, el de src/data/site.ts.
+const VIDEO = (await obtenerAjustes()).videoHero;
 
 // Encuadre de cada foto en la pantalla ancha.
 const FOTOS = [

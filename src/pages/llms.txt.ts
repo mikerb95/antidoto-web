@@ -2,12 +2,10 @@
 // y ofertas publicables (así un borrador tampoco aparece aquí) y las preguntas frecuentes respondidas.
 import type { APIRoute } from 'astro';
 import { obtenerServicios } from '../data/servicios';
-import { CLIENTES } from '../data/clientes';
 import { llmsTxt } from '../lib/llms';
-import { obtenerOfertas } from '../data/contenido';
-import { preguntas } from '../data/faq';
+import { obtenerClientes, obtenerOfertas, obtenerPreguntas } from '../data/contenido';
 
 export const GET: APIRoute = async () =>
-  new Response(llmsTxt(await obtenerServicios(), CLIENTES.map((c) => c.nombre), { ofertas: await obtenerOfertas(), faq: preguntas('es') }), {
+  new Response(llmsTxt(await obtenerServicios(), (await obtenerClientes()).map((c) => c.nombre), { ofertas: await obtenerOfertas(), faq: await obtenerPreguntas('es') }), {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   });

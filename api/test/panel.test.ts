@@ -12,6 +12,7 @@ beforeAll(() => {
     fetch: async (entrada: RequestInfo | URL) => {
       const ruta = new URL(entrada instanceof Request ? entrada.url : String(entrada)).pathname;
       if (ruta === '/admin/index.html') return new Response('<!doctype html><div id="app"></div>', { headers: { 'content-type': 'text/html' } });
+      if (ruta === '/admin/portal.html') return new Response('<!doctype html><title>Portal</title><div id="app"></div>', { headers: { 'content-type': 'text/html' } });
       if (ruta === '/admin/assets/index-abc.js') return new Response('console.log(1)', { headers: { 'content-type': 'text/javascript' } });
       return new Response('no', { status: 404 });
     },
@@ -28,6 +29,13 @@ describe('panel', () => {
       expect(r.headers.get('cache-control')).toBe('no-cache');
       expect(r.headers.get('x-frame-options')).toBe('DENY');
     }
+  });
+
+  test('el portal de clientes sirve su propia página con la misma CSP', async () => {
+    const r = await p.llamar('/portal/proyectos/00000000-0000-4000-8000-000000000000');
+    expect(await r.text()).toContain('<title>Portal</title>');
+    expect(r.headers.get('content-security-policy')).toBe(CSP_PANEL);
+    expect((await p.llamar('/portal/api/yo')).status).toBe(401);
   });
 
   test('la CSP no deja scripts ni estilos en línea ni recursos de fuera', () => {

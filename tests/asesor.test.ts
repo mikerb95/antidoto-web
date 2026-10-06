@@ -30,6 +30,14 @@ describe('chat con IA en el navegador', () => {
     expect(preguntasHechas(m)).toBe(2);
   });
 
+  it('manda el id de la conversación y el origen; un id inválido no viaja', () => {
+    const m: Mensaje[] = [{ rol: 'usuario', texto: 'Hola' }];
+    const id = '0b6a6c3e-5d1f-4a2b-9c3d-1e2f3a4b5c6d';
+    expect(cuerpoPregunta('es', 'inicio', m, id, 'facilitador')).toMatchObject({ conversacion: id, origen: 'facilitador' });
+    expect(cuerpoPregunta('es', 'inicio', m, 'no-es-uuid')).not.toHaveProperty('conversacion');
+    expect(cuerpoPregunta('es', 'inicio', m, null)).not.toHaveProperty('conversacion');
+  });
+
   it('lee el historial guardado y descarta lo dañado', () => {
     expect(leerHistorial(null)).toEqual([]);
     expect(leerHistorial('no es json')).toEqual([]);

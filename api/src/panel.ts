@@ -17,8 +17,10 @@ export const SEGURIDAD = {
 
 /** ¿Es una ruta de la interfaz del panel (no de su API ni del CSV)? */
 export const esRutaPanel = (ruta: string) => ruta.startsWith('/admin/') && !ruta.startsWith('/admin/api/') && ruta !== '/admin/leads.csv';
+/** ¿Es una ruta de la interfaz del portal de clientes? Comparte los archivos del panel. */
+export const esRutaPortal = (ruta: string) => ruta.startsWith('/portal/') && !ruta.startsWith('/portal/api/') && !ruta.startsWith('/portal/auth/');
 
-export async function servirPanel(req: Request, env: Env, ruta: string): Promise<Response> {
+export async function servirPanel(req: Request, env: Env, ruta: string, pagina: 'index.html' | 'portal.html' = 'index.html'): Promise<Response> {
   if (!env.ASSETS) return new Response('El panel no está construido (npm run admin:build).', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8', ...SEGURIDAD } });
   const origen = new URL(req.url).origin;
   if (ruta.startsWith('/admin/assets/')) {
@@ -31,7 +33,7 @@ export async function servirPanel(req: Request, env: Env, ruta: string): Promise
     return new Response(r.body, { status: 200, headers: h });
   }
   // Cualquier otra ruta del panel es la misma página: el ruteo lo hace el navegador.
-  const r = await env.ASSETS.fetch(new Request(`${origen}/admin/index.html`));
+  const r = await env.ASSETS.fetch(new Request(`${origen}/admin/${pagina}`));
   if (!r.ok) return new Response('El panel no está construido (npm run admin:build).', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8', ...SEGURIDAD } });
   return new Response(r.body, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', ...SEGURIDAD } });
 }

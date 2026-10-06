@@ -1,6 +1,7 @@
 // Rutas del chat con IA del sitio:
-//   GET  /v1/asesor   ¿está disponible? (clave configurada y presupuesto del día)
-//   POST /v1/asesor   una pregunta: { locale, pagina, mensajes } -> respuesta revisada
+//   GET  /v1/asesor          ¿está disponible? (clave configurada, encendido y presupuesto del día)
+//   POST /v1/asesor          una pregunta: { locale, pagina, mensajes, conversacion?, origen? } -> respuesta revisada
+//   POST /v1/asesor/borrar   { conversacion }: el visitante borra su conversación guardada
 // Las dos solo desde los orígenes del sitio. El POST va en text/plain, como los leads, para no
 // pagar el preflight de CORS en cada pregunta.
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
@@ -9,7 +10,10 @@ import type { ServicioId } from '../db/schema';
 import { enviar, correoInteresAsesor } from '../correo';
 import { dentroDelLimite } from '../limite';
 import { ahora, hashIp, json } from '../util';
-import { atender, validarEntrada } from './bucle';
+import { atender, validarEntrada, UUID_V4 } from './bucle';
+import { MAX_PREGUNTAS } from './prompt';
+import { borrarConversacion, guardarTurno, previaDe, type Previa } from './guardado';
+import { contenidoAsesor } from './publicado';
 import { costoUsd } from './costo';
 import { llamador } from './motor';
 import { ajustesAsesor, presupuestoRestante, sumarGasto } from './presupuesto';
@@ -59,13 +63,25 @@ export async function rutaAsesor(
   if (!(await dentroDelLimite(db, `asesor:${ipHash ?? 'sin-ip'}`, PREGUNTAS_POR_HORA, t))) {
     return json({ ok: false, error: 'limite' }, 429, cabeceras);
   }
+  // Con la conversación guardada, el tope de preguntas lo cuenta el servidor (el navegador podría
+  // mandar menos historial). Si la base no responde, sigue: guardar falla abierto.
+  let previa: Previa | null = null;
+  if (entrada.conversacion) {
+    try {
+      previa = await previaDe(db, entrada.conversacion);
+    } catch (e) {
+      console.error('[asesor] no se pudo leer la conversación', e);
+    }
+    if (previa && previa.preguntas >= MAX_PREGUNTAS) return json({ ok: false, error: 'limite' }, 429, cabeceras);
+  }
   if (!(await disponible(env, db))) return json({ ok: false, error: 'no_disponible' }, 503, cabeceras);
 
   let r;
   try {
     // Un Claude falso solo en local: en producción la URL alternativa se ignora.
     const url = env.ENTORNO === 'local' && env.ANTHROPIC_URL ? env.ANTHROPIC_URL : undefined;
-    r = await atender(entrada, { llamarModelo: llamador(env.ANTHROPIC_API_KEY!, entrada.locale, entrada.pagina, url) });
+    const extra = await contenidoAsesor(db);
+    r = await atender(entrada, { llamarModelo: llamador(env.ANTHROPIC_API_KEY!, entrada.locale, entrada.pagina, url, fetch, extra) });
   } catch (e) {
     console.error('[asesor] falló la llamada al modelo', e);
     return json({ ok: false, error: 'modelo' }, 502, cabeceras);
@@ -73,6 +89,7 @@ export async function rutaAsesor(
 
   // Si anotar el gasto falla, la respuesta ya está pagada: se entrega igual.
   diferir(sumarGasto(db, costoUsd(r.uso), t).catch((e) => console.error('[asesor] no se pudo anotar el gasto', e)));
+  if (entrada.conversacion) diferir(guardarTurno(db, { entrada, r, previa, ipHash, t }).catch((e) => console.error('[asesor] no se pudo guardar el turno', e)));
 
   if (r.whatsapp || r.contacto) {
     const servicio = r.servicio as ServicioId | null;
@@ -91,4 +108,15 @@ export async function rutaAsesor(
   }
 
   return json({ ok: true, texto: r.texto, whatsapp: r.whatsapp, contacto: r.contacto, respaldo: r.respaldo }, 200, cabeceras);
+}
+
+/** POST /v1/asesor/borrar: borra la conversación con ese id. Solo lo sabe el navegador que la tuvo. */
+export async function rutaBorrar(req: Request, db: DrizzleD1Database, cors: Record<string, string>): Promise<Response> {
+  const cabeceras = { ...cors, 'access-control-allow-methods': 'POST, OPTIONS' };
+  if (req.method !== 'POST') return json({ ok: false }, 405, cabeceras);
+  const d = (await req.text().then((x) => JSON.parse(x.slice(0, 1000))).catch(() => null)) as { conversacion?: unknown } | null;
+  if (!d || typeof d.conversacion !== 'string' || !UUID_V4.test(d.conversacion)) return json({ ok: false, error: 'formato' }, 422, cabeceras);
+  await borrarConversacion(db, d.conversacion);
+  // Responde igual exista o no: no confirma qué ids hay guardados.
+  return json({ ok: true }, 200, cabeceras);
 }

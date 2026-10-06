@@ -1,11 +1,14 @@
 // Lógica del chat con IA en el navegador (src/components/Asesor.astro), sin DOM para probarla.
-// El servidor no guarda la conversación: el historial vive en sessionStorage (solo esta pestaña)
-// y se reenvía en cada pregunta. La API lo valida y no le cree (api/src/asesor/bucle.ts).
+// El historial vive en sessionStorage (solo esta pestaña) y se reenvía en cada pregunta. La API
+// lo valida y no le cree (api/src/asesor/bucle.ts); guarda solo el turno nuevo de cada pregunta,
+// 90 días y con teléfonos y correos tapados, bajo el id de conversación de esta pestaña.
 
 /** Máximo de preguntas por conversación; el mismo de la API (MAX_PREGUNTAS). */
 export const MAX_PREGUNTAS = 30;
 export const MAX_TEXTO = 500;
 export const CLAVE_ALMACEN = 'antidoto-asesor';
+/** Id de la conversación en curso (UUID v4). Cambia al empezar de nuevo. */
+export const CLAVE_ID = 'antidoto-asesor-id';
 
 export interface Mensaje {
   rol: 'usuario' | 'asesor';
@@ -21,10 +24,19 @@ export function paginaDe(ruta: string, pagina: string | undefined, servicios: Re
   return servicios[ruta] ?? (pagina || 'otra');
 }
 
-/** Cuerpo de una pregunta: solo rol y texto. Lo demás es de la interfaz. */
-export function cuerpoPregunta(locale: 'es' | 'en', pagina: string, mensajes: readonly Mensaje[]) {
-  return { locale, pagina, mensajes: mensajes.map(({ rol, texto }) => ({ rol, texto })) };
+/** Cuerpo de una pregunta: solo rol y texto de cada mensaje. Lo demás es de la interfaz. */
+export function cuerpoPregunta(locale: 'es' | 'en', pagina: string, mensajes: readonly Mensaje[], conversacion?: string | null, origen?: 'panel' | 'facilitador') {
+  return {
+    locale,
+    pagina,
+    mensajes: mensajes.map(({ rol, texto }) => ({ rol, texto })),
+    ...(conversacion && esIdConversacion(conversacion) ? { conversacion } : {}),
+    ...(origen ? { origen } : {}),
+  };
 }
+
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+export const esIdConversacion = (v: unknown): v is string => typeof v === 'string' && UUID_V4.test(v);
 
 export const preguntasHechas = (mensajes: readonly Mensaje[]) => mensajes.filter((m) => m.rol === 'usuario').length;
 

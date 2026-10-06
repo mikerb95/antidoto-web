@@ -8,7 +8,8 @@ const logos = import.meta.glob<{ default: ImageMetadata }>('../assets/clientes/*
 export const SECTORES = ['ingenieria', 'sst', 'seguros', 'transporte', 'otros'] as const;
 export type Sector = (typeof SECTORES)[number];
 
-const CLIENTES_BASE: Array<[archivo: string, nombre: string, sector: Sector]> = [
+/** Clientes locales. También los publica el panel: obtenerClientes() (src/data/contenido.ts) une los dos. */
+export const CLIENTES_LOCALES: Array<[archivo: string, nombre: string, sector: Sector]> = [
   ['enel', 'Enel', 'ingenieria'],
   ['claro', 'Claro', 'otros'],
   ['stanley-black-decker', 'Stanley Black & Decker', 'otros'],
@@ -29,7 +30,7 @@ const CLIENTES_BASE: Array<[archivo: string, nombre: string, sector: Sector]> = 
   ['la-lorenza', 'La Lorenza', 'otros'],
 ];
 
-export const CLIENTES = CLIENTES_BASE.map(([archivo, nombre, sector]) => {
+export const CLIENTES = CLIENTES_LOCALES.map(([archivo, nombre, sector]) => {
   const mod = logos[`../assets/clientes/${archivo}.png`];
   if (!mod) throw new Error(`Falta el logo de ${nombre}: src/assets/clientes/${archivo}.png`);
   return { nombre, sector, logo: mod.default };

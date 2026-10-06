@@ -20,7 +20,11 @@ export interface LeadEntrada {
   utmSource: string | null;
   utmMedium: string | null;
   utmCampaign: string | null;
+  /** Conversación del chat con IA de la misma visita, si la hubo (UUID v4 del navegador). */
+  conversacionId: string | null;
 }
+
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 export type Resultado =
   /**
@@ -133,6 +137,7 @@ export function validarLead(entrada: unknown): Resultado {
       utmSource: texto(utm.source, 80),
       utmMedium: texto(utm.medium, 80),
       utmCampaign: texto(utm.campaign, 120),
+      conversacionId: typeof d.conversacion === 'string' && UUID_V4.test(d.conversacion) ? d.conversacion : null,
     },
   };
 }

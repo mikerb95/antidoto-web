@@ -5,7 +5,8 @@ import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import CabeceraPagina from '../CabeceraPagina.astro';
 import BloqueCta from '../BloqueCta.astro';
-import { CLIENTES, SECTORES } from '../../data/clientes';
+import { SECTORES } from '../../data/clientes';
+import { obtenerClientes } from '../../data/contenido';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { tp } from '../../i18n/paginas';
 import { grafo, migasSchema } from '../../data/schema';
@@ -13,6 +14,7 @@ import { grafo, migasSchema } from '../../data/schema';
 interface Props {
   locale: Locale;
 }
+const CLIENTES = await obtenerClientes();
 const { locale } = Astro.props;
 const s = t(locale);
 const p = tp(locale);

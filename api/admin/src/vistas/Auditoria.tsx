@@ -46,6 +46,12 @@ const ACCIONES: Record<string, string> = {
   'entregable.archivo': 'Subió un archivo a un entregable',
   'portal.invitar': 'Dio acceso al portal a un cliente',
   'portal.quitar': 'Quitó el acceso al portal a un cliente',
+  'contacto_cliente.suprimir': 'Suprimió los datos de un contacto de cliente',
+  'contenido.borrar': 'Borró un borrador de contenido',
+  'contenido.desarchivar': 'Sacó contenido del archivo',
+  'contactos.exportar': 'Exportó los contactos a CSV',
+  'proyectos.exportar': 'Exportó los proyectos a CSV',
+  'conversaciones.exportar': 'Exportó las conversaciones a CSV',
 };
 
 const ENLACES: Record<string, (id: string) => string> = {

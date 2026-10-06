@@ -112,7 +112,7 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
 <script>
   import { ui } from '../i18n/ui';
   import { enlaceCotizador, enlaceWhatsapp, paginaDe, textoPlano, type Mensaje } from '../lib/asesor';
-  import { EVENTO_ABRIR, EVENTO_HISTORIAL, disponible, guardarHistorial, leerGuardado, preguntarAsesor } from '../lib/conversacion';
+  import { EVENTO_ABRIR, EVENTO_HISTORIAL, borrarConversacion, disponible, leerGuardado, preguntarAsesor } from '../lib/conversacion';
 
   const raiz = document.querySelector<HTMLElement>('[data-asesor]');
   if (raiz) {
@@ -274,7 +274,8 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
     raiz.querySelector('[data-reiniciar]')!.addEventListener('click', () => {
       if (ocupado) return;
       historial = [];
-      guardarHistorial([], 'panel');
+      // Borra también la copia guardada en la API (90 días); si no responde, igual empieza de nuevo.
+      void borrarConversacion(d.api!, 'panel');
       lista.querySelectorAll('li:not(:first-child)').forEach((li) => li.remove());
       sugerencias.hidden = false;
       campo.focus();

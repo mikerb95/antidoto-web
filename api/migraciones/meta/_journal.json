@@ -43,6 +43,34 @@
       "when": 1791290352078,
       "tag": "0005_cimientos",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791292263989,
+      "tag": "0006_conversaciones",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1791293189988,
+      "tag": "0007_contenido",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1791294366402,
+      "tag": "0008_proyectos",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1791294798075,
+      "tag": "0009_portal",
+      "breakpoints": true
     }
   ]
 }

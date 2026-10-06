@@ -8,7 +8,7 @@ import bolivar from '../../assets/clientes-color/seguros-bolivar.png';
 import wom from '../../assets/clientes-color/wom.png';
 import cruzVerde from '../../assets/clientes-color/cruz-verde.png';
 import stanley from '../../assets/clientes-color/stanley-black-decker.png';
-import { CLIENTES } from '../../data/clientes';
+import { obtenerClientes } from '../../data/contenido';
 import { t, rutas, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -26,7 +26,7 @@ const logos = [
   { nombre: 'Cruz Verde', logo: cruzVerde, alto: 52 },
   { nombre: 'Stanley Black & Decker', logo: stanley, alto: 52 },
 ];
-const resto = CLIENTES.length - logos.length;
+const resto = (await obtenerClientes()).length - logos.length;
 ---
 <section id="clientes-cifras" class="clientes" aria-label={h.cifrasLabel}>
   <div class="wrap logos-wrap">

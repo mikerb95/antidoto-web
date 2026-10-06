@@ -61,7 +61,51 @@ export default function Ajustes() {
             </fieldset>
           </form>
         </Tarjeta>
+        <AjustesSitio a={a} editable={editable} guardando={guardando} guardar={guardar} />
       </div>
     </>
+  );
+}
+
+/** Regalo de bienvenida y video del hero: los lee el build, así que cambian al publicar el sitio. */
+function AjustesSitio({ a, editable, guardando, guardar }: { a: Ajustes; editable: boolean; guardando: boolean; guardar: (c: Ajustes) => Promise<void> }) {
+  const regalo = (a['sitio.regalo_novedades'] ?? null) as { es: string; en: string } | null;
+  const video = (a['sitio.video_hero'] ?? null) as { mp4: string; webm?: string } | null;
+  return (
+    <Tarjeta titulo="Sitio">
+      <form
+        class="formulario"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const f = new FormData(e.target as HTMLFormElement);
+          const v = (k: string) => String(f.get(k) ?? '').trim();
+          guardar({
+            'sitio.regalo_novedades': v('regalo_es') || v('regalo_en') ? { es: v('regalo_es'), en: v('regalo_en') } : null,
+            'sitio.video_hero': v('video_mp4') ? { mp4: v('video_mp4'), ...(v('video_webm') ? { webm: v('video_webm') } : {}) } : null,
+          });
+        }}
+      >
+        <fieldset disabled={!editable || guardando}>
+          <p class="suave texto-chico">Se aplican al publicar el sitio. Vacío usa lo que está en el código.</p>
+          <Campo etiqueta="Regalo por suscribirse (español)" ayuda="El nombre que promete la sección de novedades, por ejemplo una guía. Hace falta en los dos idiomas. El enlace va en el correo de bienvenida (Campañas, Correos automáticos).">
+            <input name="regalo_es" maxLength={120} defaultValue={regalo?.es ?? ''} />
+          </Campo>
+          <Campo etiqueta="Regalo por suscribirse (inglés)">
+            <input name="regalo_en" maxLength={120} defaultValue={regalo?.en ?? ''} />
+          </Campo>
+          <Campo etiqueta="Video del hero (MP4)" ayuda="Ruta del sitio (/video/hero.mp4) o enlace https. 720p, alrededor de 1 MB, horizontal.">
+            <input name="video_mp4" defaultValue={video?.mp4 ?? ''} placeholder="/video/hero.mp4" />
+          </Campo>
+          <Campo etiqueta="Video del hero (WebM, opcional)">
+            <input name="video_webm" defaultValue={video?.webm ?? ''} placeholder="/video/hero.webm" />
+          </Campo>
+          {editable && (
+            <Boton type="submit" variante="primario">
+              Guardar
+            </Boton>
+          )}
+        </fieldset>
+      </form>
+    </Tarjeta>
   );
 }

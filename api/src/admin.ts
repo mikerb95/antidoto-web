@@ -2,7 +2,8 @@
 // además el mismo origen (ver index.ts). Cada cambio queda en lead_eventos con su autor.
 import { and, desc, eq, gte, isNull, like, or, sql, type SQL } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { leads, eventos, consentimientos, usuarios, contactos, ESTADOS, SERVICIOS, ROLES, type Estado, type Lead } from './db/schema';
+import { leads, eventos, consentimientos, usuarios, contactos, conversaciones, contactosCliente, ESTADOS, SERVICIOS, ROLES, type Estado, type Lead } from './db/schema';
+import { borrarConversacion } from './asesor/guardado';
 import { suprimir, suscripcionDeLead } from './marketing/admin';
 import type { Sesion } from './auth';
 import { ahora, uuid, json, DIA } from './util';
@@ -126,6 +127,12 @@ export async function anonimizarLead(id: string, db: DrizzleD1Database, sesion: 
     .from(contactos)
     .where(lead.email ? or(eq(contactos.leadId, id), eq(contactos.email, lead.email)) : eq(contactos.leadId, id));
   for (const c of vinculados) await suprimir(db, c);
+  // La conversación del chat ligada a la solicitud también se borra.
+  const conversacionesLead = await db.select({ id: conversaciones.id }).from(conversaciones).where(eq(conversaciones.leadId, id));
+  for (const c of conversacionesLead) await borrarConversacion(db, c.id);
+  // Si la persona quedó como contacto de una organización (proyecto), también se suprime.
+  if (lead.email)
+    await db.update(contactosCliente).set({ nombre: null, email: null, telefono: null, cargo: null, anonimizado: t }).where(eq(contactosCliente.email, lead.email));
   await db.batch([
     db
       .update(leads)
@@ -139,7 +146,8 @@ export async function anonimizarLead(id: string, db: DrizzleD1Database, sesion: 
       leadId: id,
       creado: t,
       tipo: 'anonimizado',
-      detalle: vinculados.length ? 'También se suprimió su suscripción a novedades' : null,
+      detalle:
+        [vinculados.length ? 'También se suprimió su suscripción a novedades.' : '', conversacionesLead.length ? 'También se borró su conversación con el chat.' : ''].filter(Boolean).join(' ') || null,
       autor: sesion.usuario.email,
     }),
   ]);

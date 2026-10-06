@@ -25,6 +25,16 @@ export interface Env {
   ANTHROPIC_API_KEY?: string;
   /** Solo con ENTORNO=local: otra URL para la API de mensajes (un Claude falso para probar el chat). */
   ANTHROPIC_URL?: string;
-  /** Tope de gasto diario del chat con IA, en USD. Por defecto, 1. */
+  /** Tope de gasto diario del chat con IA, en USD. Por defecto, 1. Desde el panel se puede fijar otro. */
   ASESOR_TOPE_DIARIO_USD?: string;
+  /** Bucket público de imágenes del contenido del sitio (R2). Sin él, el panel no sube imágenes. */
+  MEDIOS?: R2Bucket;
+  /** Bucket PRIVADO de archivos de los entregables de proyectos (solo se descargan con sesión). */
+  ARCHIVOS?: R2Bucket;
+  /** Token de GitHub (fine-grained, Actions: Read and write) para publicar el sitio desde el panel. */
+  GITHUB_DISPATCH_TOKEN?: string;
+  /** Repositorio del sitio, "dueño/nombre". */
+  GITHUB_REPO?: string;
+  /** Rama que se construye al publicar. Por defecto, main. */
+  GITHUB_REF?: string;
 }

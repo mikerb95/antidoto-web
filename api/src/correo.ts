@@ -171,12 +171,12 @@ export function correoLeadCliente(lead: Lead, equipo: string): Omit<Correo, 'par
 
 export function correoEnlaceAcceso(enlace: string, minutos: number): Omit<Correo, 'para'> {
   return {
-    asunto: 'Tu enlace para entrar a la bandeja de Antídoto',
+    asunto: 'Tu enlace para entrar al panel de Antídoto',
     html: marco(
-      'Entrar a la bandeja',
+      'Entrar al panel',
       `<p style="margin:0 0 8px">Usa este botón para entrar. Sirve una sola vez y vence en ${minutos} minutos.</p>${boton(enlace, 'Entrar')}<p style="margin:0;color:#5b6b70;font-size:13px">Si no lo pediste, ignora este correo.</p>`,
     ),
-    texto: `Entra a la bandeja con este enlace (sirve una vez, vence en ${minutos} minutos):\n${enlace}\n\nSi no lo pediste, ignora este correo.`,
+    texto: `Entra al panel con este enlace (sirve una vez, vence en ${minutos} minutos):\n${enlace}\n\nSi no lo pediste, ignora este correo.`,
   };
 }
 
@@ -196,5 +196,51 @@ export function correoSeguimiento(pendientes: Lead[], appUrl: string, horas: num
         .join('')}</ul>${boton(`${appUrl}/admin/`, 'Abrir el panel')}`,
     ),
     texto: `Leads en "nuevo" después de ${horas} horas:\n\n${lista.map((l) => `- ${l.quien} · ${l.servicio} · ${l.hace}\n  ${l.href}`).join('\n')}`,
+  };
+}
+
+// Portal de proyectos (clientes) ------------------------------------------------------------
+
+export function correoInvitacionPortal(d: { nombre: string | null; organizacion: string; enlace: string }): Omit<Correo, 'para'> {
+  const hola = d.nombre ? `Hola, ${d.nombre}.` : 'Hola.';
+  return {
+    asunto: `Tu acceso al portal de proyectos de Antídoto`,
+    html: marco(
+      'Portal de proyectos',
+      `<p style="margin:0 0 8px">${escapar(hola)} El equipo de Antídoto te dio acceso al portal de proyectos de ${escapar(d.organizacion)}: ahí ves el avance, revisas los entregables y los apruebas o pides cambios.</p><p style="margin:0 0 8px">Para entrar, escribe tu correo en el portal y te llega un enlace. No hay contraseñas.</p>${boton(d.enlace, 'Abrir el portal')}`,
+    ),
+    texto: `${hola} El equipo de Antídoto te dio acceso al portal de proyectos de ${d.organizacion}: ahí ves el avance, revisas los entregables y los apruebas o pides cambios.\n\nPara entrar, escribe tu correo en el portal y te llega un enlace:\n${d.enlace}`,
+  };
+}
+
+export function correoEnlacePortal(enlace: string, minutos: number): Omit<Correo, 'para'> {
+  return {
+    asunto: 'Tu enlace para entrar al portal de proyectos de Antídoto',
+    html: marco(
+      'Entrar al portal',
+      `<p style="margin:0 0 8px">Usa este botón para entrar. Sirve una sola vez y vence en ${minutos} minutos.</p>${boton(enlace, 'Entrar')}<p style="margin:0;color:#5b6b70;font-size:13px">Si no lo pediste, ignora este correo.</p>`,
+    ),
+    texto: `Entra al portal de proyectos con este enlace (sirve una vez, vence en ${minutos} minutos):\n${enlace}\n\nSi no lo pediste, ignora este correo.`,
+  };
+}
+
+export function correoEntregableEnRevision(d: { proyecto: string; entregable: string; enlace: string }): Omit<Correo, 'para'> {
+  return {
+    asunto: `Para revisar: ${d.entregable}`,
+    html: marco(
+      'Un entregable listo para revisar',
+      `<p style="margin:0 0 8px">El equipo de Antídoto subió <strong>${escapar(d.entregable)}</strong> del proyecto ${escapar(d.proyecto)}. Revísalo en el portal y apruébalo o pide cambios.</p>${boton(d.enlace, 'Revisar en el portal')}`,
+    ),
+    texto: `El equipo de Antídoto subió "${d.entregable}" del proyecto ${d.proyecto}. Revísalo en el portal y apruébalo o pide cambios:\n${d.enlace}`,
+  };
+}
+
+export function correoRespuestaCliente(d: { accion: 'aprobado' | 'cambios' | 'comentario'; quien: string; proyecto: string; entregable?: string; texto?: string | null; enlace: string }): Omit<Correo, 'para'> {
+  const que =
+    d.accion === 'aprobado' ? `aprobó ${d.entregable}` : d.accion === 'cambios' ? `pidió cambios en ${d.entregable}` : 'dejó un comentario';
+  return {
+    asunto: `${d.proyecto}: el cliente ${que}`,
+    html: marco(`El cliente ${que}`, `${filas([['Proyecto', d.proyecto], ['Quién', d.quien], ['Comentario', d.texto ?? null]])}${boton(d.enlace, 'Abrir el proyecto')}`),
+    texto: `${textoPlano([['Proyecto', d.proyecto], ['Quién', d.quien], ['Qué', `el cliente ${que}`], ['Comentario', d.texto ?? null]])}\n\n${d.enlace}`,
   };
 }

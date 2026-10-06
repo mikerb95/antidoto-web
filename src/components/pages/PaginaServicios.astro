@@ -6,8 +6,7 @@ import CabeceraPagina from '../CabeceraPagina.astro';
 import BloqueCta from '../BloqueCta.astro';
 import ListaFaq from '../ListaFaq.astro';
 import { obtenerServicios, servicioPath } from '../../data/servicios';
-import { obtenerOfertas, ofertaPath } from '../../data/contenido';
-import { preguntas } from '../../data/faq';
+import { obtenerOfertas, obtenerPreguntas, ofertaPath } from '../../data/contenido';
 import { grafo, listaSchema, migasSchema, faqSchema } from '../../data/schema';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { tp } from '../../i18n/paginas';
@@ -21,7 +20,7 @@ const p = tp(locale);
 const [title, description] = s.seo.servicios;
 const servicios = await obtenerServicios();
 const ofertas = await obtenerOfertas();
-const faq = preguntas(locale, { tema: 'general' });
+const faq = await obtenerPreguntas(locale, { tema: 'general' });
 const migas: Array<[string, string]> = [
   [p.inicio, rutas.inicio[locale]],
   [s.nav.servicios, rutas.servicios[locale]],

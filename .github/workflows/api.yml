@@ -4,12 +4,14 @@ name: API (Cloudflare Worker)
 # Actions > Run workflow. La primera vez crea la base D1 "antidoto"; siempre aplica las
 # migraciones pendientes antes de publicar.
 # Secrets en GitHub:
-#   CLOUDFLARE_API_TOKEN   además de Pages: Edit, necesita Workers Scripts: Edit y D1: Edit
+#   CLOUDFLARE_API_TOKEN   además de Pages: Edit, necesita Workers Scripts: Edit, D1: Edit y Workers R2 Storage: Edit
 #   CLOUDFLARE_ACCOUNT_ID
 #   RESEND_API_KEY         opcional; sin ella la API funciona pero no salen correos
 #   SAL_IP                 opcional; texto aleatorio largo para el hash de IP
 #   RESEND_WEBHOOK_SECRET  opcional; secreto whsec_ del webhook de Resend (aperturas, rebotes)
 #   ANTHROPIC_API_KEY      opcional; sin ella el chat con IA no se ofrece y el sitio muestra solo WhatsApp
+#   GITHUB_DISPATCH_TOKEN  opcional; token fine-grained de este repo con Actions: Read and write. Con él,
+#                          el panel publica el sitio (dispara preview.yml y deploy.yml). Sin él, no.
 # Variable (Settings > Secrets and variables > Actions > Variables):
 #   PUBLIC_API_URL         URL pública del Worker; la usan los enlaces de los correos
 # Sin CLOUDFLARE_API_TOKEN o CLOUDFLARE_ACCOUNT_ID se omite con un aviso.
@@ -18,7 +20,7 @@ on:
   push:
     branches: [main]
     # El chat con IA lee los textos del sitio (servicios, ui.ts, contacto, clientes): si cambian, se redespliega.
-    paths: ['api/**', 'src/data/consentimiento.json', 'src/content/servicios/**', 'src/i18n/ui.ts', 'src/data/site.ts', 'src/data/clientes.ts', '.github/workflows/api.yml']
+    paths: ['api/**', 'src/data/consentimiento.json', 'src/data/faq.ts', 'public/fonts/**', 'src/content/servicios/**', 'src/i18n/ui.ts', 'src/data/site.ts', 'src/data/clientes.ts', '.github/workflows/api.yml']
   workflow_dispatch:
 
 concurrency:
@@ -66,6 +68,12 @@ jobs:
           sed -i "s/^database_id = .*/database_id = \"$id\"/" wrangler.toml
       - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: npx wrangler d1 migrations apply antidoto --remote
+      # Buckets R2: imágenes del contenido (público por el Worker) y archivos de proyectos (privado).
+      - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          for bucket in antidoto-medios antidoto-archivos; do
+            npx wrangler r2 bucket info "$bucket" >/dev/null 2>&1 || npx wrangler r2 bucket create "$bucket"
+          done
       - if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         id: deploy
         env:
@@ -83,8 +91,9 @@ jobs:
           SAL_IP: ${{ secrets.SAL_IP }}
           RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_DISPATCH_TOKEN: ${{ secrets.GITHUB_DISPATCH_TOKEN }}
         run: |
-          for nombre in RESEND_API_KEY SAL_IP RESEND_WEBHOOK_SECRET ANTHROPIC_API_KEY; do
+          for nombre in RESEND_API_KEY SAL_IP RESEND_WEBHOOK_SECRET ANTHROPIC_API_KEY GITHUB_DISPATCH_TOKEN; do
             valor="${!nombre}"
             if [ -n "$valor" ]; then printf '%s' "$valor" | npx wrangler secret put "$nombre"; else echo "::notice::$nombre no está configurado."; fi
           done
@@ -93,4 +102,5 @@ jobs:
           URL: ${{ steps.deploy.outputs.url }}
         run: |
           echo "API publicada en ${URL}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Bandeja: ${URL}/admin/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Panel: ${URL}/admin/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Portal de proyectos: ${URL}/portal/" >> "$GITHUB_STEP_SUMMARY"

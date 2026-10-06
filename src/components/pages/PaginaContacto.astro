@@ -149,6 +149,7 @@ const canales = [
   import { gsap, reducido } from '../../lib/motion/core';
   import { ui } from '../../i18n/ui';
   import { leerOrigen } from '../../lib/origen';
+  import { idConversacionActual } from '../../lib/conversacion';
 
   // Cotizador por pasos. Arma el texto y abre WhatsApp con el mensaje listo (enlace real
   // wa.me, sin retardos). Si el build trae la API y la persona marca la autorización, además
@@ -244,6 +245,8 @@ const canales = [
         locale,
         pagina: location.pathname,
         ...leerOrigen(),
+        // Si la persona habló con el chat en esta visita, la solicitud queda ligada a esa conversación.
+        conversacion: idConversacionActual() ?? undefined,
         t: Date.now() - inicio,
       });
       // Un segundo clic con los mismos datos no duplica el lead.

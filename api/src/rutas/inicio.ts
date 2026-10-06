@@ -1,6 +1,6 @@
 // Resumen de Inicio y buscador global del panel. Cada bloque solo sale si el rol lo puede ver.
 import { and, desc, eq, gte, inArray, like, lt, or, sql } from 'drizzle-orm';
-import { leads, contactos, campanas, gastoAsesor, usuarios } from '../db/schema';
+import { leads, contactos, campanas, gastoAsesor, usuarios, conversaciones, mensajesConversacion, proyectos, organizaciones, entregables } from '../db/schema';
 import { ajustesAsesor, hoyBogota } from '../asesor/presupuesto';
 import { puede } from '../permisos';
 import { ahora, json, DIA, HORA } from '../util';
@@ -71,10 +71,38 @@ async function inicio(c: Ctx): Promise<Response> {
       (async () => {
         try {
           const [{ tope, activo }, [hoy]] = await Promise.all([ajustesAsesor(db, env.ASESOR_TOPE_DIARIO_USD), db.select().from(gastoAsesor).where(eq(gastoAsesor.dia, hoyBogota(t)))]);
-          r.asesor = { configurado: !!env.ANTHROPIC_API_KEY, activo, tope, gastoHoy: hoy?.usd ?? 0, ...(hoy ? { hoy } : {}) };
+          r.asesor = {
+            configurado: !!env.ANTHROPIC_API_KEY,
+            activo,
+            tope,
+            gastoHoy: hoy?.usd ?? 0,
+            conversacionesHoy: hoy?.conversaciones ?? 0,
+            preguntasHoy: hoy?.preguntas ?? 0,
+            derivacionesHoy: hoy?.derivaciones ?? 0,
+          };
         } catch {
           r.asesor = null;
         }
+      })(),
+    );
+  }
+
+  if (puede(rol, 'proyectos.ver')) {
+    tareas.push(
+      (async () => {
+        const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date(t));
+        const semana = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date(t + 7 * DIA));
+        const [[activos], proximos] = await Promise.all([
+          db.select({ n: sql<number>`count(*)` }).from(proyectos).where(inArray(proyectos.estado, ['planeado', 'en_curso', 'en_pausa'])),
+          db
+            .select({ id: entregables.id, titulo: entregables.titulo, vence: entregables.vence, estado: entregables.estado, proyectoId: proyectos.id, proyecto: proyectos.nombre, codigo: proyectos.codigo })
+            .from(entregables)
+            .innerJoin(proyectos, eq(proyectos.id, entregables.proyectoId))
+            .where(and(sql`${entregables.estado} <> 'aprobado'`, sql`${entregables.vence} is not null`, sql`${entregables.vence} <= ${semana}`, inArray(proyectos.estado, ['planeado', 'en_curso', 'en_pausa'])))
+            .orderBy(entregables.vence)
+            .limit(8),
+        ]);
+        r.proyectos = { activos: activos?.n ?? 0, hoy, proximos };
       })(),
     );
   }
@@ -119,6 +147,38 @@ async function buscar(c: Ctx): Promise<Response> {
         .orderBy(desc(campanas.creada))
         .limit(POR_TIPO)
         .then((f) => f.map((x) => ({ tipo: 'campana', id: x.id, titulo: x.asunto, detalle: ESTADO_CAMPANA[x.estado], href: `/admin/campanas/${x.id}` }))),
+    );
+  }
+  if (puede(rol, 'asesor.ver'))
+    grupos.push(
+      db
+        .select({ id: conversaciones.id, texto: mensajesConversacion.texto, creada: conversaciones.creada })
+        .from(mensajesConversacion)
+        .innerJoin(conversaciones, eq(conversaciones.id, mensajesConversacion.conversacionId))
+        .where(and(eq(mensajesConversacion.rol, 'usuario'), like(mensajesConversacion.texto, patron)))
+        .orderBy(desc(conversaciones.actualizada))
+        .limit(POR_TIPO * 3)
+        .then((f) => f.filter((x, i) => f.findIndex((y) => y.id === x.id) === i).slice(0, POR_TIPO))
+        .then((f) => f.map((x) => ({ tipo: 'conversacion', id: x.id, titulo: x.texto.slice(0, 90), detalle: new Date(x.creada).toISOString().slice(0, 10), href: `/admin/conversaciones/${x.id}` }))),
+    );
+  if (puede(rol, 'proyectos.ver')) {
+    grupos.push(
+      db
+        .select({ id: proyectos.id, nombre: proyectos.nombre, codigo: proyectos.codigo, org: organizaciones.nombre })
+        .from(proyectos)
+        .innerJoin(organizaciones, eq(organizaciones.id, proyectos.organizacionId))
+        .where(or(like(proyectos.nombre, patron), like(proyectos.codigo, patron), like(organizaciones.nombre, patron)))
+        .orderBy(desc(proyectos.actualizado))
+        .limit(POR_TIPO)
+        .then((f) => f.map((x) => ({ tipo: 'proyecto', id: x.id, titulo: x.nombre, detalle: `${x.codigo} · ${x.org}`, href: `/admin/proyectos/${x.id}` }))),
+    );
+    grupos.push(
+      db
+        .select({ id: organizaciones.id, nombre: organizaciones.nombre, sector: organizaciones.sector })
+        .from(organizaciones)
+        .where(or(like(organizaciones.nombre, patron), like(organizaciones.nit, patron)))
+        .limit(POR_TIPO)
+        .then((f) => f.map((x) => ({ tipo: 'organizacion', id: x.id, titulo: x.nombre, detalle: x.sector, href: `/admin/organizaciones/${x.id}` }))),
     );
   }
   grupos.push(

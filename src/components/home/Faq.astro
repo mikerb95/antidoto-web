@@ -2,7 +2,7 @@
 // Preguntas frecuentes destacadas (src/data/faq.ts) con <details> nativo, la primera abierta, y
 // el enlace a la página con todas.
 import ListaFaq from '../ListaFaq.astro';
-import { preguntas } from '../../data/faq';
+import { obtenerPreguntas } from '../../data/contenido';
 import { t, rutas, type Locale } from '../../i18n/ui';
 import { tp } from '../../i18n/paginas';
 
@@ -15,7 +15,7 @@ const h = t(locale).inicio.faq;
 <section class="faq" aria-labelledby="faq-t">
   <div class="interior">
     <h2 id="faq-t" class="titulo-seccion">{h.titulo[0]}<span class="resaltado">{h.titulo[1]}</span></h2>
-    <ListaFaq items={preguntas(locale, { destacadas: true })} abrirPrimera />
+    <ListaFaq items={await obtenerPreguntas(locale, { destacadas: true })} abrirPrimera />
     <a class="ver-todo" href={rutas.faq[locale]}>{tp(locale).faq.todas}</a>
   </div>
 </section>

@@ -34,6 +34,9 @@ export default function Contactos({ params }: { params: string[] }) {
         acciones={
           puede('marketing.editar') && (
             <>
+              <a class="btn btn-fantasma" href="/admin/api/contactos.csv" download>
+                Exportar CSV
+              </a>
               <Boton aria-expanded={panel === 'importar'} onClick={() => setPanel(panel === 'importar' ? null : 'importar')}>
                 Importar CSV
               </Boton>

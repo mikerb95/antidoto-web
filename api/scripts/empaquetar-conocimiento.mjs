@@ -96,7 +96,7 @@ const contacto = { url: SITE.url, phoneDisplay: SITE.phoneDisplay, email: SITE.e
 // de una línea que no se publica.
 const { FAQ } = await import(new URL('src/data/faq.ts', raiz).href);
 const temasLinea = new Set(entradas.map((e) => e.clave));
-const faq = FAQ.filter((p) => !temasLinea.has(p.tema) || lineas.has(p.tema)).map(({ tema, es, en }) => ({ tema, es, en }));
+const faq = FAQ.filter((p) => !temasLinea.has(p.tema) || lineas.has(p.tema)).map(({ clave, tema, es, en }) => ({ clave, tema, es, en }));
 
 // Soluciones por área (src/data/soluciones.ts): título y descripción de ui.inicio.paraQuien,
 // como en su página, y solo las ofertas publicadas.
@@ -117,7 +117,7 @@ export const CLIENTES_PUBLICOS: readonly string[] = ${JSON.stringify(clientes)};
 /** Textos de ui.ts sin sus funciones (JSON): el asesor solo lee datos. */
 export const UI = ${JSON.stringify(ui)} as unknown as typeof Ui;
 export const RUTAS = ${JSON.stringify({ servicios: rutas.servicios, contacto: rutas.contacto, faq: rutas.faq, soluciones: solucionesBase })} as Pick<typeof Rutas, 'servicios' | 'contacto' | 'faq'> & { soluciones: Record<'es' | 'en', string> };
-export const FAQ_PUBLICA: readonly { tema: string; es: readonly [string, string]; en: readonly [string, string] }[] = ${JSON.stringify(faq)};
+export const FAQ_PUBLICA: readonly { clave: string; tema: string; es: readonly [string, string]; en: readonly [string, string] }[] = ${JSON.stringify(faq)};
 export const SOLUCIONES_PUBLICAS: readonly { clave: string; perfil: number; slug: Record<'es' | 'en', string>; ofertas: readonly string[] }[] = ${JSON.stringify(soluciones)};
 export const SITE = ${JSON.stringify(contacto)} as const;
 `;

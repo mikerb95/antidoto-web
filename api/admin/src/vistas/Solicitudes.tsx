@@ -215,8 +215,39 @@ function Ficha({ datos, alCerrar, alGuardar }: { datos: DetalleLead; alCerrar: (
           ['Origen', origen],
           ['Página', l.pagina],
           ['Idioma', l.locale === 'en' ? 'Inglés' : 'Español'],
+          ['Chat con IA', l.conversacionId && puede('asesor.ver') ? <a href={`/admin/conversaciones/${l.conversacionId}`}>Ver la conversación previa</a> : null],
+          ['Organización', l.organizacionId && puede('proyectos.ver') ? <a href={`/admin/organizaciones/${l.organizacionId}`}>Abrir ficha</a> : null],
         ]}
       />
+
+      {l.estado === 'ganado' && (l.proyectoId || puede('proyectos.editar')) && (
+        <Seccion titulo="Proyecto">
+          {l.proyectoId ? (
+            <a class="btn btn-secundario btn-chico" href={`/admin/proyectos/${l.proyectoId}`}>
+              Abrir el proyecto
+            </a>
+          ) : (
+            <>
+              <p class="suave texto-chico">La solicitud se ganó. Conviértela en proyecto: arranca con las etapas de su línea, la organización y el contacto.</p>
+              <Boton
+                variante="primario"
+                chico
+                onClick={async () => {
+                  try {
+                    const r = await api<{ proyecto: { id: string } }>(`/admin/api/leads/${l.id}/proyecto`, { body: {} });
+                    avisar('Proyecto creado', 'exito');
+                    navegar(`/admin/proyectos/${r.proyecto.id}`);
+                  } catch (err) {
+                    avisar(mensajeError(err), 'error');
+                  }
+                }}
+              >
+                Crear proyecto
+              </Boton>
+            </>
+          )}
+        </Seccion>
+      )}
 
       {l.mensaje && (
         <Seccion titulo="Mensaje">

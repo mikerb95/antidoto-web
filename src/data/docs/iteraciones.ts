@@ -87,6 +87,15 @@ export const ITERACIONES: Iteracion[] = [
     commits: 0,
     objetivo: 'Terminar las páginas de contenido, activar la API y el asesor en producción, y resolver lo que espera al cliente.',
   },
+  {
+    id: 'I10',
+    nombre: 'Panel de administración',
+    desde: '2026-10-06',
+    hasta: '2026-10-06',
+    // En curso: los commits se cuentan al cerrar la iteración, como en I9.
+    commits: 0,
+    objetivo: 'Reconstruir el panel en Preact con roles finos y auditoría, guardar y analizar las conversaciones del chat, editar el contenido del sitio y llevar proyectos con un portal para clientes.',
+  },
 ];
 
 export const TARJETAS: Tarjeta[] = [
@@ -157,4 +166,14 @@ export const TARJETAS: Tarjeta[] = [
   { id: 'K-51', titulo: 'Indexación y lanzamiento', detalle: 'Redirecciones 301 de las URLs viejas, Search Console, Bing Webmaster Tools, IndexNow opcional y decidir sobre los bots de IA. Lista en pendientes.md.', columna: 'pendiente', iteracion: 'I9', historias: ['HU-25'] },
   { id: 'K-52', titulo: 'Más sustancia en cada página de servicio', detalle: 'Hoy tienen entre 240 y 350 palabras. Faltan qué incluye, para quién es, formatos, duración, casos y preguntas por servicio. Requiere información del cliente.', columna: 'cliente', iteracion: 'I9', historias: ['HU-02'] },
   { id: 'K-53', titulo: 'Respuestas finales de la FAQ y una imagen OG por servicio', detalle: 'Las respuestas con datos entre corchetes dependen del cliente; luego se agrega FAQPage en JSON-LD.', columna: 'cliente', iteracion: 'I9', historias: ['HU-31', 'HU-25'] },
+  { id: 'K-57', titulo: 'Roles, permisos, auditoría y ajustes', detalle: 'Cinco roles con matriz de permisos en la API, bitácora de auditoría, ajustes editables y sesiones propias (migración 0005).', columna: 'hecho', iteracion: 'I10', historias: ['HU-35'] },
+  { id: 'K-58', titulo: 'Panel nuevo en Preact', detalle: 'Reemplaza a la bandeja de JS propio: barra lateral por grupos, inicio, buscador global, diseño claro de marca y carga por pantalla, servido con ASSETS y CSP estricta.', columna: 'hecho', iteracion: 'I10', historias: ['HU-34'] },
+  { id: 'K-59', titulo: 'Conversaciones del chat guardadas y métricas', detalle: 'Turnos guardados 90 días con datos tapados, borrado por el visitante, tope real de preguntas, vista y métricas en el panel (migración 0006).', columna: 'hecho', iteracion: 'I10', historias: ['HU-36', 'HU-40'] },
+  { id: 'K-60', titulo: 'Contenido editable y publicación del sitio', detalle: 'Blog, casos, vacantes, preguntas y clientes desde el panel, imágenes en R2, cargador de Astro y botón de publicar (migración 0007).', columna: 'hecho', iteracion: 'I10', historias: ['HU-37'] },
+  { id: 'K-61', titulo: 'Proyectos y organizaciones', detalle: 'Solicitud ganada a proyecto, etapas por línea, tareas, entregables con archivos privados, bitácora y ficha de la organización (migración 0008).', columna: 'hecho', iteracion: 'I10', historias: ['HU-38'] },
+  { id: 'K-62', titulo: 'Portal de proyectos para clientes', detalle: 'Acceso con enlace mágico y cookie propia, avance, descarga, aprobación y comentarios (migración 0009).', columna: 'hecho', iteracion: 'I10', historias: ['HU-39'] },
+  { id: 'K-63', titulo: 'Activar la publicación desde el panel y los buckets R2', detalle: 'Crear el token fine-grained GITHUB_DISPATCH_TOKEN (Actions: Read and write) y sumar Workers R2 Storage: Edit al token de Cloudflare.', columna: 'pendiente', iteracion: 'I10', historias: ['HU-37'] },
+  { id: 'K-64', titulo: 'Notificaciones dentro del panel', detalle: 'Hoy los avisos llegan por correo. Falta una campana con lo nuevo (comentarios del cliente, entregables aprobados, solicitudes sin respuesta).', columna: 'pendiente', iteracion: 'I10', historias: ['HU-34'] },
+  { id: 'K-65', titulo: 'Archivos grandes en los entregables', detalle: 'El Worker acepta hasta 50 MB. Para videos más grandes hace falta subir directo a R2 con URL firmada.', columna: 'pendiente', iteracion: 'I10', historias: ['HU-38'] },
+  { id: 'K-66', titulo: 'Revisión legal del chat guardado y del portal', detalle: 'Que el abogado revise el aviso del chat, la retención de 90 días y el tratamiento de los contactos de clientes en el portal.', columna: 'cliente', iteracion: 'I10', historias: ['HU-40'] },
 ];

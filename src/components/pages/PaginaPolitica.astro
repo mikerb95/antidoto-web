@@ -36,19 +36,21 @@ const txt = es
             'Cuando pides una cotización en el sitio y nos autorizas: nombre, organización, correo, teléfono, el servicio que te interesa, fecha aproximada, número de personas, ciudad y el mensaje que armas.',
             'También guardamos la página desde la que escribiste, el sitio o campaña que te trajo, la fecha de la autorización y un resumen cifrado de tu dirección IP que cambia cada día. No guardamos tu IP.',
             'Si no marcas la autorización, no guardamos nada: el mensaje sale de tu navegador directo a WhatsApp.',
+            'Chat con IA del sitio: guardamos la conversación (tus preguntas y las respuestas del asistente) durante 90 días, con los teléfonos y correos que escribas reemplazados antes de guardarla, junto con la página donde empezó, el idioma y el servicio del que se habló. Al cumplir 90 días se borra sola. El botón para empezar de nuevo del chat la borra en el momento. Si en la misma visita pides una cotización con la autorización marcada, la conversación queda ligada a esa solicitud.',
           ],
         },
         {
           t: '3. Para qué los usamos',
           p: [
             'Para responder tu solicitud, preparar la cotización, hacerle seguimiento y, si trabajamos juntos, gestionar el proyecto. No enviamos publicidad con esta autorización.',
+            'Las conversaciones del chat con IA sirven para mejorar la atención: saber qué preguntan las personas, corregir respuestas del asistente y, si pediste una cotización, entender lo que buscabas.',
             'Novedades por correo: solo si lo autorizas aparte (en el cotizador o con el formulario del pie del sitio) te enviamos novedades, contenidos y propuestas. Confirmas la suscripción desde un correo que te enviamos; sin esa confirmación no te escribimos. Cada correo trae un enlace para darte de baja en un clic. Para medir qué contenidos sirven, registramos si el correo se entregó, se abrió o recibió clics.',
           ],
         },
         {
           t: '4. Quién más los procesa',
           p: [
-            'Usamos proveedores que tratan los datos por encargo nuestro y solo para estos fines: Cloudflare (alojamiento del sitio y de la base de datos) y Resend (envío de correos). Sus servidores pueden estar fuera de Colombia, incluido Estados Unidos.',
+            'Usamos proveedores que tratan los datos por encargo nuestro y solo para estos fines: Cloudflare (alojamiento del sitio y de la base de datos), Resend (envío de correos) y Anthropic (el modelo de IA que responde en el chat, que recibe la conversación sin teléfonos ni correos). Sus servidores pueden estar fuera de Colombia, incluido Estados Unidos.',
             'Si escribes por WhatsApp, esa conversación la trata Meta según sus propias condiciones.',
           ],
         },
@@ -68,7 +70,7 @@ const txt = es
         {
           t: '7. Seguridad',
           p: [
-            'Los datos viajan cifrados (HTTPS). Solo el equipo de Antídoto entra a la bandeja de solicitudes, con enlaces de acceso de un solo uso y sesiones que se pueden cerrar. Cada cambio queda registrado con su autor.',
+            'Los datos viajan cifrados (HTTPS). Solo el equipo de Antídoto entra al panel de administración, cada persona con un rol que limita lo que puede ver y hacer, con enlaces de acceso de un solo uso y sesiones que se pueden cerrar. Cada cambio queda registrado con su autor.',
           ],
         },
         {
@@ -99,19 +101,21 @@ const txt = es
             'When you request a quote on the site and authorize us: name, organization, email, phone, the service you are interested in, approximate date, number of people, city and the message you build.',
             'We also store the page you wrote from, the site or campaign that brought you, the date of your authorization and a hashed summary of your IP address that changes every day. We do not store your IP.',
             'If you do not tick the authorization, we store nothing: the message goes from your browser straight to WhatsApp.',
+            'AI chat on the site: we keep the conversation (your questions and the assistant\'s answers) for 90 days, with any phone numbers and emails you write replaced before it is stored, along with the page where it started, the language and the service discussed. After 90 days it is deleted automatically. The chat\'s start over button deletes it right away. If during the same visit you request a quote with the authorization ticked, the conversation is linked to that request.',
           ],
         },
         {
           t: '3. What we use it for',
           p: [
             'To answer your request, prepare the quote, follow up and, if we work together, manage the project. We do not send marketing under this authorization.',
+            'AI chat conversations help us improve our service: learning what people ask, correcting the assistant\'s answers and, if you requested a quote, understanding what you were looking for.',
             'News by email: only if you authorize it separately (in the quote builder or with the form in the site footer) do we send you news, content and offers. You confirm the subscription from an email we send you; without that confirmation we do not write to you. Every email has a one-click unsubscribe link. To learn which content is useful, we record whether the email was delivered, opened or clicked.',
           ],
         },
         {
           t: '4. Who else processes it',
           p: [
-            'We use providers that process data on our behalf and only for these purposes: Cloudflare (hosting for the site and the database) and Resend (email delivery). Their servers may be outside Colombia, including the United States.',
+            'We use providers that process data on our behalf and only for these purposes: Cloudflare (hosting for the site and the database), Resend (email delivery) and Anthropic (the AI model that answers in the chat, which receives the conversation without phone numbers or emails). Their servers may be outside Colombia, including the United States.',
             'If you write on WhatsApp, Meta handles that conversation under its own terms.',
           ],
         },
@@ -131,7 +135,7 @@ const txt = es
         {
           t: '7. Security',
           p: [
-            'Data travels encrypted (HTTPS). Only the Antídoto team can open the request inbox, with single-use sign-in links and sessions that can be closed. Every change is logged with its author.',
+            'Data travels encrypted (HTTPS). Only the Antídoto team can open the admin panel, each person with a role that limits what they can see and do, with single-use sign-in links and sessions that can be closed. Every change is logged with its author.',
           ],
         },
         {
