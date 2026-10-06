@@ -36,6 +36,13 @@
       "when": 1791043656113,
       "tag": "0004_novedades",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791290352078,
+      "tag": "0005_cimientos",
+      "breakpoints": true
     }
   ]
 }

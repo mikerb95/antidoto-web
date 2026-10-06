@@ -8,12 +8,23 @@
 import { eq, sql } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { gastoAsesor } from '../db/schema';
+import { leerAjustes } from '../configuracion';
 
 export const TOPE_POR_DEFECTO_USD = 1;
 
 export function topeDiarioUsd(valor: string | undefined): number {
   const v = Number(valor);
   return valor !== undefined && valor !== '' && Number.isFinite(v) && v >= 0 ? v : TOPE_POR_DEFECTO_USD;
+}
+
+/**
+ * Tope y estado vigentes: lo que se fijó en el panel manda sobre ASESOR_TOPE_DIARIO_USD. Lanza si
+ * la base no responde, igual que presupuestoRestante (quien llama falla cerrado).
+ */
+export async function ajustesAsesor(db: DrizzleD1Database, variable: string | undefined): Promise<{ tope: number; activo: boolean }> {
+  const a = await leerAjustes(db, ['asesor.tope_diario_usd', 'asesor.activo']);
+  const tope = typeof a['asesor.tope_diario_usd'] === 'number' ? a['asesor.tope_diario_usd'] : topeDiarioUsd(variable);
+  return { tope, activo: a['asesor.activo'] !== false };
 }
 
 /** Fecha de hoy en Colombia: el día del tope empieza a medianoche de Bogotá, no de UTC. */

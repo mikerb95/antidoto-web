@@ -2,12 +2,11 @@
 // el historial de cada lead y el acceso del equipo al admin con enlace mágico.
 // Fechas en milisegundos desde epoch (UTC). Los ids son UUID generados en el Worker.
 import { sqliteTable, text, integer, real, index, uniqueIndex, primaryKey } from 'drizzle-orm/sqlite-core';
+import { ESTADOS, SERVICIOS, ROLES, ESTADOS_CONTACTO, ESTADOS_CAMPANA } from '../dominio';
 
-export const ESTADOS = ['nuevo', 'contactado', 'cotizado', 'ganado', 'perdido'] as const;
-export type Estado = (typeof ESTADOS)[number];
-
-export const SERVICIOS = ['formaciones', 'audiovisual', 'catering', 'diseno', 'ia'] as const;
-export type ServicioId = (typeof SERVICIOS)[number];
+export { ESTADOS, SERVICIOS, ROLES, ESTADOS_CONTACTO, ESTADOS_CAMPANA };
+import type { ServicioId } from '../dominio';
+export type { Estado, ServicioId, Rol, EstadoContacto, EstadoCampana } from '../dominio';
 
 export const leads = sqliteTable(
   'leads',
@@ -84,13 +83,13 @@ export const eventos = sqliteTable(
   (t) => [index('eventos_lead').on(t.leadId, t.creado)],
 );
 
-export const ROLES = ['admin', 'equipo'] as const;
-
 export const usuarios = sqliteTable('usuarios', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
   nombre: text('nombre').notNull(),
-  rol: text('rol', { enum: ROLES }).notNull().default('equipo'),
+  // En D1 la columna conserva DEFAULT 'equipo' (rol de antes de 0005): cambiarlo exige recrear
+  // la tabla, que tiene llaves foráneas. El código siempre envía el rol.
+  rol: text('rol', { enum: ROLES }).notNull().default('comercial'),
   activo: integer('activo', { mode: 'boolean' }).notNull().default(true),
   creado: integer('creado').notNull(),
 });
@@ -111,6 +110,8 @@ export const sesiones = sqliteTable(
   'sesiones',
   {
     hash: text('hash').primaryKey(),
+    /** Id público para listar y revocar sesiones sin mostrar el hash. */
+    id: text('id'),
     usuarioId: text('usuario_id')
       .notNull()
       .references(() => usuarios.id),
@@ -120,7 +121,7 @@ export const sesiones = sqliteTable(
     userAgent: text('user_agent'),
     revocada: integer('revocada'),
   },
-  (t) => [index('sesiones_usuario').on(t.usuarioId)],
+  (t) => [index('sesiones_usuario').on(t.usuarioId), uniqueIndex('sesiones_id').on(t.id)],
 );
 
 // Límites de frecuencia (leads y suscripciones por IP, enlaces de acceso por persona). Un
@@ -137,6 +138,33 @@ export const limites = sqliteTable(
   (t) => [primaryKey({ columns: [t.clave, t.ventana] })],
 );
 
+// Bitácora de auditoría del panel: quién hizo qué y cuándo. El detalle nunca lleva datos
+// personales (ni nombres, ni correos, ni teléfonos de terceros), solo ids y nombres de campos.
+export const auditoria = sqliteTable(
+  'auditoria',
+  {
+    id: text('id').primaryKey(),
+    creado: integer('creado').notNull(),
+    usuarioId: text('usuario_id'),
+    usuarioEmail: text('usuario_email'),
+    accion: text('accion').notNull(),
+    entidad: text('entidad'),
+    entidadId: text('entidad_id'),
+    detalle: text('detalle', { mode: 'json' }).$type<Record<string, unknown>>(),
+    ipHash: text('ip_hash'),
+  },
+  (t) => [index('auditoria_creado').on(t.creado), index('auditoria_entidad').on(t.entidad, t.entidadId)],
+);
+
+// Ajustes editables desde el panel (tope del chat con IA, interruptores). El valor va en JSON y
+// se valida por clave en src/configuracion.ts.
+export const configuracion = sqliteTable('configuracion', {
+  clave: text('clave').primaryKey(),
+  valor: text('valor', { mode: 'json' }).notNull(),
+  actualizado: integer('actualizado').notNull(),
+  autor: text('autor'),
+});
+
 export type Lead = typeof leads.$inferSelect;
 export type Usuario = typeof usuarios.$inferSelect;
 
@@ -144,8 +172,6 @@ export type Usuario = typeof usuarios.$inferSelect;
 // Contactos con autorización propia para recibir novedades (separada de la del lead), con doble
 // confirmación por correo. El token sirve para confirmar y para darse de baja sin iniciar sesión.
 
-export const ESTADOS_CONTACTO = ['pendiente', 'activo', 'baja', 'rebotado'] as const;
-export type EstadoContacto = (typeof ESTADOS_CONTACTO)[number];
 /** pie, inicio (sección de la home) y archivo (página de novedades) son formularios del sitio; admin e importado son invitaciones del equipo. */
 export const ORIGENES_CONTACTO = ['pie', 'inicio', 'archivo', 'cotizador', 'admin', 'importado'] as const;
 export type OrigenContacto = (typeof ORIGENES_CONTACTO)[number];
@@ -202,8 +228,6 @@ export const consentimientosMarketing = sqliteTable(
   (t) => [index('ccons_contacto').on(t.contactoId)],
 );
 
-export const ESTADOS_CAMPANA = ['borrador', 'programada', 'enviando', 'enviada', 'cancelada'] as const;
-export type EstadoCampana = (typeof ESTADOS_CAMPANA)[number];
 
 export const campanas = sqliteTable('campanas', {
   id: text('id').primaryKey(),

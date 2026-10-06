@@ -12,7 +12,7 @@ import { ahora, hashIp, json } from '../util';
 import { atender, validarEntrada } from './bucle';
 import { costoUsd } from './costo';
 import { llamador } from './motor';
-import { presupuestoRestante, sumarGasto, topeDiarioUsd } from './presupuesto';
+import { ajustesAsesor, presupuestoRestante, sumarGasto } from './presupuesto';
 
 /** Preguntas por IP y hora. Una conversación larga son unas 10; esto deja margen sin dejar abusar. */
 export const PREGUNTAS_POR_HORA = 60;
@@ -20,11 +20,12 @@ export const PREGUNTAS_POR_HORA = 60;
 export const AVISOS_POR_HORA = 2;
 const MAX_CUERPO = 64 * 1024;
 
-/** ¿Puede responder ahora? Falla cerrado: sin clave o si la base no contesta, no. */
+/** ¿Puede responder ahora? Falla cerrado: sin clave, apagado desde el panel o si la base no contesta, no. */
 async function disponible(env: Env, db: DrizzleD1Database): Promise<boolean> {
   if (!env.ANTHROPIC_API_KEY) return false;
   try {
-    return (await presupuestoRestante(db, topeDiarioUsd(env.ASESOR_TOPE_DIARIO_USD))) > 0;
+    const { tope, activo } = await ajustesAsesor(db, env.ASESOR_TOPE_DIARIO_USD);
+    return activo && (await presupuestoRestante(db, tope)) > 0;
   } catch (e) {
     console.error('[asesor] no se pudo leer el gasto del día', e);
     return false;
