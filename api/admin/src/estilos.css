@@ -321,6 +321,7 @@ fieldset:disabled textarea {
   display: grid;
   gap: 6px;
   min-width: 0;
+  align-content: start;
 }
 .campo-etq {
   font-size: 13px;
@@ -750,8 +751,14 @@ kbd {
 }
 .tarjeta + .tarjeta,
 .rejilla-2 + .tarjeta,
+.rejilla-3 + .tarjeta,
 .tarjeta + .rejilla-2 {
   margin-top: 20px;
+}
+.rejilla-2 > .tarjeta,
+.rejilla-3 > .tarjeta,
+.rejilla-inicio > .tarjeta {
+  margin-top: 0;
 }
 .rejilla-2,
 .rejilla-3,

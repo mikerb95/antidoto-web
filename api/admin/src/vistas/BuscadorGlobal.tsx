@@ -26,6 +26,7 @@ const TIPOS: Record<string, string> = {
 
 export function BuscadorGlobal({ alCerrar }: { alCerrar: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const campo = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState('');
   const [resultados, setResultados] = useState<Resultado[]>([]);
   const [activo, setActivo] = useState(0);
@@ -33,6 +34,7 @@ export function BuscadorGlobal({ alCerrar }: { alCerrar: () => void }) {
 
   useEffect(() => {
     ref.current?.showModal();
+    campo.current?.focus();
   }, []);
 
   useEffect(() => {
@@ -87,6 +89,7 @@ export function BuscadorGlobal({ alCerrar }: { alCerrar: () => void }) {
           <path d="M14 14l4 4" />
         </svg>
         <input
+          ref={campo}
           type="text"
           role="combobox"
           aria-expanded={resultados.length > 0}

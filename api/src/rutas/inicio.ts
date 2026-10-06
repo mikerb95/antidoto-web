@@ -15,6 +15,7 @@ export interface Resultado {
 }
 
 const POR_TIPO = 5;
+const ESTADO_CAMPANA: Record<string, string> = { borrador: 'Borrador', programada: 'Programada', enviando: 'Enviando', enviada: 'Enviada', cancelada: 'Cancelada' };
 
 export async function rutasInicio(c: Ctx): Promise<Response | null> {
   if (c.ruta === '/admin/api/inicio' && c.metodo === 'GET') return inicio(c);
@@ -117,7 +118,7 @@ async function buscar(c: Ctx): Promise<Response> {
         .where(like(campanas.asunto, patron))
         .orderBy(desc(campanas.creada))
         .limit(POR_TIPO)
-        .then((f) => f.map((x) => ({ tipo: 'campana', id: x.id, titulo: x.asunto, detalle: x.estado, href: `/admin/campanas/${x.id}` }))),
+        .then((f) => f.map((x) => ({ tipo: 'campana', id: x.id, titulo: x.asunto, detalle: ESTADO_CAMPANA[x.estado], href: `/admin/campanas/${x.id}` }))),
     );
   }
   grupos.push(
