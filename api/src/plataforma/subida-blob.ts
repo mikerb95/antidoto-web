@@ -10,9 +10,15 @@ const VIGENCIA_MS = 30 * 60 * 1000;
 
 export const subidaBlob: SubidaDirecta = {
   async firmar(req, cuerpo, prefijo, permitida, maxBytes) {
+    // Solo se firman subidas: sin callback de Blob (el panel registra el archivo después), así que
+    // cualquier otro evento se rechaza aquí.
+    const evento = cuerpo as HandleUploadPresignedBody | null;
+    if (evento?.type !== 'blob.generate-presigned-url') throw new Error('evento no permitido');
     return handleUploadPresigned({
       request: req,
-      body: cuerpo as HandleUploadPresignedBody,
+      body: evento,
+      // La librería exige la llave aunque solo la use para verificar callbacks, que aquí no hay.
+      webhookPublicKey: process.env.BLOB_WEBHOOK_PUBLIC_KEY || 'sin-callback',
       getSignedToken: async (ruta) => {
         const clave = ruta.startsWith(`${prefijo}/`) ? ruta.slice(prefijo.length + 1) : '';
         if (!clave || !permitida(clave)) throw new Error('clave no permitida');

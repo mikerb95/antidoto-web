@@ -142,7 +142,6 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
   return json({ error: 'no existe' }, 404);
 }
 
-
 // Crons: en Cloudflare los dispara `scheduled` (wrangler.toml); en Vercel, /cron/<nombre> (vercel.json).
 // A la hora en punto se disparan los dos. Los lotes salen solo con el de cada 5 minutos:
 // dos corridas a la vez se pisan con el límite de Resend (2 por segundo) y gastan intentos.

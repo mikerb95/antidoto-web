@@ -89,6 +89,59 @@ describe('de solicitud a proyecto', () => {
     expect(d.entregables[0]!.version).toBe(2);
   });
 
+  test('subida directa (Vercel): firma solo claves del proyecto y registra lo subido', async () => {
+    const base = (ent: string) => `/admin/api/entregables/${ent}/archivos`;
+    let d = (await (await enviar(produccion, `/admin/api/proyectos/${id}/entregables`, 'POST', { titulo: 'Fotos del evento' })).json()) as Det;
+    const ent = d.entregables.find((e) => e.archivos.length === 0)!;
+
+    // Sin env.SUBIDA (Cloudflare) el panel recibe 404 y sube por el formulario.
+    expect(await (await enviar(produccion, `${base(ent.id)}/firmar`, 'POST', {})).json()).toEqual({ error: 'sin_subida_directa' });
+    expect((await enviar(produccion, `${base(ent.id)}/registrar`, 'POST', {})).status).toBe(404);
+
+    // Con un almacenamiento falso que guarda en el R2 local, como haría Blob.
+    const firmadas: string[] = [];
+    p.env.SUBIDA = {
+      async firmar(_req, cuerpo, prefijo, permitida) {
+        const ruta = (cuerpo as { payload: { pathname: string } }).payload.pathname;
+        const clave = ruta.slice(prefijo.length + 1);
+        if (!permitida(clave)) throw new Error('clave no permitida');
+        firmadas.push(clave);
+        return { type: 'blob.generate-presigned-url', presignedUrlPayload: { firmada: clave } };
+      },
+      async info(_prefijo, clave) {
+        const o = await p.env.ARCHIVOS!.get(clave);
+        return o ? { bytes: o.size, mime: o.httpMetadata?.contentType ?? '' } : null;
+      },
+    };
+    try {
+      const { clave } = (await (await enviar(produccion, `${base(ent.id)}/firmar`, 'POST', {})).json()) as { clave: string };
+      expect(clave).toMatch(new RegExp(`^proyectos/${d.proyecto.id}/[0-9a-f-]{36}$`));
+      expect((await enviar(lectura, `${base(ent.id)}/firmar`, 'POST', {})).status).toBe(403);
+
+      const evento = (ruta: string) => ({ type: 'blob.generate-presigned-url', payload: { pathname: ruta, clientPayload: null, multipart: false } });
+      const firma = await enviar(produccion, `${base(ent.id)}/firmar`, 'POST', evento(`archivos/${clave}`));
+      expect(firma.status).toBe(200);
+      expect(await firma.json()).toEqual({ type: 'blob.generate-presigned-url', presignedUrlPayload: { firmada: clave } });
+      // Ninguna clave de otro proyecto ni fuera de proyectos/.
+      expect((await enviar(produccion, `${base(ent.id)}/firmar`, 'POST', evento(`archivos/proyectos/00000000-0000-4000-8000-000000000000/${crypto.randomUUID()}`))).status).toBe(400);
+      expect((await enviar(produccion, `${base(ent.id)}/firmar`, 'POST', evento('archivos/otra/cosa'))).status).toBe(400);
+      expect(firmadas).toEqual([clave]);
+
+      // Registrar antes de subir no crea nada.
+      expect((await enviar(produccion, `${base(ent.id)}/registrar`, 'POST', { clave, nombre: 'foto.jpg' })).status).toBe(422);
+      await p.env.ARCHIVOS!.put(clave, new TextEncoder().encode('foto subida directo'), { httpMetadata: { contentType: 'image/jpeg' } });
+      expect((await enviar(produccion, `${base(ent.id)}/registrar`, 'POST', { clave: `proyectos/otro/${crypto.randomUUID()}`, nombre: 'x' })).status).toBe(422);
+      d = (await (await enviar(produccion, `${base(ent.id)}/registrar`, 'POST', { clave, nombre: 'foto.jpg' })).json()) as Det;
+      const archivo = d.entregables.find((e) => e.id === ent.id)!.archivos[0]!;
+      expect(archivo).toMatchObject({ id: clave.split('/').at(-1), nombre: 'foto.jpg' });
+      expect((await enviar(produccion, `${base(ent.id)}/registrar`, 'POST', { clave, nombre: 'foto.jpg' })).status).toBe(409);
+      const bajada = await p.llamar(`/admin/api/archivos/${archivo.id}`, { headers: { cookie: lectura } });
+      expect(await bajada.text()).toBe('foto subida directo');
+    } finally {
+      p.env.SUBIDA = undefined;
+    }
+  });
+
   test('la ficha de la organización junta proyectos y solicitudes', async () => {
     const d = (await (await p.llamar(`/admin/api/proyectos/${id}`, { headers: { cookie: admin } })).json()) as Det;
     const f = (await (await p.llamar(`/admin/api/organizaciones/${d.proyecto.organizacionId}`, { headers: { cookie: admin } })).json()) as { proyectos: unknown[]; solicitudes: { id: string }[] };
