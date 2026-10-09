@@ -12,7 +12,7 @@
 // solo avisa y sigue con lo local (la API local suele estar apagada). CMS_ESTRICTO=1 lo fuerza.
 
 /** ¿Un fallo de la API detiene el build? */
-export const estricto = () => process.env.CI === 'true' || process.env.CMS_ESTRICTO === '1';
+export const estricto = () => process.env.CI === 'true' || process.env.VERCEL === '1' || process.env.CMS_ESTRICTO === '1';
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import type { Loader, LoaderContext } from 'astro/loaders';
 import { archivoMedio, clavesReemplazadas, convertir, type EntradaColeccion, type RespuestaApi, type TipoCms } from './convertir';

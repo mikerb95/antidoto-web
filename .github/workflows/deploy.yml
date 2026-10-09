@@ -1,9 +1,15 @@
-name: Deploy a Hostinger
+name: Deploy a producción (Vercel)
 
-# Despliega dist/ por FTP a public_html. Manual (Actions > Deploy a Hostinger > Run workflow)
-# hasta el lanzamiento: una fusión a main no debe reemplazar el sitio en producción.
+# Construye el sitio y lo publica en producción en Vercel (proyecto del sitio, dominio
+# antidotocolombia.com). Cada push a main ya publica solo por la integración de Git de Vercel;
+# este workflow sirve para volver a construir sin un commit: lo dispara el panel al publicar
+# contenido (blog, casos, FAQ...) o se corre a mano (Actions > Run workflow).
 # Secrets requeridos en GitHub (Settings > Secrets and variables > Actions):
-#   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD  (hPanel > Archivos > Cuentas FTP)
+#   VERCEL_TOKEN              token de la cuenta de Vercel (vercel.com/account/tokens)
+#   VERCEL_ORG_ID             id del equipo (.vercel/project.json después de `vercel link`)
+#   VERCEL_PROJECT_ID         id del proyecto del sitio (mismo archivo)
+# Las variables del build (PUBLIC_API_URL) viven en el proyecto de Vercel, no en GitHub.
+# Sin los secrets el job se omite con un aviso.
 
 on:
   workflow_dispatch:
@@ -12,32 +18,31 @@ concurrency:
   group: deploy
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      FTP_SERVER: ${{ secrets.FTP_SERVER }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
-      - if: env.FTP_SERVER == ''
-        run: echo "::warning::Faltan los secrets FTP_SERVER, FTP_USERNAME y FTP_PASSWORD; no se despliega."
-      - if: env.FTP_SERVER != ''
+      - if: env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == ''
+        run: echo "::warning::Faltan VERCEL_TOKEN, VERCEL_ORG_ID o VERCEL_PROJECT_ID; no se despliega."
+      - if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
         uses: actions/checkout@v4
-      - if: env.FTP_SERVER != ''
+      - if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - if: env.FTP_SERVER != ''
+      - if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
         run: npm ci
-      - if: env.FTP_SERVER != ''
-        env:
-          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
-        run: npm run build
-      - if: env.FTP_SERVER != ''
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: ./public_html/
+      - if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
+        run: |
+          npx --yes vercel@59 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@59 build --prod --token="$VERCEL_TOKEN"
+          url=$(npx --yes vercel@59 deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "Producción publicada: ${url}" >> "$GITHUB_STEP_SUMMARY"

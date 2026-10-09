@@ -57,13 +57,13 @@ Estado al 03/10/2026: el código está completo y probado (suscripción con dobl
 ### Para activarlo (técnico)
 
 - [ ] Token de Cloudflare con permisos *Workers Scripts: Edit*, *D1: Edit* y *Account Settings: Read*, además de Pages.
-- [ ] Desplegar la API (Actions > *API (Cloudflare Worker)*). Aplica sola la migración `0004_novedades.sql`.
-- [ ] Guardar la URL de la API como variable `PUBLIC_API_URL` en GitHub. Sin ella no aparecen la sección de la home, el formulario del pie ni el archivo `/novedades/`. Lo ideal es un dominio propio (`api.antidotocolombia.com`).
-- [ ] Revisar `SITIO_URL` en `api/wrangler.toml` (hoy `https://antidotocolombia.com`): es a donde redirigen confirmar, baja y preferencias. Mientras el rediseño no esté publicado en ese dominio, esos enlaces llevarían a la SPA vieja.
+- [ ] Activar la API en Vercel (pasos en `api/README.md`, sección *Producción (Vercel)*). El build de producción aplica solo las migraciones en Turso.
+- [ ] Guardar la URL de la API como variable `PUBLIC_API_URL` en el proyecto de Vercel del sitio (y en GitHub). Sin ella no aparecen la sección de la home, el formulario del pie ni el archivo `/novedades/`. Lo ideal es un dominio propio (`api.antidotocolombia.com`).
+- [ ] Revisar `SITIO_URL` (`api/wrangler.toml` y `VARS` de `api/src/plataforma/vercel.ts`) (hoy `https://antidotocolombia.com`): es a donde redirigen confirmar, baja y preferencias. Mientras el rediseño no esté publicado en ese dominio, esos enlaces llevarían a la SPA vieja.
 - [ ] Primer admin en la base de producción (`api/README.md`, paso 7).
 - [ ] Secret `SAL_IP` (texto aleatorio largo).
 
-### Resend y DNS (en Hostinger)
+### Resend y DNS
 
 - [ ] Cuenta en Resend, dominio `antidotocolombia.com` verificado (SPF y DKIM) y secret `RESEND_API_KEY` en GitHub.
 - [ ] Registro DMARC: `_dmarc.antidotocolombia.com TXT "v=DMARC1; p=none; rua=mailto:<correo>"`. Gmail y Yahoo lo exigen a quien envía en volumen. Subirlo a `quarantine` cuando los informes salgan limpios.
@@ -102,7 +102,7 @@ La solución es lanzar el rediseño. Si el lanzamiento se demora, al menos hay q
 
 ### Lanzamiento
 
-- [ ] Redirecciones 301 en `public/.htaccess` de las URLs viejas de la SPA hacia las nuevas. Antes, revisar en Search Console cuáles tiene indexadas Google.
+- [ ] Redirecciones 301 en `redirects` de `vercel.json` de las URLs viejas de la SPA hacia las nuevas. Antes, revisar en Search Console cuáles tiene indexadas Google.
 - [ ] Google Search Console: verificar el dominio, enviar `https://antidotocolombia.com/sitemap-index.xml` y revisar la cobertura.
 - [ ] Bing Webmaster Tools: verificar el dominio y enviar el sitemap. ChatGPT search y Copilot usan el índice de Bing.
 - [ ] Opcional: IndexNow, para avisarle a Bing de los cambios sin esperar al rastreo.

@@ -157,7 +157,7 @@ export const INVESTIGACIONES: Investigacion[] = [
       { decision: 'Sitio estático multipágina en Astro, renderizado en el servidor.', porque: 'Los bots y las redes sociales deben ver el contenido sin ejecutar JavaScript.', donde: 'astro.config.mjs' },
       { decision: 'Canonical, Open Graph y JSON-LD propios, y sitemap.', porque: 'Los metadatos apuntaban a un dominio ajeno.', donde: 'src/layouts/Base.astro, src/data/schema.ts' },
       { decision: 'Enlaces y botones reales en todos los contactos.', porque: 'Los div con onClick no funcionan con teclado ni con bloqueadores de popups.', donde: 'src/components/pages/PaginaContacto.astro' },
-      { decision: 'Cabeceras de seguridad, 404 real y redirección www a apex.', porque: 'El sitio no tenía cabeceras y servía 200 en cualquier ruta.', donde: 'public/.htaccess, public/_headers' },
+      { decision: 'Cabeceras de seguridad, 404 real y redirección www a apex.', porque: 'El sitio no tenía cabeceras y servía 200 en cualquier ruta.', donde: 'vercel.json, public/_headers' },
       { decision: 'Presupuesto de rendimiento: LCP ≤ 2,5 s, JS ≤ 170 KB gzip y carga inicial móvil ≤ 1,5 MB.', porque: 'El sitio anterior pesaba 5,1 MB y tenía LCP de 3,5 s.', donde: 'CLAUDE.md' },
     ],
     limites: ['Es una foto del 22/09/2026; el sitio anterior pudo cambiar.', 'Lighthouse se corrió con la emulación por defecto, no sobre dispositivos reales.'],

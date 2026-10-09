@@ -19,5 +19,9 @@
   "include": [
     "src",
     "drizzle.config.ts"
+  ],
+  // Lo de Vercel corre en Node: lo chequea tsconfig.vercel.json.
+  "exclude": [
+    "src/plataforma"
   ]
 }

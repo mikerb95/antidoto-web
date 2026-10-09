@@ -94,6 +94,8 @@ export async function rutasProyectos(c: Ctx): Promise<Response | null> {
     if (metodo === 'DELETE') return borrarParte(c, que as 'etapas' | 'tareas' | 'entregables', id);
   }
   if ((m = ruta.match(new RegExp(`^/admin/api/entregables/${U}/archivos$`))) && metodo === 'POST') return editar() ?? subirArchivo(c, m[1]!);
+  if ((m = ruta.match(new RegExp(`^/admin/api/entregables/${U}/archivos/(firmar|registrar)$`))) && metodo === 'POST')
+    return editar() ?? (m[2] === 'firmar' ? firmarSubida(c, m[1]!) : registrarSubida(c, m[1]!));
   if ((m = ruta.match(new RegExp(`^/admin/api/archivos/${U}$`)))) {
     if (metodo === 'GET') return ver() ?? descargarArchivo(c, m[1]!);
     if (metodo === 'DELETE') return editar() ?? borrarArchivo(c, m[1]!);
@@ -551,14 +553,61 @@ async function subirArchivo(c: Ctx, entId: string): Promise<Response> {
     // Fuera de workerd (pruebas en Node) no existe FixedLengthStream.
     await c.env.ARCHIVOS.put(claveR2, await archivo.arrayBuffer(), metadatos);
   }
+  return guardarArchivo(c, e, { id, claveR2, nombre, mime: archivo.type, bytes: archivo.size });
+}
+
+async function guardarArchivo(c: Ctx, e: typeof entregables.$inferSelect, a: { id: string; claveR2: string; nombre: string; mime: string; bytes: number }): Promise<Response> {
   const t = ahora();
   await c.db.batch([
-    c.db.insert(archivosEntregable).values({ id, entregableId: entId, version: e.version, claveR2, nombre, mime: (archivo.type || 'application/octet-stream').slice(0, 100), bytes: archivo.size, subido: t, autor: c.sesion.usuario.email }),
-    c.db.insert(bitacora).values(nota(e.proyectoId, 'equipo', c.sesion.usuario.email, 'archivo', `${e.titulo}: archivo ${nombre}`, e.visibleCliente)),
-    c.db.update(entregables).set({ actualizado: t }).where(eq(entregables.id, entId)),
+    c.db.insert(archivosEntregable).values({ id: a.id, entregableId: e.id, version: e.version, claveR2: a.claveR2, nombre: a.nombre, mime: (a.mime || 'application/octet-stream').slice(0, 100), bytes: a.bytes, subido: t, autor: c.sesion.usuario.email }),
+    c.db.insert(bitacora).values(nota(e.proyectoId, 'equipo', c.sesion.usuario.email, 'archivo', `${e.titulo}: archivo ${a.nombre}`, e.visibleCliente)),
+    c.db.update(entregables).set({ actualizado: t }).where(eq(entregables.id, e.id)),
     tocar(c, e.proyectoId),
   ]);
   return auditar(c, await verProyecto(c, e.proyectoId), 'entregable.archivo', 'proyecto', e.proyectoId);
+}
+
+// Subida directa (solo en Vercel, env.SUBIDA): el panel pide una clave (proyectos/<proyecto>/<id>),
+// el cliente de Blob pide la URL firmada para esa clave, el navegador sube el archivo sin pasar por
+// la función y después el panel lo registra.
+// Sin env.SUBIDA responde 404 y el panel sube por el formulario de siempre.
+const claveDe = (proyectoId: string) => new RegExp(`^proyectos/${proyectoId}/${U}$`);
+
+async function firmarSubida(c: Ctx, entId: string): Promise<Response> {
+  if (!c.env.SUBIDA) return json({ error: 'sin_subida_directa' }, 404);
+  const [e] = await c.db.select().from(entregables).where(eq(entregables.id, entId));
+  if (!e) return json({ error: 'no existe' }, 404);
+  const cuerpo = (await c.req.json().catch(() => null)) as { type?: unknown } | null;
+  // Primer pedido del panel (sin evento de Blob): la API elige la clave del archivo.
+  if (typeof cuerpo?.type !== 'string') return json({ clave: `proyectos/${e.proyectoId}/${uuid()}` });
+  try {
+    const r = await c.env.SUBIDA.firmar(c.req, cuerpo, 'archivos', (clave) => claveDe(e.proyectoId).test(clave), MAX_BYTES_ARCHIVO);
+    return json(r);
+  } catch (err) {
+    console.error('[archivos] firma de subida', err);
+    return json({ error: 'firma' }, 400);
+  }
+}
+
+async function registrarSubida(c: Ctx, entId: string): Promise<Response> {
+  if (!c.env.SUBIDA) return json({ error: 'sin_subida_directa' }, 404);
+  const [e] = await c.db.select().from(entregables).where(eq(entregables.id, entId));
+  if (!e) return json({ error: 'no existe' }, 404);
+  const d = await leer(c);
+  const claveR2 = typeof d.clave === 'string' ? d.clave : '';
+  const m = claveR2.match(claveDe(e.proyectoId));
+  if (!m) return json({ error: 'clave' }, 422);
+  const id = m[1]!;
+  const [ya] = await c.db.select({ id: archivosEntregable.id }).from(archivosEntregable).where(eq(archivosEntregable.id, id));
+  if (ya) return json({ error: 'ya registrado' }, 409);
+  const info = await c.env.SUBIDA.info('archivos', claveR2);
+  if (!info) return json({ error: 'archivo' }, 422);
+  if (info.bytes > MAX_BYTES_ARCHIVO) {
+    await c.env.ARCHIVOS?.delete(claveR2);
+    return json({ error: 'grande' }, 413);
+  }
+  const nombre = nombreLimpio(typeof d.nombre === 'string' ? d.nombre : 'archivo');
+  return guardarArchivo(c, e, { id, claveR2, nombre, mime: info.mime, bytes: info.bytes });
 }
 
 /** Descarga un archivo de R2. Siempre como adjunto y con nosniff: nunca se muestra dentro del panel. */

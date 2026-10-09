@@ -40,8 +40,8 @@ crons = ["*/5 * * * *", "0 * * * *"]
 # "local" acepta orígenes localhost y cookies sin Secure; se cambia en .dev.vars.
 ENTORNO = "produccion"
 # Orígenes que pueden enviar leads (separados por coma).
-ORIGENES = "https://antidotocolombia.com,https://antidoto-web.pages.dev"
-# Las vistas previas de rama (*.antidoto-web.pages.dev) también se aceptan: ver src/cors.ts.
+ORIGENES = "https://antidotocolombia.com,https://antidoto-web.vercel.app,https://antidoto-web.pages.dev"
+# Las vistas previas de rama (*.antidoto-web.pages.dev y antidoto-web-*.vercel.app) también se aceptan: ver src/cors.ts.
 MAIL_FROM = "Antídoto <hola@antidotocolombia.com>"
 MAIL_EQUIPO = "antidoto.colombia@outlook.com"
 # Remitente de las campañas de novedades.

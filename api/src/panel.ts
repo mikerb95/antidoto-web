@@ -5,8 +5,9 @@ import type { Env } from './env';
 
 // El panel no se incrusta en otros sitios ni carga nada de fuera. Sin scripts ni estilos en línea:
 // Vite emite todo como archivos con hash. frame-src 'self' es para la vista previa de los correos.
+// connect-src suma Vercel Blob: en Vercel los archivos de entregables suben directo del navegador.
 export const CSP_PANEL =
-  "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+  "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com; frame-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 
 export const SEGURIDAD = {
   'content-security-policy': CSP_PANEL,

@@ -3,3 +3,4 @@ node_modules/
 .dev.vars
 src/asesor/publico.gen.ts
 dist-admin/
+.vercel/

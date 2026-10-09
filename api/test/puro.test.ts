@@ -41,6 +41,10 @@ test('origenPermitido', () => {
   expect(origenPermitido('https://mi-rama.antidoto-web.pages.dev', env)).toBe(true);
   expect(origenPermitido('https://antidoto-web.pages.dev.evil.com', env)).toBe(false);
   expect(origenPermitido('https://evil-antidoto-web.pages.dev', env)).toBe(false);
+  expect(origenPermitido('https://antidoto-web-git-rama-equipo.vercel.app', env)).toBe(true);
+  expect(origenPermitido('https://antidoto-web-a1b2c3-equipo.vercel.app', env)).toBe(true);
+  expect(origenPermitido('https://otro-antidoto-web-x.vercel.app', env)).toBe(false);
+  expect(origenPermitido('https://antidoto-web-x.vercel.app.evil.com', env)).toBe(false);
   expect(origenPermitido('http://localhost:4321', env)).toBe(false);
   expect(origenPermitido('http://localhost:4321', env, true)).toBe(true);
   expect(origenPermitido(null, env)).toBe(false);

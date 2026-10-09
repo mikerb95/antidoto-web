@@ -35,3 +35,6 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
+      # Las mismas pruebas sobre libSQL (Turso, la base de la API en Vercel) y el build de Vercel.
+      - run: npm run test:libsql
+      - run: node scripts/vercel-build.mjs

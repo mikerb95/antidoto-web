@@ -27,14 +27,14 @@ Preact y Vite en `admin/` (sin router ni librerías de estado: unos 15 KB gzip d
 El equipo publica artículos del blog, casos, vacantes, preguntas frecuentes y clientes desde el panel (`src/contenido/esquemas.ts` declara los campos y la validación de cada tipo; el panel arma el formulario con eso). Los servicios, las ofertas y los textos de interfaz siguen en el código.
 
 - **Borrador y copia publicada:** guardar deja un borrador (puede ir incompleto) y la versión anterior en el historial (las últimas 20, restaurables). Publicar exige todo en los dos idiomas y una dirección que no use otra entrada, y guarda una foto aparte: editar algo publicado no cambia el sitio hasta volver a publicarlo. Lo que alguna vez salió en el sitio se archiva, no se borra.
-- **Imágenes:** PNG, JPEG o WebP de hasta 8 MB, validadas por sus primeros bytes (nunca SVG), en el bucket `MEDIOS` (`src/archivos.ts`). Se sirven en `/v1/medios/<id>`.
+- **Imágenes:** PNG, JPEG o WebP de hasta 4 MB (el tope de cuerpo de una función de Vercel), validadas por sus primeros bytes (nunca SVG), en el bucket `MEDIOS` (`src/archivos.ts`). Se sirven en `/v1/medios/<id>`.
 - **Lectura pública:** `GET /v1/contenido?tipo=` devuelve solo lo publicado, con las URL de sus imágenes. El build del sitio lo lee con el cargador de `../src/lib/cms/`, que baja las imágenes para que `astro:assets` las optimice.
-- **Publicar el sitio** (`src/publicacion.ts`): el sitio es estático, así que publicar es volver a construirlo. La vista previa de Cloudflare Pages se sube por carga directa y no tiene deploy hook, así que el Worker dispara el workflow de GitHub (`preview.yml`, o `deploy.yml` para producción, solo admin). Varios pedidos en 2 minutos se juntan en uno y el cron reintenta los que fallen. Necesita `GITHUB_DISPATCH_TOKEN` y `GITHUB_REPO`.
+- **Publicar el sitio** (`src/publicacion.ts`): el sitio es estático, así que publicar es volver a construirlo. La API dispara el workflow de GitHub (`preview.yml`, o `deploy.yml` para producción, solo admin), que construye el sitio y lo publica en Vercel. Varios pedidos en 2 minutos se juntan en uno y el cron reintenta los que fallen. Necesita `GITHUB_DISPATCH_TOKEN` y `GITHUB_REPO`.
 
 ### Proyectos y portal de clientes
 
 - **Proyectos** (`src/rutas/proyectos.ts`): una solicitud ganada se convierte en proyecto con su organización (se reutiliza si ya existe con el mismo nombre) y su contacto. Arranca con las etapas de la plantilla de su línea (`src/proyectos/plantillas.ts`) y suma tareas, entregables con estados de revisión y versiones, archivos y una bitácora. Lo que el cliente ve va marcado como visible. No duplica la plataforma de misiones: el proyecto solo guarda su enlace.
-- **Archivos:** bucket privado `ARCHIVOS`, hasta 50 MB por archivo. Solo se descargan con sesión, siempre como adjunto y con `nosniff`.
+- **Archivos:** bucket privado `ARCHIVOS` (en Vercel, `archivos/` del store privado de Blob, con subida directa del navegador), hasta 50 MB por archivo. Solo se descargan con sesión, siempre como adjunto y con `nosniff`.
 - **Organizaciones:** ficha con contactos, proyectos, solicitudes, conversaciones del chat que llevaron a cotizar y accesos al portal.
 - **Portal** (`src/portal/`, interfaz en `admin/src/portal/`): el cliente entra con su propio enlace mágico (otra tabla, otros enlaces, otras sesiones y la cookie `__Host-antidoto-cliente` con `SameSite=Strict`), ve solo los proyectos de su organización y lo marcado como visible, descarga los archivos, aprueba los entregables o pide cambios y comenta. El equipo da y quita accesos desde la ficha de la organización (permiso `portal.gestionar`). Cuando un entregable visible pasa a revisión les llega un correo; cuando el cliente aprueba, pide cambios o comenta, le llega al responsable. Mientras no haya control del DNS comparte origen con el panel; conviene moverlo a `portal.antidotocolombia.com`.
 
@@ -99,37 +99,54 @@ Sin `RESEND_API_KEY`, el enlace de acceso sale en la consola de `wrangler dev`. 
 Para el chat con IA, agrega `ANTHROPIC_API_KEY` a `.dev.vars`. Para probarlo sin gastar, apunta `ANTHROPIC_URL` a un Claude falso (solo se respeta con `ENTORNO=local`). En local, R2 es una carpeta de `.wrangler/`.
 
 - `npm test`: pruebas de la API (de punta a punta contra una D1 y un R2 locales con miniflare) y del panel (componentes en happy-dom).
-- `npm run check`: tipos del Worker, de las pruebas y del panel.
+- `npm run test:libsql`: las mismas pruebas de la API sobre libSQL (la base en Vercel).
+- `npm run check`: tipos del Worker, de la función de Vercel, de las pruebas y del panel.
 - Cambios de esquema: edita `src/db/schema.ts`, corre `npm run migraciones:generar`, revisa el SQL (en D1 no se recrean tablas con llaves foráneas: ver `0005_cimientos.sql`) y versiona la migración nueva.
 
-## Producción
+## Producción (Vercel)
 
-1. **Token de Cloudflare:** al token de `CLOUDFLARE_API_TOKEN` agrégale los permisos *Workers Scripts: Edit*, *D1: Edit*, *Workers R2 Storage: Edit* y *Account Settings: Read* (hoy solo tiene Pages; el primer despliegue falló por eso). El workflow crea los buckets `antidoto-medios` y `antidoto-archivos` si no existen.
-2. **Correo:** crea una cuenta en Resend, verifica el dominio `antidotocolombia.com` (registros DNS en Hostinger) y guarda la clave como secret `RESEND_API_KEY` en GitHub. Si el remitente va a ser otro, cambia `MAIL_FROM` en `wrangler.toml`.
-   - **DMARC:** Resend crea SPF y DKIM, pero Gmail y Yahoo exigen además un registro DMARC a quien envía en volumen. Empieza con `_dmarc.antidotocolombia.com TXT "v=DMARC1; p=none; rua=mailto:<correo>"` y súbelo a `quarantine` cuando los informes salgan limpios.
-   - **Subdominio para campañas (recomendado):** verifica también un subdominio (por ejemplo `news.antidotocolombia.com`) y usa `MAIL_FROM_NOVEDADES = "Antídoto <novedades@news.antidotocolombia.com>"`. Así la reputación de las campañas no afecta los enlaces de acceso ni los avisos de leads, y el seguimiento de clics (que reescribe enlaces) no toca los correos de acceso.
-   - **Plan:** el plan gratis de Resend permite 100 correos al día. Con una lista de más de 100 personas hace falta el plan Pro.
-   - **Pie legal:** pon la razón social y el domicilio en `MAIL_DIRECCION` (`wrangler.toml`). Sin ella, las campañas dicen solo "Antídoto · Estudio creativo empresarial · Colombia".
-   - **Sitio:** `SITIO_URL` (en `wrangler.toml`) es el sitio al que redirigen confirmar, baja y preferencias.
-3. **Sal de IP:** guarda un texto aleatorio largo como secret `SAL_IP` (por ejemplo `openssl rand -base64 32`).
-4. **Webhook de Resend (métricas de campañas):** en Resend > Webhooks crea uno hacia `<URL de la API>/v1/resend/webhook` con los eventos `email.delivered`, `email.opened`, `email.clicked`, `email.bounced` y `email.complained`, y guarda su *signing secret* (`whsec_…`) como secret `RESEND_WEBHOOK_SECRET`. Para contar aperturas y clics, activa el seguimiento de aperturas y clics del dominio en Resend. Las campañas salen de `MAIL_FROM_NOVEDADES` (en `wrangler.toml`).
-5. **Chat con IA:** crea una clave en la consola de Claude, ponle un límite de gasto mensual allá también y guárdala como secret `ANTHROPIC_API_KEY` en GitHub. El tope diario se cambia en panel > Ajustes (o en `ASESOR_TOPE_DIARIO_USD` de `wrangler.toml`, que es el valor por defecto). Antes de abrirlo al público, prueba las preguntas trampa de la skill `chat-ia` (`references/pruebas.md`).
-6. **Publicar desde el panel:** crea en GitHub un token *fine-grained* solo para este repositorio, con el permiso *Actions: Read and write* y con vencimiento, y guárdalo como secret `GITHUB_DISPATCH_TOKEN`. `GITHUB_REPO` y `GITHUB_REF` están en `wrangler.toml`.
-7. **Desplegar:** en Actions, corre *API (Cloudflare Worker)*. También corre solo en cada push a `main` que toque `api/`. La primera vez crea la base D1 y, siempre, aplica las migraciones. La URL queda en el resumen del job.
-8. **Conectar el sitio:** guarda esa URL como variable `PUBLIC_API_URL` en GitHub (Variables, no Secrets). El build del sitio la usa para activar el paso de contacto del cotizador, y la API la usa para los enlaces de los correos. Lo ideal es un dominio propio (`api.antidotocolombia.com`) apuntado al Worker.
-9. **Primer admin:**
+La API corre en Vercel desde el 08/10/2026: una función Node (Fluid Compute) con Turso (libSQL) como base y un store **privado** de Vercel Blob para imágenes y archivos. El código es el mismo del Worker: `src/plataforma/` arma el mismo `Env` con adaptadores (D1 sobre libSQL, R2 sobre Blob, `ASSETS` sobre el disco) y `scripts/vercel-build.mjs` empaqueta todo con la Build Output API, con las rutas y los crons (`/cron/cinco` y `/cron/hora`, protegidos con `CRON_SECRET`). `npm run test:libsql` corre todas las pruebas sobre libSQL.
 
-   ```sh
-   npx wrangler d1 execute antidoto --remote --command \
-     "insert into usuarios (id,email,nombre,rol,activo,creado) values ('<uuid>','antidoto.colombia@outlook.com','María Paula','admin',1,<epoch ms>)"
+Diferencias con Cloudflare: una función de Vercel no recibe cuerpos de más de 4,5 MB, así que las imágenes del contenido van hasta 4 MB y los archivos de entregables suben directo del navegador a Blob con una URL firmada para una sola clave (`src/plataforma/subida-blob.ts`) y después se registran. La IP sale de `x-real-ip`, que pone Vercel.
+
+1. **Proyecto:** en Vercel, importa este repositorio como un proyecto nuevo (por ejemplo `antidoto-api`) con *Root Directory* `api` y deja activado *Include files outside the root directory* (el build lee textos del sitio). `api/vercel.json` fija el build y se salta los commits que no tocan la API.
+2. **Base:** crea una base en Turso (Marketplace de Vercel: `vercel integration add turso`, o en turso.tech) y pon `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` **solo en Production**: las vistas previas no deben escribir en la base real. El build de producción aplica las migraciones (`npm run turso:migrar`).
+3. **Archivos:** crea un store de Blob **privado** (`vercel blob create-store antidoto --access private`) y conéctalo al proyecto (queda `BLOB_STORE_ID` o `BLOB_READ_WRITE_TOKEN`). Sin él, el panel no sube imágenes ni archivos.
+4. **Variables:** `CRON_SECRET` (texto aleatorio largo), `APP_URL` (URL pública de la API), `SAL_IP`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `ANTHROPIC_API_KEY` y `GITHUB_DISPATCH_TOKEN`. Los valores fijos de `wrangler.toml` (`[vars]`) son los de `VARS` en `src/plataforma/vercel.ts` (una prueba los mantiene iguales); una variable de Vercel con el mismo nombre los reemplaza.
+5. **Crons:** el de cada 5 minutos (lotes de campañas) exige el plan Pro de Vercel. En Hobby el despliegue falla por ese cron.
+6. **Copiar los datos de Cloudflare (una sola vez, antes de cambiar `PUBLIC_API_URL`):** con wrangler autenticado y la base de Turso **vacía**, `node scripts/turso-copiar-d1.mjs` (vuelca D1 y lo carga en Turso, con `d1_migrations`) y después `node scripts/blob-copiar-r2.mjs` (copia los objetos de R2 a `medios/` y `archivos/` en Blob; se puede repetir). Desde ahí no se escribe más en la API de Cloudflare: los leads nuevos llegarían a la base vieja.
+7. **Conectar el sitio:** pon la URL de la API (lo ideal, `api.antidotocolombia.com` como dominio del proyecto) en `PUBLIC_API_URL` del proyecto de Vercel del sitio y en la variable de GitHub, y redespliega el sitio. Revisa también `ORIGENES` si el sitio sale por otro dominio.
+8. **Apagar Cloudflare:** cuando todo funcione en Vercel, borra los secrets `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` de GitHub (los workflows de Cloudflare se omiten solos) y elimina el Worker, D1 y R2.
+9. **Primer admin** (si la base es nueva y no se copió de D1), en la consola de Turso:
+
+   ```sql
+   insert into usuarios (id,email,nombre,rol,activo,creado) values ('<uuid>','antidoto.colombia@outlook.com','María Paula','admin',1,<epoch ms>)
    ```
 
    Desde ahí, las demás personas se agregan en el panel, en *Equipo*, cada una con su rol.
+
+Lo que sigue igual en las dos plataformas:
+
+- **Correo:** crea una cuenta en Resend, verifica el dominio `antidotocolombia.com` (los registros DNS van donde quede el DNS del dominio) y guarda la clave como `RESEND_API_KEY`. Si el remitente va a ser otro, cambia `MAIL_FROM`.
+  - **DMARC:** Resend crea SPF y DKIM, pero Gmail y Yahoo exigen además un registro DMARC a quien envía en volumen. Empieza con `_dmarc.antidotocolombia.com TXT "v=DMARC1; p=none; rua=mailto:<correo>"` y súbelo a `quarantine` cuando los informes salgan limpios.
+  - **Subdominio para campañas (recomendado):** verifica también un subdominio (por ejemplo `news.antidotocolombia.com`) y usa `MAIL_FROM_NOVEDADES = "Antídoto <novedades@news.antidotocolombia.com>"`. Así la reputación de las campañas no afecta los enlaces de acceso ni los avisos de leads, y el seguimiento de clics (que reescribe enlaces) no toca los correos de acceso.
+  - **Plan:** el plan gratis de Resend permite 100 correos al día. Con una lista de más de 100 personas hace falta el plan Pro.
+  - **Pie legal:** pon la razón social y el domicilio en `MAIL_DIRECCION`. Sin ella, las campañas dicen solo "Antídoto · Estudio creativo empresarial · Colombia".
+  - **Sitio:** `SITIO_URL` es el sitio al que redirigen confirmar, baja y preferencias.
+- **Sal de IP:** un texto aleatorio largo en `SAL_IP` (por ejemplo `openssl rand -base64 32`).
+- **Webhook de Resend (métricas de campañas):** en Resend > Webhooks crea uno hacia `<URL de la API>/v1/resend/webhook` con los eventos `email.delivered`, `email.opened`, `email.clicked`, `email.bounced` y `email.complained`, y guarda su *signing secret* (`whsec_…`) como `RESEND_WEBHOOK_SECRET`. Para contar aperturas y clics, activa el seguimiento de aperturas y clics del dominio en Resend.
+- **Chat con IA:** crea una clave en la consola de Claude, ponle un límite de gasto mensual allá también y guárdala como `ANTHROPIC_API_KEY`. El tope diario se cambia en panel > Ajustes (o en `ASESOR_TOPE_DIARIO_USD`, que es el valor por defecto). Antes de abrirlo al público, prueba las preguntas trampa de la skill `chat-ia` (`references/pruebas.md`).
+- **Publicar desde el panel:** crea en GitHub un token *fine-grained* solo para este repositorio, con el permiso *Actions: Read and write* y con vencimiento, y guárdalo como `GITHUB_DISPATCH_TOKEN`. El panel dispara `deploy.yml` (producción en Vercel) o `preview.yml` (vista previa), que necesitan los secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID` y `VERCEL_PROJECT_ID` del proyecto del sitio.
+
+### Cloudflare (mientras dura la migración)
+
+El Worker sigue desplegándose con `.github/workflows/api.yml` (D1, R2 y secrets copiados desde GitHub) mientras existan `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`. El token necesita *Workers Scripts: Edit*, *D1: Edit*, *Workers R2 Storage: Edit* y *Account Settings: Read*. Primer admin en D1: `npx wrangler d1 execute antidoto --remote --command "insert into usuarios ..."`.
 
 ## Estructura
 
 - `src/index.ts`: rutas públicas, acceso y cron; las del panel van por módulos en `src/rutas/` (cada uno exige su permiso).
 - `src/panel.ts`: archivos del panel y del portal (binding `ASSETS`) con su CSP.
+- `src/plataforma/`: la API en Vercel (adaptadores de D1, R2 y `ASSETS`, subida directa a Blob, función Node). `scripts/vercel-build.mjs` la empaqueta; `scripts/turso-*.mjs` y `scripts/blob-copiar-r2.mjs` migran la base y los archivos.
 - `src/leads.ts` y `src/validar.ts`: alta y validación de leads.
 - `src/auth.ts`: enlace mágico y sesiones del equipo. `src/portal/`: acceso y API del portal de clientes.
 - `src/permisos.ts`, `src/auditoria.ts`, `src/configuracion.ts`: roles, bitácora y ajustes.

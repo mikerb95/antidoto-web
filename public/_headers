@@ -1,4 +1,4 @@
-# Solo aplica en Cloudflare Pages (vista previa). En Hostinger este archivo se ignora.
+# Solo aplica en Cloudflare Pages (vista previa mientras dura la migración a Vercel; en Vercel las cabeceras van en vercel.json).
 # Evita que Google indexe las URLs de vista previa *.pages.dev.
 https://:project.pages.dev/*
   X-Robots-Tag: noindex
@@ -6,7 +6,7 @@ https://:project.pages.dev/*
 https://:version.:project.pages.dev/*
   X-Robots-Tag: noindex
 
-# Cabeceras de seguridad (mismas que public/.htaccess en Hostinger).
+# Cabeceras de seguridad (mismas que vercel.json).
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff

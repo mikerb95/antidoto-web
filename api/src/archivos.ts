@@ -4,7 +4,8 @@
 //
 // Módulo PURO.
 
-export const MAX_BYTES_IMAGEN = 8 * 1024 * 1024;
+// 4 MB: una función de Vercel no recibe cuerpos de más de 4,5 MB (la imagen va en un formulario).
+export const MAX_BYTES_IMAGEN = 4 * 1024 * 1024;
 export type MimeImagen = 'image/png' | 'image/jpeg' | 'image/webp';
 export const EXTENSION: Record<MimeImagen, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 

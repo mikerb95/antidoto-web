@@ -46,6 +46,28 @@ export async function subir<T>(ruta: string, form: FormData): Promise<T> {
   return datos as T;
 }
 
+/**
+ * Archivo de un entregable. En Vercel sube directo del navegador a Blob (una función no recibe más
+ * de 4,5 MB) y después se registra; si la API no ofrece la subida directa (404), va por formulario.
+ */
+export async function subirArchivoEntregable<T>(entregableId: string, archivo: File): Promise<T> {
+  const base = `/admin/api/entregables/${entregableId}/archivos`;
+  let clave: string;
+  try {
+    ({ clave } = await api<{ clave: string }>(`${base}/firmar`, { body: {} }));
+  } catch (e) {
+    if (e instanceof ErrorApi && e.status === 404 && e.datos.error === 'sin_subida_directa') {
+      const form = new FormData();
+      form.append('archivo', archivo);
+      return subir<T>(base, form);
+    }
+    throw e;
+  }
+  const { uploadPresigned } = await import('@vercel/blob/client');
+  await uploadPresigned(`archivos/${clave}`, archivo, { access: 'private', handleUploadUrl: `${base}/firmar`, contentType: archivo.type || undefined });
+  return api<T>(`${base}/registrar`, { body: { clave, nombre: archivo.name } });
+}
+
 export interface Datos<T> {
   datos: T | null;
   error: ErrorApi | null;

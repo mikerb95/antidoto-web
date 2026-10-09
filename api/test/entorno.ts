@@ -2,19 +2,30 @@
 // probar la API de punta a punta sin Cloudflare.
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createClient } from '@libsql/client';
 import { getPlatformProxy } from 'wrangler';
 import type { Env } from '../src/env';
+import { d1DesdeLibsql } from '../src/plataforma/libsql-d1';
+
+/**
+ * BD=libsql corre las mismas pruebas sobre libSQL (la base de la API en Vercel, Turso) con el
+ * adaptador de src/plataforma/libsql-d1.ts, en lugar de la D1 de miniflare.
+ */
+const conLibsql = process.env.BD === 'libsql';
 
 export async function crearEntorno() {
   const proxy = await getPlatformProxy<Env>({ configPath: 'wrangler.toml', persist: false });
   // getPlatformProxy lee el .dev.vars de quien corre las pruebas (orígenes localhost, APP_URL,
   // claves): las pruebas fijan sus propias variables para dar lo mismo en cualquier PC y en CI.
   const env: Env = {
-    DB: proxy.env.DB,
+    DB: conLibsql ? d1DesdeLibsql(createClient({ url: `file:${join(mkdtempSync(join(tmpdir(), 'antidoto-libsql-')), 'prueba.db')}` })) : proxy.env.DB,
     MEDIOS: proxy.env.MEDIOS,
     ARCHIVOS: proxy.env.ARCHIVOS,
     ENTORNO: 'produccion',
-    ORIGENES: 'https://antidotocolombia.com,https://antidoto-web.pages.dev',
+    ORIGENES: 'https://antidotocolombia.com,https://antidoto-web.vercel.app,https://antidoto-web.pages.dev',
     MAIL_FROM: 'Antídoto <hola@antidotocolombia.com>',
     MAIL_FROM_NOVEDADES: 'Antídoto <novedades@antidotocolombia.com>',
     MAIL_EQUIPO: 'equipo@antidoto.test',

@@ -1,0 +1,7 @@
+{
+  // La API en Vercel (src/plataforma/): corre en Node, así que lleva sus tipos. El resto del código
+  // se chequea sin ellos desde tsconfig.json, como el Worker.
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "types": ["@cloudflare/workers-types", "node"] },
+  "include": ["src"]
+}

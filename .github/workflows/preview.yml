@@ -1,11 +1,14 @@
-name: Vista previa en Cloudflare Pages
+name: Vista previa
 
-# Sube dist/ a Cloudflare Pages en cada push. Cada rama tiene su URL de vista previa
-# (<rama>.antidoto-web.pages.dev) y main publica en antidoto-web.pages.dev.
-# Secrets requeridos en GitHub (Settings > Secrets and variables > Actions):
-#   CLOUDFLARE_API_TOKEN   token con permiso "Account > Cloudflare Pages > Edit"
-#   CLOUDFLARE_ACCOUNT_ID  ID de la cuenta (dash.cloudflare.com, panel derecho de la cuenta)
-# Sin los secrets el job se omite con un aviso, para no dejar el CI en rojo.
+# Vercel: cada push ya tiene su vista previa por la integración de Git. El job "vercel" solo corre
+# a mano o cuando el panel publica contenido en vista previa (workflow_dispatch): vuelve a
+# construir main sin un commit. Necesita VERCEL_TOKEN, VERCEL_ORG_ID y VERCEL_PROJECT_ID
+# (ver deploy.yml).
+# Cloudflare Pages (job "preview", mientras dure la migración a Vercel): sube dist/ en cada push.
+# Cada rama tiene su URL (<rama>.antidoto-web.pages.dev) y main publica en antidoto-web.pages.dev.
+# Necesita CLOUDFLARE_API_TOKEN (Cloudflare Pages: Edit) y CLOUDFLARE_ACCOUNT_ID. Para apagarlo,
+# borra esos secrets.
+# Sin sus secrets, cada job se omite con un aviso, para no dejar el CI en rojo.
 
 on:
   push:
@@ -58,3 +61,29 @@ jobs:
           URL: ${{ steps.deploy.outputs.url }}
         run: |
           echo "Vista previa de ${GITHUB_REF_NAME}: ${URL}" >> "$GITHUB_STEP_SUMMARY"
+
+  vercel:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - if: env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == ''
+        run: echo "::warning::Faltan VERCEL_TOKEN, VERCEL_ORG_ID o VERCEL_PROJECT_ID; no se publica la vista previa en Vercel."
+      - if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
+        uses: actions/checkout@v4
+      - if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
+        run: npm ci
+      - if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
+        run: |
+          npx --yes vercel@59 pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          npx --yes vercel@59 build --token="$VERCEL_TOKEN"
+          url=$(npx --yes vercel@59 deploy --prebuilt --token="$VERCEL_TOKEN")
+          echo "Vista previa en Vercel: ${url}" >> "$GITHUB_STEP_SUMMARY"

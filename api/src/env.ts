@@ -31,10 +31,26 @@ export interface Env {
   MEDIOS?: R2Bucket;
   /** Bucket PRIVADO de archivos de los entregables de proyectos (solo se descargan con sesión). */
   ARCHIVOS?: R2Bucket;
+  /**
+   * Solo en Vercel (src/plataforma/vercel.ts): los archivos de entregables suben directo del
+   * navegador a Blob, porque una función de Vercel no recibe cuerpos de más de 4,5 MB.
+   */
+  SUBIDA?: SubidaDirecta;
   /** Token de GitHub (fine-grained, Actions: Read and write) para publicar el sitio desde el panel. */
   GITHUB_DISPATCH_TOKEN?: string;
   /** Repositorio del sitio, "dueño/nombre". */
   GITHUB_REPO?: string;
   /** Rama que se construye al publicar. Por defecto, main. */
   GITHUB_REF?: string;
+}
+
+/** Subida directa del navegador al almacenamiento (Vercel Blob), con una URL firmada para una sola clave. */
+export interface SubidaDirecta {
+  /**
+   * Responde el pedido de URL firmada del cliente de Blob (`uploadPresigned`). `permitida` decide si
+   * la clave que pide el navegador es válida; si no, lanza.
+   */
+  firmar(req: Request, cuerpo: unknown, prefijo: 'archivos', permitida: (clave: string) => boolean, maxBytes: number): Promise<unknown>;
+  /** Tamaño y tipo de un archivo ya subido, o null si no existe. */
+  info(prefijo: 'archivos', clave: string): Promise<{ bytes: number; mime: string } | null>;
 }

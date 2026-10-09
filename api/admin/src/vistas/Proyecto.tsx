@@ -2,7 +2,7 @@
 // del proyecto y la organización con sus contactos.
 import { useState } from 'preact/hooks';
 import { SERVICIOS as LISTA_SERVICIOS, type ServicioId } from '@api/dominio';
-import { api, subir, mensajeError, useDatos, ErrorApi } from '../api';
+import { api, subirArchivoEntregable, mensajeError, useDatos, ErrorApi } from '../api';
 import { usePuede } from '../sesion';
 import { SERVICIOS } from '../textos';
 import { fechaLarga, hace, pesos } from '../formato';
@@ -231,15 +231,13 @@ function ItemEntregable({ e, editable, hacer, recargar }: { e: Entregable; edita
   const [subiendo, setSubiendo] = useState(false);
   const subirArchivo = async (archivo: File) => {
     setSubiendo(true);
-    const form = new FormData();
-    form.append('archivo', archivo);
     try {
-      await subir(`/admin/api/entregables/${e.id}/archivos`, form);
+      await subirArchivoEntregable(e.id, archivo);
       avisar('Archivo subido', 'exito');
       recargar();
     } catch (err) {
       const motivo = err instanceof ErrorApi ? err.datos.error : null;
-      avisar(motivo === 'grande' ? 'El archivo pasa de 50 MB. Para videos grandes, comparte un enlace en la bitácora.' : motivo === 'sin_bucket' ? 'Falta configurar el almacenamiento de archivos (R2).' : mensajeError(err), 'error');
+      avisar(motivo === 'grande' ? 'El archivo pasa de 50 MB. Para videos grandes, comparte un enlace en la bitácora.' : motivo === 'sin_bucket' ? 'Falta configurar el almacenamiento de archivos.' : mensajeError(err), 'error');
     } finally {
       setSubiendo(false);
     }

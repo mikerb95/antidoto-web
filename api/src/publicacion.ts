@@ -1,6 +1,6 @@
 // Publicar el sitio desde el panel: el sitio es estático, así que publicar es volver a construirlo.
-// La vista previa (Cloudflare Pages) se sube por carga directa y no tiene deploy hook; por eso el
-// Worker dispara el workflow de GitHub Actions que la construye (workflow_dispatch). El build lee
+// El Worker dispara el workflow de GitHub Actions que construye el sitio y lo publica en Vercel
+// (workflow_dispatch): preview.yml o deploy.yml. El build lee
 // el contenido publicado de /v1/contenido.
 //
 // Necesita GITHUB_DISPATCH_TOKEN (fine-grained, solo este repo, permiso Actions: Read and write).

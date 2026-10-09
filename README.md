@@ -1,6 +1,6 @@
 # antidotocolombia.com
 
-Sitio de Antídoto, estudio creativo empresarial. Construido con Astro y desplegado como sitio estático en Hostinger.
+Sitio de Antídoto, estudio creativo empresarial. Construido con Astro y desplegado como sitio estático en Vercel. La API (`api/`) también va en Vercel; ver `api/README.md`.
 
 ```bash
 npm install
