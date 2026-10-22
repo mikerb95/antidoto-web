@@ -61,6 +61,7 @@ Mientras no se lance, antidotocolombia.com sigue con la SPA de React: `canonical
 - [ ] Facturas de consulta desde Siigo o Alegra en el portal y mover el portal a un subdominio cuando haya DNS (RF-37, K-32).
 - [ ] Notificaciones dentro del panel (K-64).
 - [ ] Archivos de entregables de más de 50 MB.
+- [ ] Decidir qué hacer con los tokens de suscripción, que hoy se guardan en claro en `contactos.token` (auditoría OWASP del 21/10/2026, K-82). No basta con guardar el hash: la API necesita el token para armar el enlace de baja y `List-Unsubscribe` de cada campaña. Opciones: derivarlo con HMAC del id del contacto y un secreto nuevo en Vercel (si el secreto se pierde o cambia, se rompen los enlaces de baja ya enviados; los actuales seguirían con una búsqueda de respaldo), o dejarlo así (con la base filtrada se podría dar de baja o cambiar preferencias, pero esa copia ya trae todos los datos). Recomendación: dejarlo así.
 - [ ] Cuando haya varios casos o artículos: filtros como páginas propias en el portafolio, Pagefind en el blog, y su imagen OG en `src/pages/og/[locale]/[nombre].jpg.ts`.
 - [ ] Servicios, ofertas y textos de interfaz editables desde el panel (hoy siguen en Markdown y en `ui.ts`). Solo si Antídoto lo necesita.
 - Los avisos de colección vacía de `casos` y `blog` en el build desaparecen con el primer caso o artículo. No son errores.
