@@ -38,6 +38,15 @@ El equipo publica artículos del blog, casos, vacantes, preguntas frecuentes y c
 - **Organizaciones:** ficha con contactos, proyectos, solicitudes, conversaciones del chat que llevaron a cotizar y accesos al portal.
 - **Portal** (`src/portal/`, interfaz en `admin/src/portal/`): el cliente entra con su propio enlace mágico (otra tabla, otros enlaces, otras sesiones y la cookie `__Host-antidoto-cliente` con `SameSite=Strict`), ve solo los proyectos de su organización y lo marcado como visible, descarga los archivos, aprueba los entregables o pide cambios y comenta. El equipo da y quita accesos desde la ficha de la organización (permiso `portal.gestionar`). Cuando un entregable visible pasa a revisión les llega un correo; cuando el cliente aprueba, pide cambios o comenta, le llega al responsable. Mientras no haya control del DNS comparte origen con el panel; conviene moverlo a `portal.antidotocolombia.com`.
 
+### Acceso de desarrollo con GitHub
+
+El rol `dev` hace lo mismo que `admin` y es para quien desarrolla el sitio. Entra solo con su cuenta de GitHub (`src/github.ts`), nunca con enlace por correo:
+
+- `GET /auth/github` lleva a GitHub con un `state` que también va en una cookie de 10 minutos; `GET /auth/github/callback` comprueba el `state`, cambia el código por un token, lee el perfil y abre la sesión. No se pide ningún scope y el token no se guarda.
+- Solo entran los ids numéricos de `GITHUB_DEV_IDS` (separados por coma; el id no cambia aunque cambie el nombre de usuario). La primera vez se crea su usuario, con el correo `<id>+<usuario>@users.noreply.github.com` y `usuarios.github_id` (migración 0013). Quitar un id de la lista le cierra la entrada la próxima vez; para cortar una sesión abierta, ciérrala desde Mi cuenta o desactiva el usuario en la base.
+- Una cuenta `dev` no se crea, no se cambia de rol ni se desactiva desde Equipo.
+- **Activarlo:** en GitHub, Settings, Developer settings, OAuth Apps, New OAuth App, con *Authorization callback URL* `https://<dominio>/auth/github/callback` (en local, `http://127.0.0.1:8787/auth/github/callback` en otra app). El *Client ID* va en `GITHUB_OAUTH_ID` y un *client secret* en `GITHUB_OAUTH_SECRET`. Sin las dos, la pantalla de acceso no muestra el botón.
+
 ### Plataforma de misiones
 
 La plataforma de misiones es otro proyecto (`../antidoto`, Next.js con su propia base). El panel es su puerta de entrada, sin copiar sus datos:

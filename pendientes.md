@@ -14,6 +14,7 @@ Todo va en un solo proyecto de Vercel, `antidoto-web`. Pasos detallados en `api/
 - [ ] Secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID` y `VERCEL_PROJECT_ID` en GitHub, para `deploy.yml` y el job `vercel` de `preview.yml`.
 - [ ] Token fine-grained `GITHUB_DISPATCH_TOKEN` (Actions: Read and write) en las variables de Vercel, para publicar desde el panel (K-63).
 - [ ] Primer admin en la base de producción (`api/README.md`, paso 7) (K-30).
+- [ ] Acceso de desarrollo con GitHub (K-86): crear una OAuth App en GitHub (Settings, Developer settings, OAuth Apps) con el retorno `https://<dominio>/auth/github/callback` y poner `GITHUB_OAUTH_ID` y `GITHUB_OAUTH_SECRET` en Vercel. La cuenta permitida va en `GITHUB_DEV_IDS` (por defecto, la de codebymike). No necesita Resend ni `crear-admin`.
 - [ ] Conectar la plataforma de misiones con el panel (K-84): el mismo secreto (`openssl rand -base64 48`) como `MISIONES_SECRETO` aquí y `PANEL_SHARED_SECRET` en el proyecto de misiones, `MISIONES_URL` aquí (`https://actividades.antidotocolombia.com`, o su `*.vercel.app` mientras no haya DNS) y `npm run db:migrate` en misiones para crear `sso_passes`.
 
 ### Correo con Resend (K-30)
