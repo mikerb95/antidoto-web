@@ -120,7 +120,6 @@ export const ui = {
       noDisponible: 'El asistente no está disponible en este momento. Escríbele al equipo por WhatsApp y te responden.',
       error: 'No pude responder. Inténtalo de nuevo o escríbele al equipo por WhatsApp.',
       limite: 'Llegaste al máximo de preguntas de esta conversación. Sigue con el equipo por WhatsApp.',
-      aviso: 'Respuestas generadas con IA. Guardamos la conversación 90 días, sin teléfonos ni correos, para mejorar la atención. No escribas datos personales.',
       reiniciar: 'Borrar la conversación y empezar de nuevo',
       // El facilitador del mundo pixel responde con el mismo asesor (src/lib/motion/pregunta.ts).
       facilitador: { campo: 'Pregúntale al facilitador', placeholder: 'Pregúntale algo al facilitador', enviar: 'Preguntar', pensando: 'Déjame pensar', seguir: 'Seguir en el chat' },
@@ -609,7 +608,6 @@ export const ui = {
       noDisponible: "The assistant isn't available right now. Message the team on WhatsApp and they'll reply.",
       error: "I couldn't answer. Try again or message the team on WhatsApp.",
       limite: "You've reached the question limit for this conversation. Continue with the team on WhatsApp.",
-      aviso: "AI-generated answers. We keep the conversation for 90 days, without phone numbers or emails, to improve our service. Don't write personal details.",
       reiniciar: 'Delete the conversation and start over',
       facilitador: { campo: 'Ask the facilitator', placeholder: 'Ask the facilitator anything', enviar: 'Ask', pensando: 'Let me think', seguir: 'Continue in the chat' },
     },
@@ -1096,7 +1094,6 @@ export const ui = {
       noDisponible: 'O assistente não está disponível no momento. Fale com a equipe pelo WhatsApp e eles respondem.',
       error: 'Não consegui responder. Tente de novo ou fale com a equipe pelo WhatsApp.',
       limite: 'Você chegou ao máximo de perguntas desta conversa. Continue com a equipe pelo WhatsApp.',
-      aviso: 'Respostas geradas com IA. Guardamos a conversa por 90 dias, sem telefones nem e-mails, para melhorar o atendimento. Não escreva dados pessoais.',
       reiniciar: 'Apagar a conversa e começar de novo',
       facilitador: { campo: 'Pergunte ao facilitador', placeholder: 'Pergunte algo ao facilitador', enviar: 'Perguntar', pensando: 'Deixe-me pensar', seguir: 'Continuar no chat' },
     },

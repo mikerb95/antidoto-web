@@ -94,7 +94,6 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
       </form>
 
       <p class="pie">
-        <span>{a.aviso}</span>
         <a href={wa} target="_blank" rel="noopener">{a.soloWhatsapp}</a>
       </p>
     </section>
@@ -460,7 +459,7 @@ const CHISPA_CHICA = 'M18.5 2.5C18.8 4 19.3 5.2 21.5 5.5 19.3 5.8 18.8 7 18.5 8.
   .enviar:disabled { opacity: 0.5; cursor: progress; }
   .enviar svg { width: 20px; height: 20px; }
 
-  .pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; margin: 0; padding: 0 18px 10px; font-size: 12px; color: var(--color-slate); }
+  .pie { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 12px; margin: 0; padding: 0 18px 10px; font-size: 12px; color: var(--color-slate); }
   .pie a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-deep); font-weight: 600; }
 
   .asesor :focus-visible { outline: 3px solid var(--color-deep); outline-offset: 2px; }
