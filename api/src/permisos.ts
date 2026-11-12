@@ -17,6 +17,10 @@ export const PERMISOS = [
   'proyectos.editar',
   'proyectos.valor',
   'portal.gestionar',
+  /** Resumen de la plataforma de misiones (proyecto aparte) dentro del panel. */
+  'misiones.ver',
+  /** Entrar a la plataforma de misiones como superadmin y enlazar o crear empresas allá. */
+  'misiones.gestionar',
   /** Supresión de datos personales (Ley 1581): leads, contactos y conversaciones. */
   'datos.suprimir',
   'equipo.gestionar',
@@ -32,11 +36,11 @@ const MATRIZ: Record<Rol, readonly Permiso[]> = {
     'leads.ver', 'leads.editar', 'leads.exportar',
     'marketing.ver', 'marketing.editar', 'marketing.enviar',
     'asesor.ver', 'contenido.ver',
-    'proyectos.ver', 'proyectos.editar', 'proyectos.valor',
+    'proyectos.ver', 'proyectos.editar', 'proyectos.valor', 'misiones.ver',
   ],
-  produccion: ['leads.ver', 'contenido.ver', 'proyectos.ver', 'proyectos.editar', 'portal.gestionar'],
+  produccion: ['leads.ver', 'contenido.ver', 'proyectos.ver', 'proyectos.editar', 'portal.gestionar', 'misiones.ver'],
   contenido: ['marketing.ver', 'marketing.editar', 'asesor.ver', 'contenido.ver', 'contenido.editar', 'contenido.publicar'],
-  lectura: ['leads.ver', 'marketing.ver', 'asesor.ver', 'contenido.ver', 'proyectos.ver', 'sistema.ver'],
+  lectura: ['leads.ver', 'marketing.ver', 'asesor.ver', 'contenido.ver', 'proyectos.ver', 'misiones.ver', 'sistema.ver'],
 };
 
 /** Un rol desconocido (por ejemplo, uno viejo que quedó en la base) no puede nada. */

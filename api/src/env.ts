@@ -45,6 +45,10 @@ export interface Env {
   GITHUB_REPO?: string;
   /** Rama que se construye al publicar. Por defecto, main. */
   GITHUB_REF?: string;
+  /** Plataforma de misiones (proyecto aparte), sin barra final. Con MISIONES_SECRETO activa la sección Misiones del panel. */
+  MISIONES_URL?: string;
+  /** Secreto compartido con la plataforma de misiones (PANEL_SHARED_SECRET allá), de 32 caracteres o más. */
+  MISIONES_SECRETO?: string;
 }
 
 /** Subida directa del navegador al almacenamiento (Vercel Blob), con una URL firmada para una sola clave. */

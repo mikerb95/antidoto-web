@@ -521,6 +521,8 @@ export const organizaciones = sqliteTable(
     sector: text('sector'),
     sitio: text('sitio'),
     notas: text('notas'),
+    /** Id de su empresa en la plataforma de misiones (otra base); null si no está enlazada. */
+    misionEmpresaId: integer('mision_empresa_id'),
     creado: integer('creado').notNull(),
     actualizado: integer('actualizado').notNull(),
   },

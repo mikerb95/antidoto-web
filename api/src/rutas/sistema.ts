@@ -5,6 +5,7 @@ import type { Db } from '../db/conexion';
 import { configuracion, publicaciones, gastoAsesor } from '../db/schema';
 import { ajustesAsesor, hoyBogota } from '../asesor/presupuesto';
 import { configurada } from '../publicacion';
+import { misionesConfiguradas } from '../misiones';
 import { ahora, json } from '../util';
 import { sinPermiso, type Ctx } from './contexto';
 
@@ -43,6 +44,7 @@ export async function rutasSistema(c: Ctx): Promise<Response | null> {
       imagenes: !!env.MEDIOS,
       archivos: !!env.ARCHIVOS,
       publicacion: configurada(env),
+      misiones: misionesConfiguradas(env),
       salIp: !!env.SAL_IP,
       panel: !!env.ASSETS,
     },

@@ -34,6 +34,8 @@ const OPCIONALES = [
   'ANTHROPIC_API_KEY',
   'ANTHROPIC_URL',
   'GITHUB_DISPATCH_TOKEN',
+  'MISIONES_URL',
+  'MISIONES_SECRETO',
 ] as const;
 
 type Variables = Omit<Env, 'DB' | 'ASSETS' | 'MEDIOS' | 'ARCHIVOS' | 'SUBIDA'>;

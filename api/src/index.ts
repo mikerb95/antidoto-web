@@ -46,10 +46,11 @@ import { rutasAccesos } from './rutas/accesos';
 import { rutasSistema } from './rutas/sistema';
 import { pendientesSiToca } from './pendientes';
 import { rutasExportar } from './rutas/exportar';
+import { rutasMisiones } from './rutas/misiones';
 import { json } from './util';
 
 // Rutas del panel por módulo (src/rutas/), todas con sesión. Cada una exige su permiso.
-const MODULOS: Modulo[] = [rutasEquipo, rutasInicio, rutasLeads, rutasMarketing, rutasConversaciones, rutasContenido, rutasProyectos, rutasAccesos, rutasSistema, rutasExportar];
+const MODULOS: Modulo[] = [rutasEquipo, rutasInicio, rutasLeads, rutasMarketing, rutasConversaciones, rutasContenido, rutasMisiones, rutasProyectos, rutasAccesos, rutasSistema, rutasExportar];
 
 export async function manejar(req: Request, env: Env, diferir: (p: Promise<unknown>) => void): Promise<Response> {
   const url = new URL(req.url);

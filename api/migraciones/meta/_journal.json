@@ -85,6 +85,13 @@
       "when": 1792281338881,
       "tag": "0011_clave_archivos",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794454439288,
+      "tag": "0012_misiones",
+      "breakpoints": true
     }
   ]
 }

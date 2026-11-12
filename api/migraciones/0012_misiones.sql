@@ -1,0 +1,1 @@
+ALTER TABLE `organizaciones` ADD `mision_empresa_id` integer;
