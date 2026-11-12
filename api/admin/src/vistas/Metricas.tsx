@@ -10,6 +10,7 @@ import { fecha, mes, pesos, pct, numero } from '../formato';
 import type { MetricasLeads, MetricasMarketing } from '../tipos';
 import { Cabecera, Cifra, Cifras, FalloCarga, Tarjeta, Cargando } from '../ui/base';
 import { Barras, Columnas } from '../ui/graficas';
+import { semanasMisiones, type DatosMisiones, type ResumenMisiones } from '../misiones';
 
 const CLICS: Record<TipoClic, string> = {
   whatsapp: 'WhatsApp',
@@ -30,6 +31,7 @@ export default function Metricas() {
   const dias = Number(query.get('dias')) || 90;
   const m = useDatos<MetricasLeads>(`/admin/api/metricas?dias=${dias}`);
   const mk = useDatos<MetricasMarketing>(puede('marketing.ver') ? '/admin/api/marketing?semanas=12' : null);
+  const mi = useDatos<DatosMisiones>(puede('misiones.ver') ? '/admin/api/misiones' : null);
 
   return (
     <>
@@ -97,6 +99,25 @@ export default function Metricas() {
         ) : mk.datos ? (
           <ListaNovedades m={mk.datos} />
         ) : null)}
+
+      {mi.datos?.resumen && <BloqueMisiones r={mi.datos.resumen} />}
+    </>
+  );
+}
+
+function BloqueMisiones({ r }: { r: ResumenMisiones }) {
+  return (
+    <>
+      <h2 class="titulo-bloque">Misiones</h2>
+      <Cifras>
+        <Cifra etiqueta="Actividades activas" valor={numero(r.actividades.activas)} nota={`${r.actividades.pausadas} en pausa, ${r.actividades.vencidas} vencidas`} href="/admin/misiones" />
+        <Cifra etiqueta="Participantes" valor={numero(r.participantes)} nota="en las actividades sin archivar" />
+        <Cifra etiqueta="Terminan" valor={r.participantes ? pct(r.completaron, r.participantes) : 'Sin datos'} nota="completaron su actividad" />
+        <Cifra etiqueta="Empresas" valor={numero(r.empresas)} nota="en la plataforma de misiones" />
+      </Cifras>
+      <Tarjeta titulo="Participantes nuevos por semana">
+        <Columnas titulo="Participantes" puntos={semanasMisiones(r.semanas)} alto={120} />
+      </Tarjeta>
     </>
   );
 }

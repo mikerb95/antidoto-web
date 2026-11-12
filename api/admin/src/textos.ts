@@ -19,7 +19,7 @@ export const SERVICIOS: Record<ServicioId, string> = {
 };
 
 export const ROLES: Record<Rol, { nombre: string; descripcion: string }> = {
-  admin: { nombre: 'Admin', descripcion: 'Todo, incluidos el equipo, los ajustes, la auditoría y la supresión de datos personales.' },
+  admin: { nombre: 'Admin', descripcion: 'Todo, incluidos el equipo, los ajustes, la auditoría, la supresión de datos personales y la entrada a la plataforma de misiones.' },
   comercial: { nombre: 'Comercial', descripcion: 'Solicitudes, novedades y campañas, conversaciones del chat y proyectos con su valor.' },
   produccion: { nombre: 'Producción', descripcion: 'Proyectos, entregables y portal de clientes. Ve las solicitudes, sin valores.' },
   contenido: { nombre: 'Contenido', descripcion: 'Blog, casos, preguntas, clientes y vacantes del sitio, y campañas (sin enviarlas).' },

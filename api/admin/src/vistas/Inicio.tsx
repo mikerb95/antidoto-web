@@ -1,9 +1,10 @@
 // Inicio: lo que pide atención hoy. Cada bloque aparece según el rol.
 import type { Estado, ServicioId } from '@api/dominio';
 import { useDatos } from '../api';
-import { useYo } from '../sesion';
+import { useYo, usePuede } from '../sesion';
+import type { DatosMisiones } from '../misiones';
 import { ESTADOS, SERVICIOS, ESTADOS_CAMPANA } from '../textos';
-import { fecha, hace, numero, usd } from '../formato';
+import { cuenta, fecha, hace, numero, usd } from '../formato';
 import { Cabecera, Cifra, Cifras, FalloCarga, Insignia, Tarjeta, Cargando, Vacio } from '../ui/base';
 import { Medidor } from '../ui/graficas';
 import { TONO_ESTADO } from './Solicitudes';
@@ -48,6 +49,10 @@ export default function Inicio() {
 
 function Contenido({ d }: { d: DatosInicio }) {
   const { leads, novedades, asesor, proyectos } = d;
+  // Misiones vive en otro proyecto: se pide aparte para que su demora no frene el Inicio, y si no
+  // responde, su bloque simplemente no sale (la sección Misiones sí lo avisa).
+  const puede = usePuede();
+  const misiones = useDatos<DatosMisiones>(puede('misiones.ver') ? '/admin/api/misiones' : null).datos?.resumen;
   return (
     <>
       <Cifras>
@@ -64,6 +69,14 @@ function Contenido({ d }: { d: DatosInicio }) {
         {leads && <Cifra etiqueta="En curso" valor={numero(leads.abiertos)} nota="nuevas, contactadas o cotizadas" href="/admin/metricas" />}
         {asesor && <Cifra etiqueta="Chat con IA hoy" valor={numero(asesor.conversacionesHoy)} nota={`conversaciones, ${asesor.derivacionesHoy} derivadas al equipo`} href="/admin/conversaciones" />}
         {proyectos && <Cifra etiqueta="Proyectos activos" valor={numero(proyectos.activos)} nota={proyectos.proximos.length ? `${proyectos.proximos.length} entregables esta semana` : 'sin entregables esta semana'} href="/admin/proyectos" />}
+        {misiones && (
+          <Cifra
+            etiqueta="Misiones activas"
+            valor={numero(misiones.actividades.activas)}
+            nota={`${numero(misiones.participantes)} participantes en ${cuenta(misiones.empresas, 'empresa', 'empresas')}`}
+            href="/admin/misiones"
+          />
+        )}
         {novedades && <Cifra etiqueta="Lista de novedades" valor={numero(novedades.activos)} nota="contactos activos" href="/admin/contactos?estado=activo" />}
       </Cifras>
 
@@ -104,6 +117,28 @@ function Contenido({ d }: { d: DatosInicio }) {
                       </span>
                     </span>
                     <span class={`lf-meta${e.vence < proyectos.hoy ? ' vencido' : ''}`}>{e.vence < proyectos.hoy ? 'Vencido' : dia(e.vence)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Tarjeta>
+        )}
+
+        {misiones && misiones.enMarcha.length > 0 && (
+          <Tarjeta titulo="Misiones en marcha" acciones={<a href="/admin/misiones">Ver misiones</a>} sinRelleno>
+            <ul class="lista-filas">
+              {misiones.enMarcha.slice(0, 6).map((a) => (
+                <li>
+                  <a href="/admin/misiones" class="lf-enlace">
+                    <span class="lf-principal">
+                      <span class="lf-titulo">{a.actividad}</span>
+                      <span class="lf-sub">
+                        {a.empresa} · código {a.codigo}
+                      </span>
+                    </span>
+                    <span class="lf-meta">
+                      {cuenta(a.participantes, 'participante', 'participantes')} · {a.avance} % de avance
+                    </span>
                   </a>
                 </li>
               ))}

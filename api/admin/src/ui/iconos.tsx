@@ -3,6 +3,7 @@ const TRAZOS: Record<string, string> = {
   inicio: 'M3 9.5L10 4l7 5.5V16a1 1 0 0 1-1 1h-3.5v-4.5h-5V17H4a1 1 0 0 1-1-1z',
   bandeja: 'M3 11l2.2-6.2A1 1 0 0 1 6.1 4h7.8a1 1 0 0 1 .9.8L17 11v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM3 11h4l1 2h4l1-2h4',
   chat: 'M4 4h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9l-4 3v-3H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM7 8h6M7 11h4',
+  misiones: 'M5 17V3M5 4h9l-2 3 2 3H5',
   proyectos: 'M3 6a1 1 0 0 1 1-1h4l1.5 2H16a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z',
   organizaciones: 'M4 17V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v12M12 9h3a1 1 0 0 1 1 1v7M3 17h14M7 7h2M7 10h2M7 13h2',
   correo: 'M3 5h14v10H3zM3 5l7 6 7-6',

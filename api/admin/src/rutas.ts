@@ -21,6 +21,7 @@ export const RUTAS: Ruta[] = [
   { patron: r('proyectos'), vista: perezoso(() => import('./vistas/Proyectos')), nav: 'proyectos', permiso: 'proyectos.ver', titulo: 'Proyectos' },
   { patron: r(`proyectos/${UUID}`), vista: perezoso(() => import('./vistas/Proyecto')), nav: 'proyectos', permiso: 'proyectos.ver', titulo: 'Proyecto' },
   { patron: r(`organizaciones(?:/${UUID})?`), vista: perezoso(() => import('./vistas/Organizaciones')), nav: 'organizaciones', permiso: 'proyectos.ver', titulo: 'Organizaciones' },
+  { patron: r('misiones'), vista: perezoso(() => import('./vistas/Misiones')), nav: 'misiones', permiso: 'misiones.ver', titulo: 'Misiones' },
   { patron: r('contenido'), vista: perezoso(() => import('./vistas/Contenido')), nav: 'contenido', permiso: 'contenido.ver', titulo: 'Contenido del sitio' },
   { patron: r(`contenido/(nuevo|${UUID.slice(1, -1)})`), vista: perezoso(() => import('./vistas/EditorContenido')), nav: 'contenido', permiso: 'contenido.ver', titulo: 'Editar contenido' },
   { patron: r('metricas'), vista: perezoso(() => import('./vistas/Metricas')), nav: 'metricas', permiso: 'leads.ver', titulo: 'Métricas' },
@@ -54,6 +55,10 @@ export const NAV: { grupo: string; entradas: EntradaNav[] }[] = [
       { clave: 'proyectos', texto: 'Proyectos', href: '/admin/proyectos', permiso: 'proyectos.ver', icono: 'proyectos' },
       { clave: 'organizaciones', texto: 'Organizaciones', href: '/admin/organizaciones', permiso: 'proyectos.ver', icono: 'organizaciones' },
     ],
+  },
+  {
+    grupo: 'Actividades',
+    entradas: [{ clave: 'misiones', texto: 'Misiones', href: '/admin/misiones', permiso: 'misiones.ver', icono: 'misiones' }],
   },
   {
     grupo: 'Novedades',

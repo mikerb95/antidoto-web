@@ -13,6 +13,7 @@ import { Icono } from '../ui/iconos';
 import { ESTADOS_PROYECTO, type EstadoProyecto } from './Proyectos';
 import { TONO_ESTADO } from './Solicitudes';
 import { AccesosPortal } from './AccesosPortal';
+import { MisionesOrganizacion } from './MisionesOrganizacion';
 
 export default function Organizaciones({ params }: { params: string[] }) {
   return params[0] ? <Ficha id={params[0]} /> : <Lista />;
@@ -294,6 +295,7 @@ function Ficha({ id }: { id: string }) {
               </form>
             )}
           </Tarjeta>
+          {puede('misiones.ver') && <MisionesOrganizacion organizacionId={o.id} nombre={o.nombre} />}
           {puede('portal.gestionar') && <AccesosPortal organizacionId={o.id} contactos={contactos} />}
         </div>
       </div>
