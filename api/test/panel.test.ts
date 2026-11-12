@@ -29,6 +29,8 @@ describe('panel', () => {
       expect(r.headers.get('content-security-policy')).toBe(CSP_PANEL);
       expect(r.headers.get('cache-control')).toBe('no-cache');
       expect(r.headers.get('x-frame-options')).toBe('DENY');
+      // Con no-referrer el formulario de Entrar llega con Origin: null y la API lo rechaza.
+      expect(r.headers.get('referrer-policy')).toBe('same-origin');
     }
   });
 

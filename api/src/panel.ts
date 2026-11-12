@@ -11,7 +11,10 @@ export const CSP_PANEL =
 export const SEGURIDAD = {
   'content-security-policy': CSP_PANEL,
   'x-content-type-options': 'nosniff',
-  'referrer-policy': 'no-referrer',
+  // same-origin y no no-referrer: con no-referrer el navegador manda "Origin: null" en los
+  // formularios (el botón Entrar del enlace de acceso, aquí y en el portal) y mismoOrigen() los
+  // rechaza con 403. Hacia otros sitios sigue sin salir ningún Referer.
+  'referrer-policy': 'same-origin',
   'x-frame-options': 'DENY',
 };
 
