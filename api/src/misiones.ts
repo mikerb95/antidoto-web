@@ -7,7 +7,7 @@ import { ahora, token } from './util';
 
 export const SEGUNDOS_PASE = 60;
 const SECRETO_MINIMO = 32;
-const ESPERA_MS = 6000;
+const ESPERA_MS = 8000;
 
 export type UsoPase = 'entrar' | 'api';
 
