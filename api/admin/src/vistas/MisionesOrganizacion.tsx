@@ -123,10 +123,12 @@ function Enlazar({ nombre, ocupado, guardar }: { nombre: string; ocupado: boolea
       {libres.length > 0 && (
         <>
           <Campo etiqueta="Enlazar con una empresa que ya existe">
-            <select name="empresaId" required defaultValue={igual ? String(igual.id) : ''}>
+            <select name="empresaId" required>
               <option value="">Elige una empresa</option>
               {libres.map((e) => (
-                <option value={e.id}>{e.nombre}</option>
+                <option value={e.id} selected={e.id === igual?.id}>
+                  {e.nombre}
+                </option>
               ))}
             </select>
           </Campo>
