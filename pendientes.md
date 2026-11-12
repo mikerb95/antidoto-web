@@ -14,6 +14,7 @@ Todo va en un solo proyecto de Vercel, `antidoto-web`. Pasos detallados en `api/
 - [ ] Secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID` y `VERCEL_PROJECT_ID` en GitHub, para `deploy.yml` y el job `vercel` de `preview.yml`.
 - [ ] Token fine-grained `GITHUB_DISPATCH_TOKEN` (Actions: Read and write) en las variables de Vercel, para publicar desde el panel (K-63).
 - [ ] Primer admin en la base de producción (`api/README.md`, paso 7) (K-30).
+- [ ] Conectar la plataforma de misiones con el panel (K-84): el mismo secreto (`openssl rand -base64 48`) como `MISIONES_SECRETO` aquí y `PANEL_SHARED_SECRET` en el proyecto de misiones, `MISIONES_URL` aquí (`https://actividades.antidotocolombia.com`, o su `*.vercel.app` mientras no haya DNS) y `npm run db:migrate` en misiones para crear `sso_passes`.
 
 ### Correo con Resend (K-30)
 
@@ -63,6 +64,7 @@ Mientras no se lance, antidotocolombia.com sigue con la SPA de React: `canonical
 - [ ] Archivos de entregables de más de 50 MB.
 - [ ] Decidir qué hacer con los tokens de suscripción, que hoy se guardan en claro en `contactos.token` (auditoría OWASP del 21/10/2026, K-82). No basta con guardar el hash: la API necesita el token para armar el enlace de baja y `List-Unsubscribe` de cada campaña. Opciones: derivarlo con HMAC del id del contacto y un secreto nuevo en Vercel (si el secreto se pierde o cambia, se rompen los enlaces de baja ya enviados; los actuales seguirían con una búsqueda de respaldo), o dejarlo así (con la base filtrada se podría dar de baja o cambiar preferencias, pero esa copia ya trae todos los datos). Recomendación: dejarlo así.
 - [ ] Cuando haya varios casos o artículos: filtros como páginas propias en el portafolio, Pagefind en el blog, y su imagen OG en `src/pages/og/[locale]/[nombre].jpg.ts`.
+- [ ] Misiones en el panel, lo que sigue si hace falta: mover al panel las pantallas de configuración de misiones (ajustes, textos legales, usuarios) y decidir si el rol Producción también entra a la plataforma (hoy solo Admin).
 - [ ] Servicios, ofertas y textos de interfaz editables desde el panel (hoy siguen en Markdown y en `ui.ts`). Solo si Antídoto lo necesita.
 - Los avisos de colección vacía de `casos` y `blog` en el build desaparecen con el primer caso o artículo. No son errores.
 
