@@ -23,6 +23,8 @@ export const VARS = {
   ASESOR_TOPE_DIARIO_USD: '1',
   GITHUB_REPO: 'mikerb95/antidoto-web',
   GITHUB_REF: 'main',
+  // Cuenta de GitHub del desarrollador del sitio (mikerb95): la única que entra con el rol dev.
+  GITHUB_DEV_IDS: '69970540',
 } as const;
 
 const OPCIONALES = [
@@ -34,6 +36,8 @@ const OPCIONALES = [
   'ANTHROPIC_API_KEY',
   'ANTHROPIC_URL',
   'GITHUB_DISPATCH_TOKEN',
+  'GITHUB_OAUTH_ID',
+  'GITHUB_OAUTH_SECRET',
   'MISIONES_URL',
   'MISIONES_SECRETO',
 ] as const;

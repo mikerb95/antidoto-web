@@ -2263,3 +2263,10 @@ button.enlace {
   gap: 8px;
   margin-top: 12px;
 }
+
+/* Pantalla de acceso: el acceso de desarrollo va aparte del formulario del equipo. */
+.entrar-dev {
+  margin: 20px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--linea);
+}

@@ -1,7 +1,7 @@
 // Acceso con enlace mágico. El correo trae /auth/entrar?t=..., que redirige aquí con el token en
 // el fragmento (#t=...): el fragmento no viaja al servidor ni queda en el Referer. El enlace se
 // gasta solo al pulsar "Entrar", así los filtros de correo que abren enlaces no lo consumen.
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import type { Yo } from '../sesion';
 
 export default function Entrar(_: { alEntrar?: (yo: Yo) => void }) {
@@ -9,6 +9,14 @@ export default function Entrar(_: { alEntrar?: (yo: Yo) => void }) {
   const error = new URLSearchParams(location.search).get('error');
   const [enviado, setEnviado] = useState(false);
   const [ocupado, setOcupado] = useState(false);
+  // El acceso de desarrollo con GitHub solo se ofrece si la API lo tiene configurado.
+  const [github, setGithub] = useState(false);
+  useEffect(() => {
+    fetch('/auth/opciones')
+      .then((r) => r.json())
+      .then((o: { github?: boolean }) => setGithub(!!o.github))
+      .catch(() => null);
+  }, []);
 
   const pedir = async (e: Event) => {
     e.preventDefault();
@@ -43,6 +51,11 @@ export default function Entrar(_: { alEntrar?: (yo: Yo) => void }) {
                 El enlace venció o ya se usó. Pide uno nuevo.
               </div>
             )}
+            {error === 'github' && (
+              <div class="aviso aviso-alerta" role="status">
+                No se pudo entrar con GitHub: esa cuenta no tiene acceso, o el intento venció. Prueba de nuevo.
+              </div>
+            )}
             {enviado ? (
               <div class="aviso aviso-exito" role="status">
                 Si el correo es del equipo, te llega un enlace en un minuto. Vence en 15 minutos y sirve una sola vez.
@@ -57,6 +70,13 @@ export default function Entrar(_: { alEntrar?: (yo: Yo) => void }) {
                   {ocupado ? 'Enviando' : 'Enviarme el enlace'}
                 </button>
               </form>
+            )}
+            {github && (
+              <p class="entrar-dev">
+                <a class="btn btn-secundario btn-bloque" href="/auth/github">
+                  Acceso de desarrollo con GitHub
+                </a>
+              </p>
             )}
           </>
         )}

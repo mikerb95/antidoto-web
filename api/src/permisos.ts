@@ -31,6 +31,7 @@ export const PERMISOS = [
 export type Permiso = (typeof PERMISOS)[number];
 
 const MATRIZ: Record<Rol, readonly Permiso[]> = {
+  dev: PERMISOS,
   admin: PERMISOS,
   comercial: [
     'leads.ver', 'leads.editar', 'leads.exportar',

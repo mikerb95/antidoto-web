@@ -97,6 +97,8 @@ export const usuarios = sqliteTable('usuarios', {
   rol: text('rol', { enum: ROLES }).notNull().default('comercial'),
   activo: integer('activo', { mode: 'boolean' }).notNull().default(true),
   creado: integer('creado').notNull(),
+  /** Id numérico de su cuenta de GitHub. Quien lo tiene entra solo con GitHub, sin enlace por correo. */
+  githubId: integer('github_id').unique('usuarios_github'),
 });
 
 // Enlaces mágicos: solo se guarda el hash del token, de un solo uso y con vencimiento corto.

@@ -27,7 +27,12 @@ export type ServicioId = (typeof SERVICIOS)[number];
  * Roles del equipo. admin hace todo; comercial atiende solicitudes y novedades; produccion lleva
  * los proyectos; contenido edita el sitio y las campañas; lectura solo mira.
  */
-export const ROLES = ['admin', 'comercial', 'produccion', 'contenido', 'lectura'] as const;
+export const ROLES_EQUIPO = ['admin', 'comercial', 'produccion', 'contenido', 'lectura'] as const;
+/**
+ * Todos los roles. dev es el acceso de desarrollo: hace todo, entra solo con su cuenta de GitHub
+ * (src/github.ts) y no se asigna ni se cambia desde Equipo.
+ */
+export const ROLES = ['dev', ...ROLES_EQUIPO] as const;
 export type Rol = (typeof ROLES)[number];
 
 export const ESTADOS_CONTACTO = ['pendiente', 'activo', 'baja', 'rebotado'] as const;

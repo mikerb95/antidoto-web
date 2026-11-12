@@ -45,6 +45,11 @@ export interface Env {
   GITHUB_REPO?: string;
   /** Rama que se construye al publicar. Por defecto, main. */
   GITHUB_REF?: string;
+  /** OAuth App de GitHub para el acceso de desarrollo (rol dev). Sin las dos, no se ofrece. */
+  GITHUB_OAUTH_ID?: string;
+  GITHUB_OAUTH_SECRET?: string;
+  /** Ids numéricos de las cuentas de GitHub que entran como dev, separados por coma. */
+  GITHUB_DEV_IDS?: string;
   /** Plataforma de misiones (proyecto aparte), sin barra final. Con MISIONES_SECRETO activa la sección Misiones del panel. */
   MISIONES_URL?: string;
   /** Secreto compartido con la plataforma de misiones (PANEL_SHARED_SECRET allá), de 32 caracteres o más. */

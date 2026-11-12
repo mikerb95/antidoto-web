@@ -1,8 +1,9 @@
 // API de la bandeja de leads. Todo pasa por una sesión válida; lo que cambia datos exige
 // además el mismo origen (ver index.ts). Cada cambio queda en lead_eventos con su autor.
-import { and, desc, eq, gte, isNull, like, or, sql, type SQL } from 'drizzle-orm';
+import { ROLES_EQUIPO, type Rol } from './dominio';
+import { and, desc, eq, gte, isNull, like, ne, or, sql, type SQL } from 'drizzle-orm';
 import type { Db } from './db/conexion';
-import { leads, clics, eventos, consentimientos, usuarios, contactos, conversaciones, contactosCliente, ESTADOS, SERVICIOS, ROLES, type Estado, type Lead } from './db/schema';
+import { leads, clics, eventos, consentimientos, usuarios, contactos, conversaciones, contactosCliente, ESTADOS, SERVICIOS, type Estado, type Lead } from './db/schema';
 import { borrarConversacion } from './asesor/guardado';
 import { suprimir, suscripcionDeLead } from './marketing/admin';
 import type { Sesion } from './auth';
@@ -245,7 +246,8 @@ export async function crearUsuario(req: Request, db: Db): Promise<Response> {
   const d = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const email = typeof d.email === 'string' ? d.email.trim().toLowerCase() : '';
   const nombre = typeof d.nombre === 'string' ? d.nombre.trim().slice(0, 120) : '';
-  const rol = ROLES.includes(d.rol as (typeof ROLES)[number]) ? (d.rol as (typeof ROLES)[number]) : 'comercial';
+  // El rol dev no se asigna desde Equipo: solo lo crea el acceso con GitHub.
+  const rol = ROLES_EQUIPO.includes(d.rol as (typeof ROLES_EQUIPO)[number]) ? (d.rol as Rol) : 'comercial';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || !nombre) return json({ errores: ['email', 'nombre'] }, 422);
   const [existe] = await db.select().from(usuarios).where(eq(usuarios.email, email));
   if (existe) return json({ error: 'existe' }, 409);
@@ -258,10 +260,14 @@ export async function editarUsuario(id: string, req: Request, db: Db, sesion: Se
   const d = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const set: Partial<typeof usuarios.$inferInsert> = {};
   if (typeof d.activo === 'boolean') set.activo = d.activo;
-  if (ROLES.includes(d.rol as (typeof ROLES)[number])) set.rol = d.rol as (typeof ROLES)[number];
+  if (ROLES_EQUIPO.includes(d.rol as (typeof ROLES_EQUIPO)[number])) set.rol = d.rol as Rol;
   if (typeof d.nombre === 'string' && d.nombre.trim()) set.nombre = d.nombre.trim().slice(0, 120);
   if (!Object.keys(set).length) return json({ errores: ['vacio'] }, 422);
-  const r = await db.update(usuarios).set(set).where(eq(usuarios.id, id)).returning({ id: usuarios.id });
-  if (!r.length) return json({ error: 'no existe' }, 404);
+  // Una cuenta de desarrollo no se cambia ni se desactiva desde Equipo.
+  const r = await db.update(usuarios).set(set).where(and(eq(usuarios.id, id), ne(usuarios.rol, 'dev'))).returning({ id: usuarios.id });
+  if (!r.length) {
+    const [u] = await db.select({ id: usuarios.id }).from(usuarios).where(eq(usuarios.id, id));
+    return u ? json({ error: 'dev' }, 403) : json({ error: 'no existe' }, 404);
+  }
   return listarUsuarios(db);
 }

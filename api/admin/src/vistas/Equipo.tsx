@@ -1,5 +1,5 @@
 // Equipo: quién entra al panel y con qué rol. Solo quien tiene equipo.gestionar cambia algo.
-import { ROLES as LISTA_ROLES, type Rol } from '@api/dominio';
+import { ROLES_EQUIPO as LISTA_ROLES, type Rol } from '@api/dominio';
 import { api, mensajeError, useDatos, ErrorApi } from '../api';
 import { usePuede, useYo } from '../sesion';
 import { ROLES } from '../textos';
@@ -66,7 +66,7 @@ export default function Equipo() {
                         <span class="fila-sub">{u.email}</span>
                       </td>
                       <td>
-                        {gestiona && u.id !== yo.id ? (
+                        {gestiona && u.id !== yo.id && u.rol !== 'dev' ? (
                           <>
                             <label class="sr" for={`rol-${u.id}`}>
                               Rol de {u.nombre}
@@ -87,7 +87,7 @@ export default function Equipo() {
                       </td>
                       {gestiona && (
                         <td class="num">
-                          {u.id !== yo.id && (
+                          {u.id !== yo.id && u.rol !== 'dev' && (
                             <Boton chico variante={u.activo ? 'fantasma' : 'secundario'} onClick={() => cambiar(u, { activo: !u.activo })}>
                               {u.activo ? 'Quitar acceso' : 'Devolver acceso'}
                             </Boton>

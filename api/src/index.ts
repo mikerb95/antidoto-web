@@ -47,6 +47,7 @@ import { rutasSistema } from './rutas/sistema';
 import { pendientesSiToca } from './pendientes';
 import { rutasExportar } from './rutas/exportar';
 import { rutasMisiones } from './rutas/misiones';
+import { githubConfigurado, irAGithub, volverDeGithub } from './github';
 import { json } from './util';
 
 // Rutas del panel por módulo (src/rutas/), todas con sesión. Cada una exige su permiso.
@@ -122,6 +123,10 @@ export async function manejar(req: Request, env: Env, diferir: (p: Promise<unkno
   if (ruta === '/portal/auth/entrar' && metodo === 'GET') return paginaEntrarCliente(req);
 
   if (ruta === '/auth/entrar' && metodo === 'GET') return paginaEntrar(req);
+  // Acceso de desarrollo con GitHub (src/github.ts). /auth/opciones le dice a la pantalla de acceso si ofrecerlo.
+  if (ruta === '/auth/opciones' && metodo === 'GET') return json({ github: githubConfigurado(env) });
+  if (ruta === '/auth/github' && metodo === 'GET') return irAGithub(env, appUrl);
+  if (ruta === '/auth/github/callback' && metodo === 'GET') return volverDeGithub(req, env, db, appUrl);
 
   // De aquí en adelante, todo lo que cambia algo tiene que venir de la propia app.
   const cambia = metodo !== 'GET' && metodo !== 'HEAD';

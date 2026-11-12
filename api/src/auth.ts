@@ -28,7 +28,7 @@ export interface Sesion {
   id: string | null;
 }
 
-const leerCookie = (req: Request, nombre: string): string | null => {
+export const leerCookie = (req: Request, nombre: string): string | null => {
   const c = req.headers.get('cookie') ?? '';
   for (const parte of c.split(';')) {
     const [k, ...v] = parte.trim().split('=');
@@ -82,7 +82,7 @@ export async function pedirEnlace(req: Request, env: Env, db: Db, appUrl: string
   diferir(
     (async () => {
       const t = ahora();
-      const buscar = async () => (await db.select().from(usuarios).where(and(eq(usuarios.email, email), eq(usuarios.activo, true))))[0];
+      const buscar = async () => (await db.select().from(usuarios).where(and(eq(usuarios.email, email), eq(usuarios.activo, true), isNull(usuarios.githubId))))[0];
       const u = await puedeMandarEnlace(db, 'enlace', await hashIp(ip, env.SAL_IP, t), buscar, t);
       if (!u) return;
       const secreto = token();
@@ -125,9 +125,14 @@ export async function entrar(req: Request, env: Env, db: Db): Promise<Response> 
   const usuarioId = usados[0]?.usuarioId;
   if (!usuarioId) return volver('enlace');
 
-  const [u] = await db.select().from(usuarios).where(and(eq(usuarios.id, usuarioId), eq(usuarios.activo, true)));
+  // Una cuenta ligada a GitHub no entra con enlace, aunque le quede uno pedido antes de ligarla.
+  const [u] = await db.select().from(usuarios).where(and(eq(usuarios.id, usuarioId), eq(usuarios.activo, true), isNull(usuarios.githubId)));
   if (!u) return volver('enlace');
+  return abrirSesion(req, env, db, u, t);
+}
 
+/** Crea la sesión de alguien que ya probó quién es (enlace por correo o GitHub) y lo lleva al panel. */
+export async function abrirSesion(req: Request, env: Env, db: Db, u: Usuario, t = ahora(), cookiesExtra: string[] = []): Promise<Response> {
   const secretoSesion = token();
   const idSesion = uuid();
   await db.insert(sesiones).values({
@@ -141,10 +146,9 @@ export async function entrar(req: Request, env: Env, db: Db): Promise<Response> 
     revocada: null,
   });
   await registrarAcceso(db, req, env.SAL_IP, 'sesion.entrar', u, 'sesion', idSesion);
-  return new Response(null, {
-    status: 303,
-    headers: { location: '/admin/', 'set-cookie': cookieSesion(secretoSesion, DIAS_SESION * 86_400), 'cache-control': 'no-store' },
-  });
+  const headers = new Headers({ location: '/admin/', 'cache-control': 'no-store' });
+  for (const c of [cookieSesion(secretoSesion, DIAS_SESION * 86_400), ...cookiesExtra]) headers.append('set-cookie', c);
+  return new Response(null, { status: 303, headers });
 }
 
 /** Una sesión sigue abierta si no venció, no se revocó y se usó en los últimos DIAS_INACTIVIDAD días. */

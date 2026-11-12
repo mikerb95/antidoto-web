@@ -22,6 +22,7 @@ const SERVICIOS: [string, string, string][] = [
   ['archivos', 'Archivos de proyectos', 'Vercel Blob, archivos/ (privado).'],
   ['publicacion', 'Publicar desde el panel', 'GITHUB_DISPATCH_TOKEN y GITHUB_REPO.'],
   ['misiones', 'Plataforma de misiones', 'MISIONES_URL y MISIONES_SECRETO: resumen de actividades y entrada sin otra contraseña.'],
+  ['github', 'Acceso de desarrollo con GitHub', 'GITHUB_OAUTH_ID y GITHUB_OAUTH_SECRET de la OAuth App, y GITHUB_DEV_IDS.'],
   ['salIp', 'Sal del hash de IP', 'SAL_IP: sin ella el hash es menos privado.'],
 ];
 const TABLAS: Record<string, string> = {

@@ -16,7 +16,7 @@ describe('matriz de permisos', () => {
   });
 
   test('solo admin suprime datos, gestiona el equipo y cambia ajustes', () => {
-    for (const rol of ROLES.filter((r) => r !== 'admin')) {
+    for (const rol of ROLES.filter((r) => r !== 'admin' && r !== 'dev')) {
       expect(puede(rol, 'datos.suprimir')).toBe(false);
       expect(puede(rol, 'equipo.gestionar')).toBe(false);
       expect(puede(rol, 'config.editar')).toBe(false);
@@ -59,14 +59,14 @@ describe('rutas por rol', () => {
   test.each(casos)('%s %s', async (metodo, ruta, cuerpo, permitidos) => {
     for (const rol of ROLES) {
       const r = await p.conSesion(cookies[rol], ruta, { method: metodo, ...(cuerpo ? { body: cuerpo.replace('ROL', rol) } : {}) });
-      if (permitidos.includes(rol)) expect(r.status, `${rol} debería poder`).not.toBe(403);
+      if (permitidos.includes(rol) || rol === 'dev') expect(r.status, `${rol} debería poder`).not.toBe(403);
       else expect(r.status, `${rol} no debería poder`).toBe(403);
     }
   });
 
   test('suprimir un lead o un contacto es solo de admin', async () => {
     const id = '00000000-0000-4000-8000-000000000001';
-    for (const rol of ROLES.filter((r) => r !== 'admin')) {
+    for (const rol of ROLES.filter((r) => r !== 'admin' && r !== 'dev')) {
       expect((await p.conSesion(cookies[rol], `/admin/api/leads/${id}/anonimizar`, { method: 'POST' })).status).toBe(403);
       expect((await p.conSesion(cookies[rol], `/admin/api/contactos/${id}/suprimir`, { method: 'POST' })).status).toBe(403);
     }
